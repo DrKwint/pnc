@@ -44,6 +44,38 @@ class Ensemble:
         w1, b1, w2, b2 = self.perturbations[idx]
         return self.manual_forward(x, w1, b1, w2, b2)
 
+class MultiLayerPJSVDEnsemble:
+    def __init__(self, base_model: TransitionModel, perturbations: List[Tuple]):
+        self.base_model = base_model
+        # List of (w1, b1, w2, b2, w3, b3)
+        self.perturbations = perturbations 
+
+    def manual_forward(
+        self, 
+        x: jax.Array, 
+        w1: jax.Array, 
+        b1: jax.Array, 
+        w2: jax.Array, 
+        b2: jax.Array,
+        w3: jax.Array,
+        b3: jax.Array
+    ) -> jax.Array:
+        h1 = nnx.relu(x @ w1 + b1)
+        h2 = nnx.relu(h1 @ w2 + b2)
+        out = h2 @ w3 + b3
+        return out
+
+    def predict(self, x: jax.Array) -> jax.Array:
+        ys = []
+        for w1, b1, w2, b2, w3, b3 in self.perturbations:
+            y = self.manual_forward(x, w1, b1, w2, b2, w3, b3)
+            ys.append(y)
+        return jnp.stack(ys, axis=0)
+    
+    def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
+        w1, b1, w2, b2, w3, b3 = self.perturbations[idx]
+        return self.manual_forward(x, w1, b1, w2, b2, w3, b3)
+
 class StandardEnsemble:
     def __init__(self, models: List[TransitionModel]):
         self.models = models

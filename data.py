@@ -23,6 +23,48 @@ def id_policy_random(env: gym.Env, obs: np.ndarray) -> np.ndarray:
     """
     return env.action_space.sample()
 
+def ant_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndarray:
+    """
+    ID Policy for Ant-v5: A structured, alternating tetrapod gait.
+    Mimics 'routine navigation'.
+    State coverage: Coordinated 8-joint periodic motion.
+    
+    Action space (8D):
+    [hip_1, ankle_1, hip_2, ankle_2, hip_3, ankle_3, hip_4, ankle_4]
+    """
+    freq = 2.0  # Hz
+    amplitude = 0.8
+    t = step_count * 0.05  # Assuming dt is roughly 0.05
+    
+    # Legs 1 & 4 move together, Legs 2 & 3 move exactly out of phase
+    # We offset the ankle slightly from the hip for a "stepping" motion
+    phase_offset = np.array([
+        0, -0.5,           # Leg 1 (Front Left)
+        np.pi, np.pi-0.5,  # Leg 2 (Front Right)
+        np.pi, np.pi-0.5,  # Leg 3 (Back Left)
+        0, -0.5            # Leg 4 (Back Right)
+    ])
+    
+    action = amplitude * np.sin(freq * t + phase_offset)
+    return action.astype(np.float32)
+
+def hopper_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndarray:
+    """
+    ID Policy for Hopper-v5: A structured, 3-joint jumping motion.
+    State coverage: Coordinated extension and contraction.
+    
+    Action space (3D): [thigh_joint, leg_joint, foot_joint]
+    """
+    freq = 2.5  # Hz, slightly faster for jumping
+    amplitude = 0.7
+    t = step_count * 0.02  # Hopper usually has a smaller dt
+    
+    # Create a whip-like motion: thigh moves first, then leg, then foot pushes off
+    phase_offset = np.array([0, -np.pi/4, -np.pi/2])
+    
+    action = amplitude * np.sin(freq * t + phase_offset)
+    return action.astype(np.float32)
+
 def ood_policy_run(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndarray:
     """
     OOD Policy: A structured Sine-Wave Gait.
@@ -86,7 +128,12 @@ class OODPolicyWrapper:
         self.step_count = 0
 
     def __call__(self, env: gym.Env, obs: np.ndarray) -> np.ndarray:
-        action = ood_policy_run(env, obs, self.step_count)
+        if 'hopper' in env.spec.id.lower():
+            action = hopper_expert_policy(env, obs, self.step_count)
+        elif 'ant' in env.spec.id.lower():
+            action = ant_expert_policy(env, obs, self.step_count)
+        else:
+            action = ood_policy_run(env, obs, self.step_count)
         self.step_count += 1
         return action
 
