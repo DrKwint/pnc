@@ -1,20 +1,36 @@
 import jax
 import jax.numpy as jnp
 from flax import nnx
-from typing import List, Tuple
+from typing import List, Tuple, Any, Callable
 import numpy as np
 
 from models import TransitionModel
 
-def evaluate_tail_from_preact(base_model, preact, current_layer_idx, activation=nnx.relu):
+def evaluate_tail_from_preact(
+    base_model: Any, 
+    preact: jax.Array, 
+    current_layer_idx: int, 
+    activation: Any = nnx.relu
+) -> jax.Array:
+    """
+    Evaluates the remaining layers of a model given a pre-activation from an intermediate layer.
+    
+    Args:
+        base_model: The model to evaluate. Expected to have a 'layers' sequence or 'l1', 'l2', etc.
+        preact: The intermediate pre-activation tensor.
+        current_layer_idx: The 0-indexed index of the preact's layer (e.g., 0 for 'l1', 1 for 'l2').
+        activation: The activation function to apply.
+    """
     h = preact
     if hasattr(base_model, 'layers'):
+        if current_layer_idx >= len(base_model.layers):
+            raise ValueError(f"current_layer_idx {current_layer_idx} is out of bounds for model with {len(base_model.layers)} layers.")
         for idx in range(current_layer_idx + 1, len(base_model.layers)):
             h = activation(h)
             layer = base_model.layers[idx]
             h = h @ layer.kernel.get_value() + layer.bias.get_value()
         return h
-    else:
+    elif hasattr(base_model, f'l{current_layer_idx + 1}'):
         i = current_layer_idx + 2
         while hasattr(base_model, f'l{i}'):
             h = activation(h)
@@ -22,6 +38,12 @@ def evaluate_tail_from_preact(base_model, preact, current_layer_idx, activation=
             h = h @ layer.kernel.get_value() + layer.bias.get_value()
             i += 1
         return h
+    else:
+        raise TypeError(
+            f"base_model (type {type(base_model).__name__}) does not match the expected interface "
+            f"or the current_layer_idx {current_layer_idx} is invalid. The model must have either "
+            f"a 'layers' sequence or continuous attributes 'l1', 'l2', etc."
+        )
 
 # ==============================================================================
 # PJSVD Compact Ensembles

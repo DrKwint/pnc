@@ -1,9 +1,11 @@
+import os
+from collections.abc import Callable
+
 import gymnasium as gym
+import jax
 import jax.numpy as jnp
 import numpy as np
-from typing import Callable, Tuple
-import jax
-import os
+
 
 def positive_policy(env: gym.Env, obs: np.ndarray) -> np.ndarray:
     """A placeholder policy that always takes positive actions."""
@@ -35,7 +37,7 @@ def ant_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndar
     freq = 2.0  # Hz
     amplitude = 0.8
     t = step_count * 0.05  # Assuming dt is roughly 0.05
-    
+
     # Legs 1 & 4 move together, Legs 2 & 3 move exactly out of phase
     # We offset the ankle slightly from the hip for a "stepping" motion
     phase_offset = np.array([
@@ -44,7 +46,7 @@ def ant_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndar
         np.pi, np.pi-0.5,  # Leg 3 (Back Left)
         0, -0.5            # Leg 4 (Back Right)
     ])
-    
+
     action = amplitude * np.sin(freq * t + phase_offset)
     return action.astype(np.float32)
 
@@ -58,14 +60,14 @@ def hopper_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.n
     freq = 2.5  # Hz, slightly faster for jumping
     amplitude = 0.7
     t = step_count * 0.02  # Hopper usually has a smaller dt
-    
+
     # Create a whip-like motion: thigh moves first, then leg, then foot pushes off
     phase_offset = np.array([0, -np.pi/4, -np.pi/2])
-    
+
     action = amplitude * np.sin(freq * t + phase_offset)
     return action.astype(np.float32)
 
-def ood_policy_run(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndarray:
+def halfcheetah_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndarray:
     """
     OOD Policy: A structured Sine-Wave Gait.
     Mimics an 'expert' or 'deployment' policy.
@@ -77,53 +79,53 @@ def ood_policy_run(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndarray
     # A simple trotting gait for HalfCheetah
     # Joints: [bthigh, bshin, bfoot, fthigh, fshin, ffoot]
     # We oscillate legs in anti-phase to create forward motion
-    
+
     freq = 2.0  # Hz
     phase_offset = np.array([0, -1, -0.5, np.pi, np.pi-1, np.pi-0.5])
     amplitude = 0.8
-    
+
     t = step_count * 0.05 # Assuming dt=0.05 or similar
-    
+
     # Generate action: A * sin(wt + phi)
     action = amplitude * np.sin(freq * t + phase_offset)
-    
+
     return action.astype(np.float32)
 
 def collect_data(
-    env_name: str, 
-    steps: int, 
-    policy_fn: Callable[[gym.Env, np.ndarray], np.ndarray], 
+    env_name: str,
+    steps: int,
+    policy_fn: Callable[[gym.Env, np.ndarray], np.ndarray],
     seed: int = 0
-) -> Tuple[jax.Array, jax.Array]:
+) -> tuple[jax.Array, jax.Array]:
     """Collects transitions from a Gym environment using a given policy."""
     print(f"Collecting {steps} steps ({str(policy_fn)})...")
     env = gym.make(env_name)
-        
+
     inputs, targets = [], []
     obs, _ = env.reset(seed=seed)
-    
+
     for _ in range(steps):
         action = policy_fn(env, obs)
         # Fix for Gym API quirks
-        if np.isscalar(action): 
+        if np.isscalar(action):
             action = np.array([action], dtype=np.float32)
-        if action.ndim == 0: 
+        if action.ndim == 0:
             action = action[None]
-            
+
         next_obs, _, term, trunc, _ = env.step(action)
-        
+
         inputs.append(np.concatenate([obs, action])) # State + Action
         targets.append(next_obs) # Predict Next State
-        
+
         obs = next_obs
         if term or trunc:
             obs, _ = env.reset()
-    
+
     env.close()
     return jnp.array(np.stack(inputs)), jnp.array(np.stack(targets))
 
 class OODPolicyWrapper:
-    """A stateful wrapper for ood_policy_run that keeps track of the step count."""
+    """A stateful wrapper for half_cheetah_expert_policy that keeps track of the step count."""
     def __init__(self):
         self.step_count = 0
 
@@ -133,15 +135,15 @@ class OODPolicyWrapper:
         elif 'ant' in env.spec.id.lower():
             action = ant_expert_policy(env, obs, self.step_count)
         else:
-            action = ood_policy_run(env, obs, self.step_count)
+            action = halfcheetah_expert_policy(env, obs, self.step_count)
         self.step_count += 1
         return action
 
 def _download_idx(url: str, cache_dir: str) -> np.ndarray:
     """Downloads and parses an IDX file (MNIST binary format). Caches locally."""
-    import urllib.request
     import gzip
     import struct
+    import urllib.request
     os.makedirs(cache_dir, exist_ok=True)
     fname = os.path.join(cache_dir, url.split('/')[-1])
     if not os.path.exists(fname):
@@ -182,16 +184,17 @@ def load_uci(name: str, cache_dir: str = '/tmp/uci_cache', seed: int = 0) -> tup
     Downloads, parses, normalizes features and targets, and splits into 90/10 train/test.
     Returns: (x_train, y_train, x_test, y_test)
     """
-    import pandas as pd
     import urllib.request
     import zipfile
-    
+
+    import pandas as pd
+
     name = name.lower()
     os.makedirs(cache_dir, exist_ok=True)
     uci_base = 'https://archive.ics.uci.edu/ml/machine-learning-databases/'
-    
+
     print(f"Loading UCI dataset: {name}")
-    
+
     if name == 'boston':
         url = uci_base + 'housing/housing.data'
         df = pd.read_fwf(url, header=None)
@@ -231,35 +234,35 @@ def load_uci(name: str, cache_dir: str = '/tmp/uci_cache', seed: int = 0) -> tup
          X, Y = data[:, 1:], data[:, 0:1]
     else:
         raise ValueError(f"Unknown UCI dataset {name}")
-        
+
     X = X.astype(np.float32)
     Y = Y.astype(np.float32)
-    
+
     N = X.shape[0]
     ind = np.arange(N)
-    
+
     # We follow the reference repo's exact seeding
     rng = np.random.RandomState(seed)
     rng.shuffle(ind)
-    
+
     n_train = int(N * 0.9)
     train_idx = ind[:n_train]
     test_idx = ind[n_train:]
-    
+
     x_train, y_train = X[train_idx], Y[train_idx]
     x_test, y_test = X[test_idx], Y[test_idx]
-    
+
     # Normalize with train stats
     x_mean = np.mean(x_train, axis=0, keepdims=True)
     x_std = np.std(x_train, axis=0, keepdims=True) + 1e-6
     y_mean = np.mean(y_train, axis=0, keepdims=True)
     y_std = np.std(y_train, axis=0, keepdims=True) + 1e-6
-    
+
     x_train = (x_train - x_mean) / x_std
     y_train = (y_train - y_mean) / y_std
     x_test = (x_test - x_mean) / x_std
     y_test = (y_test - y_mean) / y_std
-    
+
     return jnp.array(x_train), jnp.array(y_train), jnp.array(x_test), jnp.array(y_test)
 
 
@@ -280,8 +283,8 @@ def load_cifar10(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) ->
     Downloads from the official Toronto CDN if not cached.
 
     Returns: (x_train, y_train, x_test, y_test)
-        x_*: jnp.array of shape (N, 32, 32, 3), float32, NHWC layout.
-        y_*: jnp.array of shape (N,), int32.
+        x_*: np.ndarray of shape (N, 32, 32, 3), float32, NHWC layout.
+        y_*: np.ndarray of shape (N,), int32.
     """
     import tarfile
     import urllib.request
@@ -323,8 +326,8 @@ def load_cifar10(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) ->
         x_test  = _cifar_normalize(x_test)
 
     print(f'CIFAR-10 loaded: train={x_train.shape}, test={x_test.shape}')
-    return jnp.array(x_train), jnp.array(y_train, dtype=jnp.int32), \
-           jnp.array(x_test),  jnp.array(y_test,  dtype=jnp.int32)
+    return x_train, y_train.astype(np.int32), \
+           x_test,  y_test.astype(np.int32)
 
 
 def load_cifar100(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -> tuple:
@@ -333,8 +336,8 @@ def load_cifar100(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -
     Downloads from the official Toronto CDN if not cached.
 
     Returns: (x_train, y_train, x_test, y_test)
-        x_*: jnp.array of shape (N, 32, 32, 3), float32, NHWC layout.
-        y_*: jnp.array of shape (N,), int32  (fine labels, 100 classes).
+        x_*: np.ndarray of shape (N, 32, 32, 3), float32, NHWC layout.
+        y_*: np.ndarray of shape (N,), int32  (fine labels, 100 classes).
     """
     import tarfile
     import urllib.request
@@ -372,6 +375,6 @@ def load_cifar100(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -
         x_test  = _cifar_normalize(x_test)
 
     print(f'CIFAR-100 loaded: train={x_train.shape}, test={x_test.shape}')
-    return jnp.array(x_train), jnp.array(y_train, dtype=jnp.int32), \
-           jnp.array(x_test),  jnp.array(y_test,  dtype=jnp.int32)
+    return x_train, y_train.astype(np.int32), \
+           x_test,  y_test.astype(np.int32)
 

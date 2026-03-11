@@ -92,7 +92,7 @@ def main():
                         default=[20.0, 40.0, 80.0, 160.0, 320.0],
                         help="List of perturbation norms to sweep")
     parser.add_argument("--laplace_priors",    nargs="+",  type=float,
-                        default=[1.0, 5.0, 10.0, 50.0, 100.0],
+                        default=[0.1, 0.5, 1.0, 5.0, 10.0],
                         help="List of prior precisions for Laplace Approximation")
     parser.add_argument("--seed",              type=int,   default=0,
                         help="Global random seed for reproducibility")
