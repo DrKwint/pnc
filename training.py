@@ -1,16 +1,17 @@
 import time
+
 import jax
 import jax.numpy as jnp
-import optax
 import numpy as np
+import optax
 from flax import nnx
 
 
 def train_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 2000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 2000,
     batch_size: int = 64,
     val_split: float = 0.1,
     patience: int = 10,
@@ -25,13 +26,13 @@ def train_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training on {len(train_inputs)} samples, val {len(val_inputs)} samples...")
     optimizer = optax.adamw(1e-3)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -55,45 +56,45 @@ def train_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if (i + 1) % eval_freq == 0 or i == steps - 1:
             if n_val > 0:
                 v_loss = val_loss_fn(model, val_inputs, val_targets)
             else:
                 v_loss = loss
-                
-            if (i+1) % 500 == 0: 
+
+            if (i+1) % 500 == 0:
                 print(f"Step {i+1}: Train Loss {loss:.5f} | Val Loss {v_loss:.5f}")
-                
+
             if float(v_loss) < best_val_loss:
                 best_val_loss = float(v_loss)
                 best_state = nnx.state(model)
                 checks_without_improvement = 0
             else:
                 checks_without_improvement += 1
-                
+
             if checks_without_improvement >= patience:
                 print(f"Early stopping at step {i+1}. Best Val Loss: {best_val_loss:.5f}")
                 break
-                
+
     print(f"Final Train Loss: {loss:.5f} | Best Val Loss: {best_val_loss:.5f}")
     nnx.update(model, best_state)
     return model
 
 
 def train_probabilistic_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 2000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 2000,
     batch_size: int = 64,
     val_split: float = 0.1,
     patience: int = 10,
@@ -108,13 +109,13 @@ def train_probabilistic_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training Probabilistic Model on {len(train_inputs)} samples, val {len(val_inputs)} samples...")
     optimizer = optax.adamw(1e-3)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -122,7 +123,7 @@ def train_probabilistic_model(
             # Gaussian NLL loss: 0.5 * (log(var) + (y - mean)^2 / var)
             # We ignore the constant (log(2pi)/2) for optimization
             return jnp.mean(0.5 * (jnp.log(var) + (y - mean)**2 / var))
-            
+
         grads = nnx.grad(loss_fn)(model)
         updates, new_opt = optimizer.update(nnx.state(grads, nnx.Param), opt_state, nnx.state(model, nnx.Param))
         nnx.update(model, optax.apply_updates(nnx.state(model, nnx.Param), updates))
@@ -135,44 +136,44 @@ def train_probabilistic_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if (i + 1) % eval_freq == 0 or i == steps - 1:
             if n_val > 0:
                 v_loss = val_loss_fn(model, val_inputs, val_targets)
             else:
                 v_loss = loss
-                
-            if (i+1) % 500 == 0: 
+
+            if (i+1) % 500 == 0:
                 print(f"Step {i+1}: Train NLL {loss:.5f} | Val NLL {v_loss:.5f}")
-                
+
             if float(v_loss) < best_val_loss:
                 best_val_loss = float(v_loss)
                 best_state = nnx.state(model)
                 checks_without_improvement = 0
             else:
                 checks_without_improvement += 1
-                
+
             if checks_without_improvement >= patience:
                 print(f"Early stopping at step {i+1}. Best Val NLL: {best_val_loss:.5f}")
                 break
-                
+
     print(f"Final Train NLL: {loss:.5f} | Best Val NLL: {best_val_loss:.5f}")
     nnx.update(model, best_state)
     return model
 
 def train_swag_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 2000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 2000,
     batch_size: int = 64,
     swag_start: int = 1000,
     val_split: float = 0.1,
@@ -188,13 +189,13 @@ def train_swag_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training on {len(train_inputs)} samples (SWAG enabled after {swag_start} steps, val {len(val_inputs)})...")
     optimizer = optax.adamw(1e-3)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -218,31 +219,31 @@ def train_swag_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     swag_mean = jax.tree.map(lambda x: jnp.zeros_like(x), params)
     swag_sq_mean = jax.tree.map(lambda x: jnp.zeros_like(x), params)
     n_swag_steps = 0
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     best_swag_mean = None
     best_swag_sq_mean = None
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if i >= swag_start:
             current_params = nnx.state(model, nnx.Param)
             n = float(n_swag_steps + 1)
             swag_mean = jax.tree.map(
-                lambda m, p: (m * n_swag_steps + p) / n, 
+                lambda m, p: (m * n_swag_steps + p) / n,
                 swag_mean, current_params
             )
             swag_sq_mean = jax.tree.map(
-                lambda sq_m, p: (sq_m * n_swag_steps + p**2) / n, 
+                lambda sq_m, p: (sq_m * n_swag_steps + p**2) / n,
                 swag_sq_mean, current_params
             )
             n_swag_steps += 1
@@ -252,42 +253,42 @@ def train_swag_model(
                 v_loss = val_loss_fn(model, val_inputs, val_targets)
             else:
                 v_loss = loss
-                
-            if (i+1) % 500 == 0: 
+
+            if (i+1) % 500 == 0:
                 print(f"Step {i+1}: Train Loss {loss:.5f} | Val Loss {v_loss:.5f}")
-                
+
             if float(v_loss) < best_val_loss:
                 best_val_loss = float(v_loss)
                 best_state = nnx.state(model)
                 checks_without_improvement = 0
             else:
                 checks_without_improvement += 1
-                
+
             if checks_without_improvement >= patience and i < swag_start:
                 print(f"Early stopping at step {i+1}. Best Val Loss: {best_val_loss:.5f}")
                 break
-                
+
     nnx.update(model, best_state)
-    
+
     if n_swag_steps == 0:
         swag_mean = nnx.state(model, nnx.Param)
         swag_sq_mean = jax.tree.map(lambda x: x**2, swag_mean)
-        
+
     print(f"Final Train Loss: {loss:.5f} | Best Val Loss: {best_val_loss:.5f} | SWAG steps collected: {n_swag_steps}")
-    
+
     swag_var = jax.tree.map(
-        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8), 
+        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8),
         swag_sq_mean, swag_mean
     )
-    
+
     return model, swag_mean, swag_var
 
 
 def train_classification_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 5000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 5000,
     batch_size: int = 256,
     lr: float = 1e-3,
     val_split: float = 0.1,
@@ -303,13 +304,13 @@ def train_classification_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training Classification on {len(train_inputs)} samples, val {len(val_inputs)} samples...")
     optimizer = optax.adamw(lr)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -327,44 +328,44 @@ def train_classification_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if (i + 1) % eval_freq == 0 or i == steps - 1:
             if n_val > 0:
                 v_loss = val_loss_fn(model, val_inputs, val_targets)
             else:
                 v_loss = loss
-            
-            if (i+1) % 1000 == 0: 
+
+            if (i+1) % 1000 == 0:
                 print(f"Step {i+1}: Train Loss {loss:.5f} | Val Loss {v_loss:.5f}")
-                
+
             if float(v_loss) < best_val_loss:
                 best_val_loss = float(v_loss)
                 best_state = nnx.state(model)
                 checks_without_improvement = 0
             else:
                 checks_without_improvement += 1
-                
+
             if checks_without_improvement >= patience:
                 print(f"Early stopping at step {i+1}. Best Val Loss: {best_val_loss:.5f}")
                 break
-                
+
     print(f"Final Train Loss: {loss:.5f} | Best Val Loss: {best_val_loss:.5f}")
     nnx.update(model, best_state)
     return model
 
 def train_swag_classification_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 5000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 5000,
     batch_size: int = 256,
     lr: float = 1e-3,
     swag_start: int = 3000,
@@ -381,13 +382,13 @@ def train_swag_classification_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training Classification on {len(train_inputs)} samples (SWAG enabled after {swag_start} steps, val {len(val_inputs)})...")
     optimizer = optax.adamw(lr)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -405,31 +406,31 @@ def train_swag_classification_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     swag_mean = jax.tree.map(lambda x: jnp.zeros_like(x), params)
     swag_sq_mean = jax.tree.map(lambda x: jnp.zeros_like(x), params)
     n_swag_steps = 0
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     best_swag_mean = None
     best_swag_sq_mean = None
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if i >= swag_start:
             current_params = nnx.state(model, nnx.Param)
             n = float(n_swag_steps + 1)
             swag_mean = jax.tree.map(
-                lambda m, p: (m * n_swag_steps + p) / n, 
+                lambda m, p: (m * n_swag_steps + p) / n,
                 swag_mean, current_params
             )
             swag_sq_mean = jax.tree.map(
-                lambda sq_m, p: (sq_m * n_swag_steps + p**2) / n, 
+                lambda sq_m, p: (sq_m * n_swag_steps + p**2) / n,
                 swag_sq_mean, current_params
             )
             n_swag_steps += 1
@@ -439,43 +440,44 @@ def train_swag_classification_model(
                 v_loss = val_loss_fn(model, val_inputs, val_targets)
             else:
                 v_loss = loss
-            
-            if (i+1) % 1000 == 0: 
+
+            if (i+1) % 1000 == 0:
                 print(f"Step {i+1}: Train Loss {loss:.5f} | Val Loss {v_loss:.5f}")
-                
+
             if float(v_loss) < best_val_loss:
                 best_val_loss = float(v_loss)
                 best_state = nnx.state(model)
                 checks_without_improvement = 0
             else:
                 checks_without_improvement += 1
-                
+
             if checks_without_improvement >= patience and i < swag_start:
                 print(f"Early stopping at step {i+1}. Best Val Loss: {best_val_loss:.5f}")
                 break
-                
+
     nnx.update(model, best_state)
-    
+
     if n_swag_steps == 0:
         swag_mean = nnx.state(model, nnx.Param)
         swag_sq_mean = jax.tree.map(lambda x: x**2, swag_mean)
-        
+
     print(f"Final Train Loss: {loss:.5f} | Best Val Loss: {best_val_loss:.5f} | SWAG steps collected: {n_swag_steps}")
-    
+
     swag_var = jax.tree.map(
-        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8), 
+        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8),
         swag_sq_mean, swag_mean
     )
-    
+
     return model, swag_mean, swag_var
 
 import jax.flatten_util
 
+
 def train_subspace_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 2000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 2000,
     batch_size: int = 64,
     swag_start: int = 1000,
     max_rank: int = 20,
@@ -491,13 +493,13 @@ def train_subspace_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training on {len(train_inputs)} samples (Subspace enabled after {swag_start} steps, rank {max_rank})...")
     optimizer = optax.adamw(1e-3)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -521,25 +523,26 @@ def train_subspace_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     swag_mean = jax.tree.map(lambda x: jnp.zeros_like(x), params)
     n_swag_steps = 0
     snapshots = []
     snapshot_freq = max(1, (steps - swag_start) // max_rank)
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if i >= swag_start:
             current_params = nnx.state(model, nnx.Param)
             n = float(n_swag_steps + 1)
+            n_steps = float(n_swag_steps)
             swag_mean = jax.tree.map(
-                lambda m, p: (m * n_swag_steps + p) / n, 
+                lambda m, p, current_steps=n_steps, denom=n: (m * current_steps + p) / denom,
                 swag_mean, current_params
             )
             n_swag_steps += 1
@@ -557,12 +560,12 @@ def train_subspace_model(
                 checks_without_improvement += 1
             if checks_without_improvement >= patience and i < swag_start:
                 break
-                
+
     nnx.update(model, best_state)
-    
+
     if n_swag_steps == 0:
         swag_mean = nnx.state(model, nnx.Param)
-    
+
     swag_mean_flat, _ = jax.flatten_util.ravel_pytree(swag_mean)
     if len(snapshots) > 0:
         A = jnp.stack([s - swag_mean_flat for s in snapshots], axis=1) # (D, C)
@@ -570,14 +573,14 @@ def train_subspace_model(
         pca_components = U[:, :max_rank] * (S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1)))
     else:
         pca_components = jnp.zeros((swag_mean_flat.shape[0], max_rank))
-    
+
     return model, swag_mean, pca_components
 
 def train_subspace_classification_model(
-    model: nnx.Module, 
-    inputs: jax.Array, 
-    targets: jax.Array, 
-    steps: int = 5000, 
+    model: nnx.Module,
+    inputs: jax.Array,
+    targets: jax.Array,
+    steps: int = 5000,
     batch_size: int = 256,
     lr: float = 1e-3,
     swag_start: int = 3000,
@@ -594,13 +597,13 @@ def train_subspace_classification_model(
         val_inputs, val_targets = inputs[val_idx], targets[val_idx]
     else:
         train_inputs, train_targets = inputs, targets
-        val_inputs, val_targets = inputs, targets 
-        
+        val_inputs, val_targets = inputs, targets
+
     print(f"Training Classification on {len(train_inputs)} samples (Subspace enabled after {swag_start} steps)...")
     optimizer = optax.adamw(lr)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
-    
+
     @nnx.jit
     def train_step(model, opt_state, x, y):
         def loss_fn(m):
@@ -617,25 +620,26 @@ def train_subspace_classification_model(
 
     indices = np.arange(len(train_inputs))
     loss = jnp.inf
-    
+
     swag_mean = jax.tree.map(lambda x: jnp.zeros_like(x), params)
     n_swag_steps = 0
     snapshots = []
     snapshot_freq = max(1, (steps - swag_start) // max_rank)
-    
+
     best_val_loss = jnp.inf
     best_state = nnx.state(model)
     checks_without_improvement = 0
-    
+
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
         loss, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
-        
+
         if i >= swag_start:
             current_params = nnx.state(model, nnx.Param)
             n = float(n_swag_steps + 1)
+            n_steps = float(n_swag_steps)
             swag_mean = jax.tree.map(
-                lambda m, p: (m * n_swag_steps + p) / n, 
+                lambda m, p, current_steps=n_steps, denom=n: (m * current_steps + p) / denom,
                 swag_mean, current_params
             )
             n_swag_steps += 1
@@ -653,12 +657,12 @@ def train_subspace_classification_model(
                 checks_without_improvement += 1
             if checks_without_improvement >= patience and i < swag_start:
                 break
-                
+
     nnx.update(model, best_state)
-    
+
     if n_swag_steps == 0:
         swag_mean = nnx.state(model, nnx.Param)
-        
+
     swag_mean_flat, _ = jax.flatten_util.ravel_pytree(swag_mean)
     if len(snapshots) > 0:
         A = jnp.stack([s - swag_mean_flat for s in snapshots], axis=1)
@@ -666,7 +670,7 @@ def train_subspace_classification_model(
         pca_components = U[:, :max_rank] * (S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1)))
     else:
         pca_components = jnp.zeros((swag_mean_flat.shape[0], max_rank))
-    
+
     return model, swag_mean, pca_components
 
 
@@ -674,22 +678,52 @@ def train_subspace_classification_model(
 # ResNet-50 training (CIFAR images, 2D conv, BatchNorm)
 # ---------------------------------------------------------------------------
 
-def _random_flip_crop(x: np.ndarray, pad: int = 4) -> np.ndarray:
-    """Random horizontal flip + crop for a batch of NHWC images."""
-    N, H, W, C = x.shape
-    x_pad = np.pad(x, ((0,0),(pad,pad),(pad,pad),(0,0)), mode='reflect')
-    tops  = np.random.randint(0, 2 * pad, size=N)
-    lefts = np.random.randint(0, 2 * pad, size=N)
-    out   = np.stack([x_pad[i, tops[i]:tops[i]+H, lefts[i]:lefts[i]+W, :] for i in range(N)])
-    flip  = np.random.rand(N) > 0.5
-    out[flip] = out[flip, :, ::-1, :]
-    return out
+import grain.python as grain
+
+
+class NumpyDataSource(grain.RandomAccessDataSource):
+    def __init__(self, x_data: np.ndarray, y_data: np.ndarray):
+        super().__init__()
+        self.x = x_data
+        self.y = y_data
+
+    def __len__(self) -> int:
+        return len(self.x)
+
+    def __getitem__(self, record_key: int):
+        return {"image": self.x[record_key], "label": self.y[record_key]}
+
+
+class RandomFlipCrop(grain.MapTransform):
+    def __init__(self, pad: int = 4):
+        self.pad = pad
+
+    def map(self, element):
+        x = element["image"]
+        # In grain we operate on single unbatched elements.
+        H, W, C = x.shape
+        x_pad = np.pad(x, ((self.pad, self.pad), (self.pad, self.pad), (0, 0)), mode='reflect')
+
+        # Grain provides its own RNG mechanisms typically, but for simplicity
+        # we can use standard numpy randomization since map is stateless here,
+        # provided grain workers are seeded, or simply rely on fast augmentation.
+        # Alternatively, grain MapTransforms can be stateful/seeded, but random functions are sufficient.
+        top = np.random.randint(0, 2 * self.pad + 1)
+        left = np.random.randint(0, 2 * self.pad + 1)
+
+        x_aug = x_pad[top:top+H, left:left+W, :]
+
+        if np.random.rand() > 0.5:
+            x_aug = x_aug[:, ::-1, :]
+
+        element["image"] = x_aug
+        return element
 
 
 def train_resnet_model(
     model,
-    x_train: jax.Array,
-    y_train: jax.Array,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
     epochs: int = 100,
     batch_size: int = 128,
     lr: float = 0.001,
@@ -704,7 +738,7 @@ def train_resnet_model(
     Features:
       - Cosine LR decay with linear warmup via optax.warmup_cosine_decay_schedule
       - AdamW optimizer
-      - Random crop + horizontal flip augmentation per batch
+      - Grain DataLoader for batched data augmentation and streaming
       - Epoch-level early stopping on val cross-entropy
       - BatchNorm use_running_average=False during training, True at evaluation
 
@@ -715,10 +749,10 @@ def train_resnet_model(
     if n_val > 0:
         perm   = np.random.permutation(N)
         tr_idx, va_idx = perm[n_val:], perm[:n_val]
-        x_tr, y_tr = np.array(x_train[tr_idx]), np.array(y_train[tr_idx])
-        x_va, y_va = np.array(x_train[va_idx]), np.array(y_train[va_idx])
+        x_tr, y_tr = x_train[tr_idx], y_train[tr_idx]
+        x_va, y_va = x_train[va_idx], y_train[va_idx]
     else:
-        x_tr, y_tr = np.array(x_train), np.array(y_train)
+        x_tr, y_tr = x_train, y_train
         x_va, y_va = x_tr, y_tr
 
     n_tr      = len(x_tr)
@@ -760,6 +794,7 @@ def train_resnet_model(
     def _epoch_val():
         losses, ns = [], []
         for s in range(0, len(x_va), batch_size):
+            # x_va is numpy array here, so slice then convert
             xb = jnp.array(x_va[s:s+batch_size])
             yb = jnp.array(y_va[s:s+batch_size])
             losses.append(float(val_loss_fn(model, xb, yb)) * len(xb))
@@ -770,11 +805,32 @@ def train_resnet_model(
         correct = total = 0
         for s in range(0, len(x_va), batch_size):
             xb  = jnp.array(x_va[s:s+batch_size])
-            yb  = np.array(y_va[s:s+batch_size])
-            preds = np.array(jnp.argmax(model(xb, use_running_average=True), axis=-1))
-            correct += (preds == yb).sum()
+            yb  = jnp.array(y_va[s:s+batch_size])
+            preds = jnp.argmax(model(xb, use_running_average=True), axis=-1)
+            correct += int((preds == yb).sum())
             total   += len(yb)
-        return correct / total
+        return float(correct) / total
+
+    # Setup Grain DataLoader
+    source = NumpyDataSource(x_tr, y_tr)
+    sampler = grain.IndexSampler(
+        num_records=len(source),
+        num_epochs=epochs,
+        shard_options=grain.NoSharding(),
+        shuffle=True,
+        seed=42,
+    )
+    dataloader = grain.DataLoader(
+        data_source=source,
+        sampler=sampler,
+        operations=[
+            RandomFlipCrop(pad=4),
+            grain.Batch(batch_size=batch_size, drop_remainder=False)
+        ],
+        worker_count=0, # Disable parallel preprocessing to avoid JAX fork segfaults
+    )
+
+    data_iterator = iter(dataloader)
 
     best_val = float('inf')
     best_state = nnx.state(model)
@@ -786,21 +842,26 @@ def train_resnet_model(
 
     for epoch in range(epochs):
         t_ep = time.time()
-        perm_ep = np.random.permutation(n_tr)
         ep_loss = 0.0
+
         for step in range(steps_ep):
-            idx  = perm_ep[step * batch_size:(step + 1) * batch_size]
-            xaug = jnp.array(_random_flip_crop(x_tr[idx]))
-            yb   = jnp.array(y_tr[idx])
-            loss, opt_state = train_step(model, opt_state, xaug, yb)
-            ep_loss += float(loss)
-            print(f"\r  Epoch {epoch+1:3d}/{epochs}  step {step+1}/{steps_ep}"
-                  f"  loss={ep_loss/(step+1):.4f}", end='', flush=True)
+            try:
+                batch = next(data_iterator)
+                xaug = jnp.array(batch["image"])
+                yb   = jnp.array(batch["label"])
+
+                loss, opt_state = train_step(model, opt_state, xaug, yb)
+                ep_loss += float(loss)
+                print(f"\r  Epoch {epoch+1:3d}/{epochs}  step {step+1}/{steps_ep}"
+                      f"  loss={ep_loss/(step+1):.4f}", end='', flush=True)
+            except StopIteration:
+                break
+
         ep_loss /= steps_ep
 
         vl  = _epoch_val()
         acc = _epoch_acc()
-        elapsed = time.time() - t_start
+        # elapsed = time.time() - t_start  # removed unused variable
         ep_time = time.time() - t_ep
         eta     = ep_time * (epochs - epoch - 1)
         print(f"\r  Epoch {epoch+1:3d}/{epochs} | "

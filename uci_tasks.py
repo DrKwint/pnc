@@ -1,34 +1,41 @@
 """Luigi tasks for Gym environment experiments."""
-import time
 import json
 import pickle
+import time
 from pathlib import Path
 
-import luigi
 import jax.numpy as jnp
-from flax import nnx
+import luigi
 import numpy as np
+from flax import nnx
 
-from util import (
-    _get_activation, seed_everything, _ps_str, _find_pjsvd_directions
+from data import load_uci
+from ensembles import (
+    CompactMultiLayerPJSVDEnsemble,
+    CompactPJSVDEnsemble,
+    LaplaceEnsemble,
+    MCDropoutEnsemble,
+    StandardEnsemble,
+    SubspaceInferenceEnsemble,
+    SWAGEnsemble,
+)
+from laplace import compute_kfac_factors
+from metrics import compute_calibration, compute_nll, print_metrics
+from models import (
+    MCDropoutRegressionModel,
+    ProbabilisticRegressionModel,
+    RegressionModel,
 )
 from pjsvd import (
     find_optimal_perturbation_multi_layer,
-    find_optimal_perturbation_multi_layer_full,
 )
-from models import ProbabilisticRegressionModel
-from data import load_uci
 from training import (
-    train_probabilistic_model, train_swag_model,
-    train_subspace_model
+    train_model,
+    train_probabilistic_model,
+    train_subspace_model,
+    train_swag_model,
 )
-from ensembles import (
-    CompactPJSVDEnsemble, CompactMultiLayerPJSVDEnsemble,
-    LeastSquaresCompactPJSVDEnsemble, LeastSquaresCompactMultiLayerPJSVDEnsemble,
-    StandardEnsemble, MCDropoutEnsemble, SWAGEnsemble, LaplaceEnsemble,
-    SubspaceInferenceEnsemble,
-)
-from laplace import compute_kfac_factors
+from util import _find_pjsvd_directions, _get_activation, _ps_str, seed_everything
 
 # ===========================================================================
 # UCI REGRESSION TASKS

@@ -1,16 +1,12 @@
 import os
-import sys
-import argparse
-import time
-import json
 import random
-import pickle
-from pathlib import Path
+
 import jax
 import jax.numpy as jnp
-from flax import nnx
 import numpy as np
-from metrics import compute_nll, compute_calibration, print_metrics, compute_ood_metrics
+from flax import nnx
+
+from metrics import compute_calibration, compute_nll, compute_ood_metrics, print_metrics
 from pjsvd import find_optimal_perturbation, find_optimal_perturbation_full
 
 # ---------------------------------------------------------------------------
@@ -138,7 +134,7 @@ def _evaluate_mnist(ensemble_name: str, ensemble, x_test, y_test,
     corr_np   = np.array(correct)
     ece_sum   = 0.0
     n_total   = len(conf_np)
-    for lo, hi in zip(bin_edges[:-1], bin_edges[1:]):
+    for lo, hi in zip(bin_edges[:-1], bin_edges[1:], strict=True):
         mask = (conf_np >= lo) & (conf_np < hi)
         if mask.sum() == 0:
             continue
@@ -194,9 +190,9 @@ def _find_pjsvd_directions(model_fn, W_curr, n_directions: int, use_full_span=Fa
     for k in range(n_directions):
         v_opts_jax = jnp.array(v_opts_buf)
         mask_jax   = jnp.array(direction_mask)
-        
+
         solver_fn = find_optimal_perturbation_full if use_full_span else find_optimal_perturbation
-        
+
         v_opt, sigma = solver_fn(
             model_fn, W_curr, max_iter=500,
             orthogonal_directions=v_opts_jax,
@@ -250,7 +246,7 @@ def _evaluate_cifar(ensemble_name: str, ensemble, x_test, y_test,
     bin_edges = np.linspace(0.0, 1.0, n_bins + 1)
     ece_sum   = 0.0
     n_total   = len(conf_np)
-    for lo, hi in zip(bin_edges[:-1], bin_edges[1:]):
+    for lo, hi in zip(bin_edges[:-1], bin_edges[1:], strict=True):
         mask = (conf_np >= lo) & (conf_np < hi)
         if mask.sum() == 0:
             continue
