@@ -33,25 +33,29 @@ def get_full_span_affine_residuals(outputs_batch: jax.Array, original_outputs_ba
     Project the perturbed outputs onto the orthogonal complement of the
     full Affine Correction Subspace spanned by [Original Signal (Y), 1].
     """
-    # Augment Y with a column of 1s representing the bias
-    # Y is shape (B, D)
-    B = original_outputs_batch.shape[0]
-    ones = jnp.ones((B, 1), dtype=original_outputs_batch.dtype)
-    Y_aug = jnp.concatenate([original_outputs_batch, ones], axis=-1)  # (B, D + 1)
+    out_shape = outputs_batch.shape
+    C = out_shape[-1]
+    
+    # Reshape to (eff_B, C) to support both 2D (B, D) and 4D (B, H, W, C) tensors natively.
+    # The affine subspace is shared across spatial dimensions (e.g. for BatchNorm).
+    orig_2d = original_outputs_batch.reshape(-1, C)
+    out_2d = outputs_batch.reshape(-1, C)
+    
+    eff_B = orig_2d.shape[0]
+    ones = jnp.ones((eff_B, 1), dtype=original_outputs_batch.dtype)
+    Y_aug = jnp.concatenate([orig_2d, ones], axis=-1)  # (eff_B, C + 1)
     
     # Compute orthogonal basis Q for the column space of Y_aug
-    # Q has shape (B, K) where K is the rank (at most D+1)
+    # Q has shape (eff_B, K) where K is the rank (at most C+1)
     Q, _ = jnp.linalg.qr(Y_aug)
     
     # Project perturbed outputs onto the span of Q
-    # proj = Q * (Q^T * outputs_batch)
-    # Since outputs_batch is (B, D), we compute Q^T @ outputs_batch -> (K, D)
-    # Then Q @ (K, D) -> (B, D)
-    proj = jnp.dot(Q, jnp.dot(Q.T, outputs_batch))
+    # proj = Q * (Q^T * out_2d) -> (eff_B, C)
+    proj_2d = jnp.dot(Q, jnp.dot(Q.T, out_2d))
     
     # The residual is the part orthogonal to the Affine Correction Subspace
-    residual = outputs_batch - proj
-    return residual
+    residual_2d = out_2d - proj_2d
+    return residual_2d.reshape(out_shape)
 
 
 # ==============================================================================

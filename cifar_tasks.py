@@ -61,7 +61,13 @@ class CIFARTrainBaseModel(luigi.Task):
             lr=self.lr, weight_decay=self.weight_decay)
         print(f'Training time: {time.time()-t0:.2f}s')
 
-        metrics = _evaluate_cifar('ResNet-50 (base)', model, x_te, y_te, n_cls)
+        class _SingleEns:
+            def __init__(self, m): self.m = m
+            def predict(self, x):
+                return jnp.expand_dims(self.m(x, use_running_average=True), axis=0)
+
+        ens = _SingleEns(model)
+        metrics = _evaluate_cifar('ResNet-50 (base)', ens, x_te, y_te, n_cls)
 
         state = nnx.state(model)
         with open(self.output().path, 'wb') as f:
@@ -235,7 +241,8 @@ class CIFARTrainSWAGModel(luigi.Task):
         for _ in range(self.epochs - warmup_ep):
             model = train_resnet_model(model, x_tr, y_tr, epochs=1,
                                        batch_size=self.batch_size, lr=self.lr * 0.01,
-                                       weight_decay=self.weight_decay)
+                                       weight_decay=self.weight_decay,
+                                       warmup_epochs=0)
             cur = nnx.state(model, nnx.Param)
             n   = float(n_swag + 1)
             swag_mean    = jax.tree.map(lambda m, p: (m * n_swag + p) / n, swag_mean, cur)

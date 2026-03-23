@@ -725,10 +725,17 @@ def train_resnet_model(
     steps_ep  = max(1, n_tr // batch_size)
     total_steps = epochs * steps_ep
 
-    schedule  = optax.warmup_cosine_decay_schedule(
-        init_value=0.0, peak_value=lr,
-        warmup_steps=warmup_epochs * steps_ep,
-        decay_steps=total_steps, end_value=lr * 1e-3)
+    warmup_epochs = min(warmup_epochs, epochs)
+    warmup_steps = warmup_epochs * steps_ep
+    if warmup_steps > 0:
+        schedule = optax.warmup_cosine_decay_schedule(
+            init_value=0.0, peak_value=lr,
+            warmup_steps=warmup_steps,
+            decay_steps=total_steps, end_value=lr * 1e-3)
+    else:
+        schedule = optax.cosine_decay_schedule(
+            init_value=lr,
+            decay_steps=total_steps, alpha=1e-3)
     optimizer = optax.adamw(learning_rate=schedule, weight_decay=weight_decay)
     opt_state = optimizer.init(nnx.state(model, nnx.Param))
 
