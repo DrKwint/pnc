@@ -38,17 +38,17 @@ def get_full_span_affine_residuals(outputs_batch: jax.Array, original_outputs_ba
     B = original_outputs_batch.shape[0]
     ones = jnp.ones((B, 1), dtype=original_outputs_batch.dtype)
     Y_aug = jnp.concatenate([original_outputs_batch, ones], axis=-1)  # (B, D + 1)
-    
+
     # Compute orthogonal basis Q for the column space of Y_aug
     # Q has shape (B, K) where K is the rank (at most D+1)
     Q, _ = jnp.linalg.qr(Y_aug)
-    
+
     # Project perturbed outputs onto the span of Q
     # proj = Q * (Q^T * outputs_batch)
     # Since outputs_batch is (B, D), we compute Q^T @ outputs_batch -> (K, D)
     # Then Q @ (K, D) -> (B, D)
     proj = jnp.dot(Q, jnp.dot(Q.T, outputs_batch))
-    
+
     # The residual is the part orthogonal to the Affine Correction Subspace
     residual = outputs_batch - proj
     return residual

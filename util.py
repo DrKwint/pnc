@@ -1,10 +1,13 @@
 import os
 import random
+import time
+from typing import Callable, Any
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 from flax import nnx
+from jaxtyping_bridge import Array, Float
 
 from metrics import compute_calibration, compute_nll, compute_ood_metrics, print_metrics
 from pjsvd import find_optimal_perturbation, find_optimal_perturbation_full
@@ -37,6 +40,7 @@ def seed_everything(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
+    # Note: JAX is stateless, so we seed nnx.Rngs and use explicit keys elsewhere.
     print(f"[seed] Seeded everything with seed={seed}")
 
 
@@ -44,10 +48,10 @@ def seed_everything(seed: int) -> None:
 # Shared evaluation helpers
 # ---------------------------------------------------------------------------
 
-def _evaluate_gym(ensemble_name: str, ensemble,
-                  inputs_id_eval, targets_id_eval,
-                  inputs_ood, targets_ood,
-                  sidecar_path: str | None = None) -> dict:
+def _evaluate_gym(ensemble_name: str, ensemble: Any,
+                  inputs_id_eval: Float[Array, "batch ..."], targets_id_eval: Array,
+                  inputs_ood: Float[Array, "batch ..."], targets_ood: Array,
+                  sidecar_path: str | None = None) -> dict[str, float]:
     """Evaluate a gym ensemble, return a scalar metrics dict.
 
     If sidecar_path is given, also writes a .npz file with per-point
@@ -57,7 +61,13 @@ def _evaluate_gym(ensemble_name: str, ensemble,
     print(f"\n--- Results: {ensemble_name} ---")
 
     def _group(name, inputs, targets):
+        # Warm-up
+        _ = ensemble.predict(inputs[:1])
+        
+        t0 = time.time()
         preds    = ensemble.predict(inputs)          # (S, N, D)
+        preds.block_until_ready()
+        eval_time = time.time() - t0
         mean     = jnp.mean(preds, axis=0)           # (N, D)
         var      = jnp.var(preds, axis=0)            # (N, D)
         avg_var  = float(jnp.mean(var))
@@ -70,11 +80,11 @@ def _evaluate_gym(ensemble_name: str, ensemble,
         sq_err_per_pt = np.array(jnp.mean((mean - targets) ** 2, axis=-1))  # (N,)
         # predictive_variance: mean predictive variance per sample
         pred_var_per_pt = np.array(jnp.mean(var, axis=-1))                  # (N,)
-        return rmse, avg_var, nll, ece, sq_err_per_pt, pred_var_per_pt
+        return rmse, avg_var, nll, ece, sq_err_per_pt, pred_var_per_pt, eval_time
 
-    rmse_id,  var_id,  nll_id,  ece_id,  sq_err_id,  pred_var_id  = \
+    rmse_id,  var_id,  nll_id,  ece_id,  sq_err_id,  pred_var_id, t_id  = \
         _group("ID",  inputs_id_eval,  targets_id_eval)
-    rmse_ood, var_ood, nll_ood, ece_ood, sq_err_ood, pred_var_ood = \
+    rmse_ood, var_ood, nll_ood, ece_ood, sq_err_ood, pred_var_ood, t_ood = \
         _group("OOD", inputs_ood, targets_ood)
 
     # Re-use the per-point predictive variance we already computed!
@@ -99,12 +109,13 @@ def _evaluate_gym(ensemble_name: str, ensemble,
         "var_id": var_id, "var_ood": var_ood,
         "auroc": auroc, "aupr": aupr,
         "rmse_ratio": rmse_ratio, "var_ratio": var_ratio,
+        "eval_time": t_id # We report the ID inference time
     }
 
 
-def _evaluate_mnist(ensemble_name: str, ensemble, x_test, y_test,
+def _evaluate_mnist(ensemble_name: str, ensemble: Any, x_test: Float[Array, "batch ..."], y_test: Array,
                     n_classes: int = 10,
-                    sidecar_path: str | None = None) -> dict:
+                    sidecar_path: str | None = None) -> dict[str, float]:
     """Evaluate a classification ensemble and return a metrics dict.
 
     ECE is computed via reliability diagram binning (confidence-accuracy).
@@ -113,7 +124,13 @@ def _evaluate_mnist(ensemble_name: str, ensemble, x_test, y_test,
     """
     print(f"\n--- Results: {ensemble_name} ---")
 
+    # Warm-up
+    _ = ensemble.predict(x_test[:1])
+
+    t0 = time.time()
     preds = jax.nn.softmax(ensemble.predict(x_test), axis=-1)  # (S, N, C)
+    preds.block_until_ready()
+    eval_time = time.time() - t0
     mean  = jnp.mean(preds, axis=0)                            # (N, C)
 
     pred_class  = jnp.argmax(mean, axis=-1)                    # (N,)
@@ -126,6 +143,7 @@ def _evaluate_mnist(ensemble_name: str, ensemble, x_test, y_test,
     # Per-sample entropy for sidecar
     ent_per_sample = np.array(-jnp.sum(mean * jnp.log(mean + 1e-8), axis=-1))
     ent = float(np.mean(ent_per_sample))
+    nll  = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
 
     # ECE: reliability-diagram binning (confidence → accuracy)
     n_bins   = 15
@@ -143,7 +161,7 @@ def _evaluate_mnist(ensemble_name: str, ensemble, x_test, y_test,
         ece_sum += mask.sum() * abs(bin_acc - bin_conf)
     ece = float(ece_sum / n_total)
 
-    print(f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | ECE: {ece:.4f}")
+    print(f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | NLL: {nll:.4f} | ECE: {ece:.4f}")
 
     if sidecar_path is not None:
         np.savez(
@@ -153,14 +171,16 @@ def _evaluate_mnist(ensemble_name: str, ensemble, x_test, y_test,
             pred_entropy=ent_per_sample,
         )
 
-    return {"accuracy": acc, "brier": brier, "entropy": ent, "ece": ece}
+    return {"accuracy": acc, "brier": brier, "entropy": ent, "nll": nll, "ece": ece, "eval_time": eval_time}
 
 
 # ---------------------------------------------------------------------------
 # Data I/O helpers
 # ---------------------------------------------------------------------------
 
-def _load_gym_data(paths: dict):
+def _load_gym_data(
+    paths: dict
+) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
     """Load arrays written by CollectGymData."""
     def _npz(p):
         d = np.load(p)
@@ -172,6 +192,18 @@ def _load_gym_data(paths: dict):
     return inputs_id, targets_id, inputs_id_eval, targets_id_eval, inputs_ood, targets_ood
 
 
+def _split_data(inputs: Any, targets: Any, val_split: float = 0.1, seed: int = 99) -> tuple[Any, Any, Any, Any]:
+    """Split ID data into train and validation sets."""
+    n_val = max(1, int(len(inputs) * val_split)) if val_split > 0 else 0
+    if n_val > 0:
+        rng = np.random.RandomState(seed)
+        idx = rng.permutation(len(inputs))
+        train_idx, val_idx = idx[n_val:], idx[:n_val]
+        return inputs[train_idx], targets[train_idx], inputs[val_idx], targets[val_idx]
+    else:
+        return inputs, targets, inputs, targets
+
+
 def _ps_str(sizes) -> str:
     """Compact string for a list of perturbation sizes used in filenames."""
     return "-".join(str(s) for s in sizes)
@@ -180,7 +212,10 @@ def _ps_str(sizes) -> str:
 # PJSVD null-space search (shared logic, called from multiple tasks)
 # ---------------------------------------------------------------------------
 
-def _find_pjsvd_directions(model_fn, W_curr, n_directions: int, use_full_span=False):
+def _find_pjsvd_directions(
+    model_fn: Callable, W_curr: Float[Array, "..."], n_directions: int,
+    use_full_span: bool = False, seed: int = 99
+) -> tuple[Float[Array, "k D_flat"], np.ndarray]:
     """Find n_directions orthogonal null-space directions for a single-layer model fn."""
     D = W_curr.size
     v_opts_buf   = np.zeros((n_directions, D), dtype=np.float32)
@@ -197,6 +232,7 @@ def _find_pjsvd_directions(model_fn, W_curr, n_directions: int, use_full_span=Fa
             model_fn, W_curr, max_iter=500,
             orthogonal_directions=v_opts_jax,
             direction_mask=mask_jax,
+            seed=seed + k,
         )
         v_opts_buf[k]    = np.array(v_opt.reshape(-1))
         direction_mask[k] = True
@@ -206,10 +242,11 @@ def _find_pjsvd_directions(model_fn, W_curr, n_directions: int, use_full_span=Fa
     return jnp.array(v_opts_buf), np.array(sigmas)
 
 
-def _evaluate_cifar(ensemble_name: str, ensemble, x_test, y_test,
-                    n_classes: int = 10,
-                    batch_size: int = 256,
-                    sidecar_path: str | None = None) -> dict:
+def _evaluate_cifar(
+    ensemble_name: str, ensemble: Any, x_test: Float[np.ndarray, "batch ..."], y_test: Array,
+    n_classes: int = 10,
+    batch_size: int = 256,
+                    sidecar_path: str | None = None) -> dict[str, float]:
     """
     Evaluate a classification ensemble on CIFAR images.
 
@@ -220,6 +257,11 @@ def _evaluate_cifar(ensemble_name: str, ensemble, x_test, y_test,
 
     # Collect per-batch softmax predictions
     all_preds = []
+    
+    # Warm-up
+    _ = ensemble.predict(x_test[:1])
+
+    t0 = time.time()
     for start in range(0, len(x_test), batch_size):
         x_batch = x_test[start:start + batch_size]
         # ensemble.predict returns (S, N_batch, C) logits
@@ -227,6 +269,8 @@ def _evaluate_cifar(ensemble_name: str, ensemble, x_test, y_test,
         probs_batch  = jax.nn.softmax(logits_batch, axis=-1)  # (S, N_batch, C)
         all_preds.append(probs_batch)
     preds = jnp.concatenate(all_preds, axis=1)  # (S, N, C)
+    preds.block_until_ready()
+    eval_time = time.time() - t0
 
     mean         = jnp.mean(preds, axis=0)                             # (N, C)
     pred_class   = jnp.argmax(mean, axis=-1)                           # (N,)
@@ -238,6 +282,7 @@ def _evaluate_cifar(ensemble_name: str, ensemble, x_test, y_test,
     brier  = float(jnp.mean(jnp.sum((mean - y_oh) ** 2, axis=-1)))
     ent_ps = np.array(-jnp.sum(mean * jnp.log(mean + 1e-8), axis=-1))  # (N,)
     ent    = float(np.mean(ent_ps))
+    nll    = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
 
     # ECE (reliability diagram)
     n_bins    = 15
@@ -253,11 +298,11 @@ def _evaluate_cifar(ensemble_name: str, ensemble, x_test, y_test,
         ece_sum += mask.sum() * abs(corr_np[mask].mean() - conf_np[mask].mean())
     ece = float(ece_sum / n_total)
 
-    print(f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | ECE: {ece:.4f}")
+    print(f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | NLL: {nll:.4f} | ECE: {ece:.4f}")
 
     if sidecar_path is not None:
         np.savez(sidecar_path,
                  confidence=conf_np, correct=corr_np, pred_entropy=ent_ps)
 
-    return {"accuracy": acc, "brier": brier, "entropy": ent, "ece": ece}
+    return {"accuracy": acc, "brier": brier, "entropy": ent, "nll": nll, "ece": ece, "eval_time": eval_time}
 

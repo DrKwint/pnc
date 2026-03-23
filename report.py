@@ -34,6 +34,8 @@ GYM_METRICS = [
     ("ece_ood",  "ECE-OOD"),
     ("auroc",    "AUROC"),
     ("aupr",     "AUPR"),
+    ("train_time", "Train (s)"),
+    ("eval_time",  "Eval (s)"),
 ]
 
 CLF_METRICS = [
@@ -41,6 +43,8 @@ CLF_METRICS = [
     ("brier",    "Brier"),
     ("entropy",  "Entropy"),
     ("ece",      "ECE"),
+    ("train_time", "Train (s)"),
+    ("eval_time",  "Eval (s)"),
 ]
 
 UCI_METRICS = [
@@ -48,6 +52,8 @@ UCI_METRICS = [
     ("nll",      "NLL"),
     ("ece",      "ECE"),
     ("var",      "Var"),
+    ("train_time", "Train (s)"),
+    ("eval_time",  "Eval (s)"),
 ]
 
 
@@ -117,10 +123,17 @@ def _friendly_name(canonical: str) -> str | None:
         return f"SWAG (n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("laplace"):
         return f"Laplace (n={_extract(canonical, 'n')}){act_suffix}"
+    if canonical.startswith("pjsvd"):
+        scope = "First" if "_first_" in canonical else "Multi" if "_multi_" in canonical else ""
+        mode = "Affine" if "_affine" in canonical else "LS" if "_least_squares" in canonical else ""
+        full = " (Full)" if "_full" in canonical else ""
+        k = _extract(canonical, 'k')
+        n = _extract(canonical, 'n')
+        if not scope and not mode:
+            return f"PJSVD (k={k}, n={n}){act_suffix}"
+        return f"PJSVD-{scope}-{mode}{full} (k={k}, n={n}){act_suffix}"
     if canonical.startswith("ml_pjsvd"):
         return f"ML-PJSVD (k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}"
-    if canonical.startswith("pjsvd"):
-        return f"PJSVD (k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("ensemble_pjsvd"):
         return (f"Ensemble+PJSVD (m={_extract(canonical, 'm')}, "
                 f"k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}")
