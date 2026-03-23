@@ -1,17 +1,19 @@
+from __future__ import annotations
 from flax import nnx
 from typing import Callable
 import jax
 import jax.numpy as jnp
+from jaxtyping_bridge import Array, Float
 
 class TransitionModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  activation: Callable = nnx.relu):
         self.l1 = nnx.Linear(in_features, 64, rngs=rngs)
         self.l2 = nnx.Linear(64, 64, rngs=rngs)
         self.l3 = nnx.Linear(64, out_features, rngs=rngs)
         self.activation = activation
 
-    def __call__(self, x):
+    def __call__(self, x: jax.Array) -> jax.Array:
         h1 = self.activation(self.l1(x))
         h2 = self.activation(self.l2(h1))
         out = self.l3(h2)
@@ -19,7 +21,7 @@ class TransitionModel(nnx.Module):
 
 
 class MCDropoutTransitionModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  dropout_rate: float = 0.1, activation: Callable = nnx.relu):
         self.l1 = nnx.Linear(in_features, 64, rngs=rngs)
         self.dropout1 = nnx.Dropout(dropout_rate, rngs=rngs)
@@ -28,7 +30,7 @@ class MCDropoutTransitionModel(nnx.Module):
         self.l3 = nnx.Linear(64, out_features, rngs=rngs)
         self.activation = activation
 
-    def __call__(self, x, deterministic: bool = False):
+    def __call__(self, x: jax.Array, deterministic: bool = False) -> jax.Array:
         h1 = self.activation(self.l1(x))
         h1 = self.dropout1(h1, deterministic=deterministic)
         h2 = self.activation(self.l2(h1))
@@ -38,7 +40,7 @@ class MCDropoutTransitionModel(nnx.Module):
 
 
 class ClassificationModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  activation: Callable = nnx.relu):
         self.l1 = nnx.Linear(in_features, 200, rngs=rngs)
         self.l2 = nnx.Linear(200, 200, rngs=rngs)
@@ -46,7 +48,7 @@ class ClassificationModel(nnx.Module):
         self.l4 = nnx.Linear(200, out_features, rngs=rngs)
         self.activation = activation
 
-    def __call__(self, x):
+    def __call__(self, x: jax.Array) -> jax.Array:
         h1 = self.activation(self.l1(x))
         h2 = self.activation(self.l2(h1))
         h3 = self.activation(self.l3(h2))
@@ -55,7 +57,7 @@ class ClassificationModel(nnx.Module):
 
 
 class MCDropoutClassificationModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  dropout_rate: float = 0.5, activation: Callable = nnx.relu):
         self.l1 = nnx.Linear(in_features, 200, rngs=rngs)
         self.dropout1 = nnx.Dropout(dropout_rate, rngs=rngs)
@@ -66,7 +68,7 @@ class MCDropoutClassificationModel(nnx.Module):
         self.l4 = nnx.Linear(200, out_features, rngs=rngs)
         self.activation = activation
 
-    def __call__(self, x, deterministic: bool = False):
+    def __call__(self, x: jax.Array, deterministic: bool = False) -> jax.Array:
         h1 = self.activation(self.l1(x))
         h1 = self.dropout1(h1, deterministic=deterministic)
         h2 = self.activation(self.l2(h1))
@@ -77,7 +79,7 @@ class MCDropoutClassificationModel(nnx.Module):
         return out
 
 class RegressionModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  hidden_dims: list[int] = [50],
                  activation: Callable = nnx.relu):
         layers = []
@@ -87,14 +89,14 @@ class RegressionModel(nnx.Module):
         self.layers = nnx.List(layers)
         self.activation = activation
 
-    def __call__(self, x):
+    def __call__(self, x: jax.Array) -> jax.Array:
         for layer in self.layers[:-1]:
             x = self.activation(layer(x))
         out = self.layers[-1](x)
         return out
 
 class MCDropoutRegressionModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  hidden_dims: list[int] = [50],
                  dropout_rate: float = 0.05,
                  activation: Callable = nnx.relu):
@@ -109,7 +111,7 @@ class MCDropoutRegressionModel(nnx.Module):
         self.dropouts = nnx.List(dropouts)
         self.activation = activation
 
-    def __call__(self, x, deterministic: bool = False):
+    def __call__(self, x: jax.Array, deterministic: bool = False) -> jax.Array:
         for i, layer in enumerate(self.layers[:-1]):
             x = self.activation(layer(x))
             x = self.dropouts[i](x, deterministic=deterministic)
@@ -118,7 +120,7 @@ class MCDropoutRegressionModel(nnx.Module):
 
 
 class ProbabilisticRegressionModel(nnx.Module):
-    def __init__(self, in_features, out_features, rngs: nnx.Rngs,
+    def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
                  hidden_dims: list[int] = [50],
                  activation: Callable = nnx.relu):
         layers = []
@@ -126,16 +128,16 @@ class ProbabilisticRegressionModel(nnx.Module):
         for i in range(len(dims) - 1):
             layers.append(nnx.Linear(dims[i], dims[i+1], rngs=rngs))
         self.layers = nnx.List(layers)
-        
+
         # Two output heads: one for mean, one for variance (pre-softplus)
         self.mean_layer = nnx.Linear(hidden_dims[-1], out_features, rngs=rngs)
         self.var_layer = nnx.Linear(hidden_dims[-1], out_features, rngs=rngs)
         self.activation = activation
 
-    def __call__(self, x):
+    def __call__(self, x: jax.Array) -> tuple[jax.Array, jax.Array]:
         for layer in self.layers:
             x = self.activation(layer(x))
-        
+
         mean = self.mean_layer(x)
         # Softplus to ensure strictly positive variance, plus a small epsilon for stability
         var = jax.nn.softplus(self.var_layer(x)) + 1e-6
@@ -161,7 +163,7 @@ class _BNConvFixed(nnx.Module):
         )
         self.bn = nnx.BatchNorm(num_features=out_channels, rngs=rngs)
 
-    def __call__(self, x, use_running_average: bool = False):
+    def __call__(self, x: jax.Array, use_running_average: bool = False) -> jax.Array:
         return self.bn(self.conv(x), use_running_average=use_running_average)
 
 
@@ -182,7 +184,10 @@ class _Bottleneck(nnx.Module):
             else None
         )
 
-    def __call__(self, x, use_running_average: bool = False):
+    _SHAPE_IN = "batch H W in_channels"
+    _SHAPE_OUT = "batch H_out W_out out_channels"
+
+    def __call__(self, x: Float[Array, _SHAPE_IN], use_running_average: bool = False) -> Float[Array, _SHAPE_OUT]:
         identity = x
         out = jax.nn.relu(self.conv1(x,   use_running_average=use_running_average))
         out = jax.nn.relu(self.conv2(out, use_running_average=use_running_average))
@@ -228,34 +233,48 @@ class ResNet50(nnx.Module):
         self.fc = nnx.Linear(c4, n_classes, rngs=rngs)
 
     def _run_stages(self, x, use_running_average: bool):
-        for blk in self.stage1: x = blk(x, use_running_average=use_running_average)
-        for blk in self.stage2: x = blk(x, use_running_average=use_running_average)
-        for blk in self.stage3: x = blk(x, use_running_average=use_running_average)
-        for blk in self.stage4: x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage1:
+            x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage2:
+            x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage3:
+            x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage4:
+            x = blk(x, use_running_average=use_running_average)
         return x
 
-    def __call__(self, x, use_running_average: bool = False):
+    _SHAPE_X = "batch H W C"
+    _SHAPE_OUT = "batch n_classes"
+    def __call__(self, x: Float[Array, _SHAPE_X], use_running_average: bool = False) -> Float[Array, _SHAPE_OUT]:
         # x: (N, 32, 32, 3)
         x = jax.nn.relu(self.stem(x, use_running_average=use_running_average))
         x = self._run_stages(x, use_running_average=use_running_average)
         x = jnp.mean(x, axis=(1, 2))   # global average pool → (N, 2048)
         return self.fc(x)
 
-    def stem_out(self, x, use_running_average: bool = True):
+    _SHAPE_STEM_IN = "batch H W C"
+    _SHAPE_STEM_OUT = "batch H W C_out"
+    def stem_out(self, x: Float[Array, _SHAPE_STEM_IN], use_running_average: bool = True) -> Float[Array, _SHAPE_STEM_OUT]:
         """Post-stem-BN-ReLU activations, shape (N, 32, 32, 64)."""
         return jax.nn.relu(self.stem(x, use_running_average=use_running_average))
 
-    def forward_from_stem_out(self, h, use_running_average: bool = True):
+    _SHAPE_FORWARD_FROM_STEM_IN = "batch H W C_in"
+    _SHAPE_FORWARD_FROM_STEM_OUT = "batch n_classes"
+    def forward_from_stem_out(self, h: Float[Array, _SHAPE_FORWARD_FROM_STEM_IN], use_running_average: bool = True) -> Float[Array, _SHAPE_FORWARD_FROM_STEM_OUT]:
         """Complete forward from stem activations through stages + head."""
         h = self._run_stages(h, use_running_average=use_running_average)
         h = jnp.mean(h, axis=(1, 2))
         return self.fc(h)
 
-    def stem_conv_out_raw(self, x):
+    _SHAPE_STEM_CONV_RAW_IN = "batch H W C"
+    _SHAPE_STEM_CONV_RAW_OUT = "batch H W C_out"
+    def stem_conv_out_raw(self, x: Float[Array, _SHAPE_STEM_CONV_RAW_IN]) -> Float[Array, _SHAPE_STEM_CONV_RAW_OUT]:
         """Raw post-conv (before BN) activations, shape (N, 32, 32, 64)."""
         return self.stem.conv(x)
 
-    def stem_bn_from_raw(self, raw_conv_out, use_running_average: bool = True):
+    _SHAPE_STEM_BN_FROM_RAW_IN = "batch H W C_in"
+    _SHAPE_STEM_BN_FROM_RAW_OUT = "batch H W C_in"
+    def stem_bn_from_raw(self, raw_conv_out: Float[Array, _SHAPE_STEM_BN_FROM_RAW_IN], use_running_average: bool = True) -> Float[Array, _SHAPE_STEM_BN_FROM_RAW_OUT]:
         """Apply stem BN to raw conv output (used by BN Refit)."""
         return self.stem.bn(raw_conv_out, use_running_average=use_running_average)
 
@@ -270,11 +289,92 @@ class MCDropoutResNet50(ResNet50):
         super().__init__(n_classes=n_classes, rngs=rngs)
         self.dropout = nnx.Dropout(rate=dropout_rate, rngs=rngs)
 
-    def __call__(self, x, use_running_average: bool = False,
-                 deterministic: bool = False):
+    def __call__(self, x: Float[Array, "batch H W C"], use_running_average: bool = False,
+                 deterministic: bool = False) -> Float[Array, "batch n_classes"]:
         x = jax.nn.relu(self.stem(x, use_running_average=use_running_average))
         x = self._run_stages(x, use_running_average=use_running_average)
         x = jnp.mean(x, axis=(1, 2))
         x = self.dropout(x, deterministic=deterministic)
+        return self.fc(x)
+
+
+# ===========================================================================
+# Wide ResNet for CIFAR (matching uncertainty_baselines)
+# ===========================================================================
+
+class _WideBasicBlock(nnx.Module):
+    """Wide ResNet basic block: two 3×3 convs + shortcut."""
+    def __init__(self, in_channels: int, out_channels: int, strides: int = 1,
+                 rngs: nnx.Rngs = None):
+        self.conv1 = _BNConvFixed(in_channels, out_channels, kernel_size=3, strides=strides, rngs=rngs)
+        self.conv2 = _BNConvFixed(out_channels, out_channels, kernel_size=3, strides=1, rngs=rngs)
+
+        self.downsample = (
+            _BNConvFixed(in_channels, out_channels, kernel_size=1, strides=strides, rngs=rngs)
+            if strides != 1 or in_channels != out_channels
+            else None
+        )
+
+    def __call__(self, x: jax.Array, use_running_average: bool = False) -> jax.Array:
+        identity = x
+        out = jax.nn.relu(self.conv1(x, use_running_average=use_running_average))
+        out = self.conv2(out, use_running_average=use_running_average)
+        if self.downsample is not None:
+            identity = self.downsample(x, use_running_average=use_running_average)
+        return jax.nn.relu(out + identity)
+
+
+def _make_wide_resnet_stage(in_channels: int, out_channels: int, n_blocks: int,
+                            strides: int, rngs: nnx.Rngs):
+    """Build one Wide ResNet stage, return (nnx.List of blocks, out_channels)."""
+    blocks = []
+    for i in range(n_blocks):
+        s = strides if i == 0 else 1
+        inp = in_channels if i == 0 else out_channels
+        blocks.append(_WideBasicBlock(inp, out_channels, strides=s, rngs=rngs))
+    return nnx.List(blocks), out_channels
+
+
+class WideResNet(nnx.Module):
+    """
+    Wide ResNet adapted for CIFAR-10/100 (32×32 input, NHWC).
+
+    Matches uncertainty_baselines' Wide ResNet 28-10:
+      - Depth 28: 4 blocks per stage (n=4)
+      - Width multiplier 10: channels 16*10=160, 32*10=320, 64*10=640
+      - Stem: 3×3 conv / stride 1, 16*k channels
+      - Stages: 4 blocks each, strides 1,2,2
+      - Output: raw logits
+
+    Every Conv is followed by BatchNorm (no bias).
+    """
+
+    def __init__(self, depth: int = 28, width_multiplier: int = 10, n_classes: int = 10, rngs: nnx.Rngs = None):
+        assert (depth - 4) % 6 == 0, f"Depth {depth} not compatible with Wide ResNet"
+        n = (depth - 4) // 6  # blocks per stage
+
+        k = width_multiplier
+        self.stem = _BNConvFixed(3, 16 * k, kernel_size=3, strides=1, rngs=rngs)
+
+        self.stage1, c1 = _make_wide_resnet_stage(16 * k, 16 * k, n_blocks=n, strides=1, rngs=rngs)
+        self.stage2, c2 = _make_wide_resnet_stage(c1, 32 * k, n_blocks=n, strides=2, rngs=rngs)
+        self.stage3, c3 = _make_wide_resnet_stage(c2, 64 * k, n_blocks=n, strides=2, rngs=rngs)
+
+        self.fc = nnx.Linear(c3, n_classes, rngs=rngs)
+
+    def _run_stages(self, x, use_running_average: bool):
+        for blk in self.stage1:
+            x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage2:
+            x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage3:
+            x = blk(x, use_running_average=use_running_average)
+        return x
+
+    def __call__(self, x: Float[Array, "batch H W C"], use_running_average: bool = False) -> Float[Array, "batch n_classes"]:
+        # x: (N, 32, 32, 3)
+        x = jax.nn.relu(self.stem(x, use_running_average=use_running_average))
+        x = self._run_stages(x, use_running_average=use_running_average)
+        x = jnp.mean(x, axis=(1, 2))   # global average pool
         return self.fc(x)
 

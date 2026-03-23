@@ -20,7 +20,7 @@ def negative_policy(env: gym.Env, obs: np.ndarray) -> np.ndarray:
 def id_policy_random(env: gym.Env, obs: np.ndarray) -> np.ndarray:
     """
     ID Policy: Pure Random Exploration.
-    Mimics 'training data' in offline RL. 
+    Mimics 'training data' in offline RL.
     State coverage: Low velocity, chaotic poses, falling over.
     """
     return env.action_space.sample()
@@ -30,7 +30,7 @@ def ant_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.ndar
     ID Policy for Ant-v5: A structured, alternating tetrapod gait.
     Mimics 'routine navigation'.
     State coverage: Coordinated 8-joint periodic motion.
-    
+
     Action space (8D):
     [hip_1, ankle_1, hip_2, ankle_2, hip_3, ankle_3, hip_4, ankle_4]
     """
@@ -54,7 +54,7 @@ def hopper_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) -> np.n
     """
     ID Policy for Hopper-v5: A structured, 3-joint jumping motion.
     State coverage: Coordinated extension and contraction.
-    
+
     Action space (3D): [thigh_joint, leg_joint, foot_joint]
     """
     freq = 2.5  # Hz, slightly faster for jumping
@@ -72,8 +72,8 @@ def halfcheetah_expert_policy(env: gym.Env, obs: np.ndarray, step_count: int) ->
     OOD Policy: A structured Sine-Wave Gait.
     Mimics an 'expert' or 'deployment' policy.
     State coverage: High velocity, coordinated periodic motion.
-    
-    This is OOD because the model has never seen 'coordinated running' 
+
+    This is OOD because the model has never seen 'coordinated running'
     dynamics, only 'random flailing' dynamics.
     """
     # A simple trotting gait for HalfCheetah
@@ -109,6 +109,7 @@ def collect_data(
         # Fix for Gym API quirks
         if np.isscalar(action):
             action = np.array([action], dtype=np.float32)
+        # Coerce shape
         if action.ndim == 0:
             action = action[None]
 
@@ -134,8 +135,10 @@ class OODPolicyWrapper:
             action = hopper_expert_policy(env, obs, self.step_count)
         elif 'ant' in env.spec.id.lower():
             action = ant_expert_policy(env, obs, self.step_count)
-        else:
+        elif 'halfcheetah' in env.spec.id.lower():
             action = halfcheetah_expert_policy(env, obs, self.step_count)
+        else:
+            raise NotImplementedError(f"Unknown environment: {env.spec.id}")
         self.step_count += 1
         return action
 
@@ -156,7 +159,7 @@ def _download_idx(url: str, cache_dir: str) -> np.ndarray:
         data = np.frombuffer(f.read(), dtype=np.uint8).reshape(shape)
     return data
 
-def load_mnist(cache_dir: str = '/tmp/mnist_cache') -> tuple:
+def load_mnist(cache_dir: str = '/tmp/mnist_cache') -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     Loads MNIST train and test splits.
     Downloads directly from the Google CDN — no tensorflow or keras needed.
@@ -178,7 +181,7 @@ def load_mnist(cache_dir: str = '/tmp/mnist_cache') -> tuple:
 
     return preprocess_x(x_train_raw), preprocess_y(y_train_raw), preprocess_x(x_test_raw), preprocess_y(y_test_raw)
 
-def load_uci(name: str, cache_dir: str = '/tmp/uci_cache', seed: int = 0) -> tuple:
+def load_uci(name: str, cache_dir: str = '/tmp/uci_cache', seed: int = 0) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     Loads a UCI regression dataset.
     Downloads, parses, normalizes features and targets, and splits into 90/10 train/test.
@@ -277,7 +280,7 @@ def _cifar_normalize(x: np.ndarray) -> np.ndarray:
     return (x / 255.0 - mean) / std
 
 
-def load_cifar10(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -> tuple:
+def load_cifar10(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Loads CIFAR-10 train and test splits.
     Downloads from the official Toronto CDN if not cached.
@@ -330,7 +333,7 @@ def load_cifar10(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) ->
            x_test,  y_test.astype(np.int32)
 
 
-def load_cifar100(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -> tuple:
+def load_cifar100(cache_dir: str = '/tmp/cifar_cache', normalize: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Loads CIFAR-100 train and test splits.
     Downloads from the official Toronto CDN if not cached.
