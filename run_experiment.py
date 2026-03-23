@@ -77,7 +77,7 @@ from uci_tasks import (
 def main():
     parser = argparse.ArgumentParser(description="Run PJSVD experiments via Luigi")
     parser.add_argument("--env",               type=str,   default="HalfCheetah-v5",
-                        help="Gym environment name, 'MNIST', 'uci-<dataset>', 'cifar10', 'cifar100', or 'bsuite/<id>'")
+                        help="Gym environment name, 'MNIST', 'uci-<dataset>', 'cifar10', 'cifar100'")
     parser.add_argument("--steps",             type=int,   default=10000,
                         help="Training steps / env interactions per policy")
     parser.add_argument("--subset_size",       type=int,   default=4096,
@@ -109,9 +109,9 @@ def main():
 
     if args.task:
         # Resolve the task class by name from all registered modules
-        import gym_tasks, mnist_tasks, cifar_tasks, bsuite_experiments
+        import gym_tasks, mnist_tasks, cifar_tasks
         all_namespaces = [globals(), vars(gym_tasks), vars(mnist_tasks),
-                          vars(cifar_tasks), vars(bsuite_experiments)]
+                          vars(cifar_tasks)]
         task_cls = None
         for ns in all_namespaces:
             task_cls = ns.get(args.task)
@@ -126,8 +126,6 @@ def main():
         args_dict = vars(args)
         if "dataset" in task_params and args.env.lower().startswith("uci-"):
             task_kwargs["dataset"] = args.env.lower()[4:]
-        if "bsuite_id" in task_params and args.env.lower().startswith("bsuite/"):
-            task_kwargs["bsuite_id"] = args.env[7:]
         for param in task_params:
             if param in args_dict:
                 task_kwargs[param] = args_dict[param]
