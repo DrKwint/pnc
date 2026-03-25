@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import jax.flatten_util
 from flax import nnx
 from typing import List, Tuple, Any, Callable
 import numpy as np
@@ -974,4 +975,71 @@ class PnCEnsemble:
 
     def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
         return self._forward_member(x, idx)
+
+
+# ==============================================================================
+# Last-Layer Laplace Approximation (LLLA) Ensemble
+# ==============================================================================
+
+class LLLAEnsemble:
+    """
+    Last-Layer Laplace Approximation Ensemble.
+    Samples weights for the final dense layer from a Gaussian posterior
+    N(W_map, (G + lambda I)^-1) where G is the Generalized Gauss-Newton matrix.
+    """
+    def __init__(
+        self,
+        model: nnx.Module,
+        mean_params: nnx.State,
+        cov: jax.Array,
+        n_models: int,
+        seed: int = 0
+    ):
+        """
+        Args:
+            model: The base model (e.g. PreActResNet18).
+            mean_params: nnx.State containing the MAP parameters of the 'fc' layer.
+            cov: The posterior covariance matrix (D*K + K, D*K + K).
+            n_models: Number of samples in the ensemble.
+            seed: RNG seed for sampling.
+        """
+        # We store a clone to avoid mutating the original model in the caller
+        self.model = nnx.clone(model)
+        self.mean_params = mean_params
+        self.cov = cov
+        self.n_models = n_models
+        self.seed = seed
+        
+        # Pre-compute Cholesky for efficient sampling: W ~ N(mu, L L^T)
+        # We add a small epsilon to the diagonal for numerical stability.
+        self.L = jnp.linalg.cholesky(cov + jnp.eye(cov.shape[0]) * 1e-6)
+        
+        # Helper to flatten/unflatten the fc layer parameters
+        self.flat_mean, self.unflatten_fn = jax.flatten_util.ravel_pytree(mean_params)
+
+    def _sample_model(self, step: int) -> nnx.Module:
+        rng = jax.random.PRNGKey(self.seed + step)
+        eps = jax.random.normal(rng, self.flat_mean.shape)
+        
+        # Sample: theta = mu + L @ epsilon
+        flat_sample = self.flat_mean + self.L @ eps
+        sampled_fc_state = self.unflatten_fn(flat_sample)
+        
+        # Update ONLY the final layer (fc) with the sampled weights
+        nnx.update(self.model.fc, sampled_fc_state)
+        return self.model
+
+    def predict(self, x: jax.Array) -> jax.Array:
+        """Returns (n_models, batch, n_classes) stacked predictions."""
+        ys = []
+        for i in range(self.n_models):
+            m = self._sample_model(i)
+            # Standard eval-time forward pass
+            ys.append(m(x, use_running_average=True))
+        return jnp.stack(ys, axis=0)
+
+    def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
+        """Returns (batch, n_classes) prediction for a single ensemble member."""
+        m = self._sample_model(idx)
+        return m(x, use_running_average=True)
 

@@ -19,42 +19,21 @@ from pjsvd import find_pjsvd_directions_randomized_svd
 from models import PreActResNet18, MCDropoutPreActResNet18
 from data import load_cifar10, load_cifar100
 from training import train_resnet_model
-from ensembles import SWAGEnsemble, PJSVDEnsemble, PnCEnsemble
+from ensembles import SWAGEnsemble, PJSVDEnsemble, PnCEnsemble, LLLAEnsemble
 
 
 def _load_cifar_dataset(dataset: str):
-    """Load cifar10 or cifar100 using uncertainty_baselines; return (x_train, y_train, x_test, y_test, n_classes)."""
-    import uncertainty_baselines as ub
-    import tensorflow_datasets as tfds
-
-    dataset = dataset.lower()
-    if dataset == 'cifar10':
-        n_classes = 10
-        DatasetClass = ub.datasets.Cifar10Dataset
-    elif dataset == 'cifar100':
-        n_classes = 100
-        DatasetClass = ub.datasets.Cifar100Dataset
+    """Load cifar10 or cifar100 using native data loading; return (x_train, y_train, x_test, y_test, n_classes)."""
+    if dataset.lower() == 'cifar10':
+        x_tr, y_tr, x_te, y_te = load_cifar10()
+        n_cls = 10
+    elif dataset.lower() == 'cifar100':
+        x_tr, y_tr, x_te, y_te = load_cifar100()
+        n_cls = 100
     else:
-        raise ValueError(f"Unknown CIFAR dataset: {dataset}. Choose cifar10 or cifar100.")
+        raise ValueError(f"Unknown dataset: {dataset}")
 
-    # Load train
-    train_builder = DatasetClass(split='train', validation_percent=0)
-    train_ds = train_builder.load(batch_size=-1)  # Load all at once
-    train_data = tfds.as_numpy(train_ds)
-    x_train, y_train = next(iter(train_data))['features'], next(iter(train_data))['labels']
-    x_train = x_train.astype(np.float32)
-    y_train = y_train.astype(np.int32)
-
-    # Load test
-    test_builder = DatasetClass(split='test', validation_percent=0)
-    test_ds = test_builder.load(batch_size=-1)
-    test_data = tfds.as_numpy(test_ds)
-    x_test, y_test = next(iter(test_data))['features'], next(iter(test_data))['labels']
-    x_test = x_test.astype(np.float32)
-    y_test = y_test.astype(np.int32)
-
-    print(f'{dataset.upper()} loaded: train={x_train.shape}, test={x_test.shape}')
-    return x_train, y_train, x_test, y_test, n_classes
+    return x_tr, y_tr, x_te, y_te, n_cls
 
 
 def _extract_orbax_values(d, path=""):
@@ -774,6 +753,95 @@ class CIFARPnC(luigi.Task):
             json.dump(all_metrics, f, indent=2)
 
 
+class CIFARLLLA(luigi.Task):
+    """Last-Layer Laplace Approximation for PreAct ResNet-18."""
+    dataset          = luigi.Parameter(default='cifar10')
+    epochs           = luigi.IntParameter(default=100)
+    n_perturbations  = luigi.IntParameter(default=50)
+    batch_size       = luigi.IntParameter(default=128)
+    lr               = luigi.FloatParameter(default=1e-3)
+    weight_decay     = luigi.FloatParameter(default=1e-4)
+    prior_precision  = luigi.FloatParameter(default=1.0)
+    seed             = luigi.IntParameter(default=0)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
+            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        return luigi.LocalTarget(
+            str(Path('results') / self.dataset /
+                f'llla_n{self.n_perturbations}_prec{self.prior_precision}'
+                f'_e{self.epochs}_seed{self.seed}.json'))
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+
+        print(f'\n=== CIFAR LLLA (n={self.n_perturbations}, prior_prec={self.prior_precision}) ===')
+        t0 = time.time()
+        
+        # 1. Load MAP model
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, 'rb') as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt['state'])
+        
+        # 2. Extract features and compute GGN
+        @jax.jit
+        def get_features(x):
+            h = model.stem(x)
+            h = model._run_stages(h, use_running_average=True)
+            h = model.final_bn(h, use_running_average=True)
+            h = jax.nn.relu(h)
+            h = jnp.mean(h, axis=(1, 2))
+            return h
+
+        @jax.jit
+        def compute_batch_ggn(x_hat, probs):
+            # Batch of Fisher matrices: H_i = diag(p_i) - p_i p_i^T
+            # (B, K, K)
+            H = jax.vmap(lambda p: jnp.diag(p) - jnp.outer(p, p))(probs)
+            # Accumulate sum_s (x_hat_s x_hat_s^T) \otimes H_s
+            return jnp.einsum('si,sj,skm->ikjm', x_hat, x_hat, H)
+
+        D = 512 # feature dim
+        K = n_cls
+        G = jnp.zeros((D + 1, K, D + 1, K))
+        
+        print("  Computing GGN over training set...")
+        for i in range(0, len(x_tr), self.batch_size):
+            x_batch = x_tr[i:i+self.batch_size]
+            feats = get_features(x_batch) # (B, D)
+            logits = model.fc(feats) # (B, K)
+            probs = jax.nn.softmax(logits) # (B, K)
+            X_hat = jnp.concatenate([feats, jnp.ones((feats.shape[0], 1))], axis=-1) # (B, D+1)
+            G += compute_batch_ggn(X_hat, probs)
+
+        # Flatten G to ((D+1)K, (D+1)K) matching ravel_pytree order
+        G_flat = G.reshape((D + 1) * K, (D + 1) * K)
+        
+        print("  Inverting GGN...")
+        # Add prior precision (lambda I)
+        precision = G_flat + self.prior_precision * jnp.eye(G_flat.shape[0])
+        covariance = jnp.linalg.inv(precision)
+        
+        # 4. Create LLLA Ensemble
+        fc_state = nnx.state(model.fc)
+        ens = LLLAEnsemble(model, fc_state, covariance, self.n_perturbations, self.seed)
+        
+        train_time = time.time() - t0
+        print("  Evaluating LLLA Ensemble...")
+        metrics = _evaluate_cifar('LLLA', ens, x_te, y_te, n_cls)
+        metrics["train_time"] = train_time
+        
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, 'w') as f:
+            json.dump(metrics, f, indent=2)
+
+
 class AllCIFARExperiments(luigi.WrapperTask):
     """Umbrella task: runs all CIFAR experiments for a given dataset."""
     dataset            = luigi.Parameter(default='cifar10')
@@ -801,4 +869,5 @@ class AllCIFARExperiments(luigi.WrapperTask):
             CIFARPnC(n_directions=self.n_directions,
                            n_perturbations=self.n_perturbations,
                            perturbation_sizes=self.perturbation_sizes, **shared),
+            CIFARLLLA(n_perturbations=self.n_perturbations, **shared),
         ]
