@@ -3,7 +3,7 @@ from flax import nnx
 from typing import Callable
 import jax
 import jax.numpy as jnp
-from jaxtyping_bridge import Array, Float
+from jaxtyping import Array, Float
 
 class TransitionModel(nnx.Module):
     def __init__(self, in_features: int, out_features: int, rngs: nnx.Rngs,
@@ -299,68 +299,75 @@ class MCDropoutResNet50(ResNet50):
 
 
 # ===========================================================================
-# Wide ResNet for CIFAR (matching uncertainty_baselines)
+# PreAct ResNet-18 for CIFAR
 # ===========================================================================
 
-class _WideBasicBlock(nnx.Module):
-    """Wide ResNet basic block: two 3×3 convs + shortcut."""
+class _PreActBasicBlock(nnx.Module):
+    """Standard Pre-Activation ResNet basic block (BN -> ReLU -> Conv -> BN -> ReLU -> Conv)."""
     def __init__(self, in_channels: int, out_channels: int, strides: int = 1,
                  rngs: nnx.Rngs = None):
-        self.conv1 = _BNConvFixed(in_channels, out_channels, kernel_size=3, strides=strides, rngs=rngs)
-        self.conv2 = _BNConvFixed(out_channels, out_channels, kernel_size=3, strides=1, rngs=rngs)
+        self.bn1 = nnx.BatchNorm(num_features=in_channels, rngs=rngs, momentum=0.9)
+        self.conv1 = nnx.Conv(in_features=in_channels, out_features=out_channels, 
+                              kernel_size=(3, 3), strides=(strides, strides), padding='SAME', use_bias=False, rngs=rngs)
+        self.bn2 = nnx.BatchNorm(num_features=out_channels, rngs=rngs, momentum=0.9)
+        self.conv2 = nnx.Conv(in_features=out_channels, out_features=out_channels, 
+                              kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=False, rngs=rngs)
 
         self.downsample = (
-            _BNConvFixed(in_channels, out_channels, kernel_size=1, strides=strides, rngs=rngs)
+            nnx.Conv(in_features=in_channels, out_features=out_channels, 
+                     kernel_size=(1, 1), strides=(strides, strides), padding='SAME', use_bias=False, rngs=rngs)
             if strides != 1 or in_channels != out_channels
             else None
         )
 
     def __call__(self, x: jax.Array, use_running_average: bool = False) -> jax.Array:
-        identity = x
-        out = jax.nn.relu(self.conv1(x, use_running_average=use_running_average))
-        out = self.conv2(out, use_running_average=use_running_average)
+        # 1. First Pre-Activation
+        out_bn1 = self.bn1(x, use_running_average=use_running_average)
+        out_relu1 = jax.nn.relu(out_bn1)
+        
+        # 2. Main Branch
+        y = self.conv1(out_relu1)
+        y = self.bn2(y, use_running_average=use_running_average)
+        y = jax.nn.relu(y)
+        y = self.conv2(y)
+        
+        # 3. Shortcut Branch
         if self.downsample is not None:
-            identity = self.downsample(x, use_running_average=use_running_average)
-        return jax.nn.relu(out + identity)
+            # Apply the 1x1 projection to the normalized, activated tensor
+            identity = self.downsample(out_relu1) 
+        else:
+            # If dimensions match, keep the true identity mapping clean
+            identity = x
+            
+        return y + identity
 
 
-def _make_wide_resnet_stage(in_channels: int, out_channels: int, n_blocks: int,
-                            strides: int, rngs: nnx.Rngs):
-    """Build one Wide ResNet stage, return (nnx.List of blocks, out_channels)."""
+def _make_preact_resnet_stage(in_channels: int, out_channels: int, n_blocks: int,
+                              strides: int, rngs: nnx.Rngs):
     blocks = []
     for i in range(n_blocks):
         s = strides if i == 0 else 1
         inp = in_channels if i == 0 else out_channels
-        blocks.append(_WideBasicBlock(inp, out_channels, strides=s, rngs=rngs))
-    return nnx.List(blocks), out_channels
+        blocks.append(_PreActBasicBlock(inp, out_channels, strides=s, rngs=rngs))
+    return nnx.List(blocks)
 
 
-class WideResNet(nnx.Module):
+class PreActResNet18(nnx.Module):
     """
-    Wide ResNet adapted for CIFAR-10/100 (32×32 input, NHWC).
-
-    Matches uncertainty_baselines' Wide ResNet 28-10:
-      - Depth 28: 4 blocks per stage (n=4)
-      - Width multiplier 10: channels 16*10=160, 32*10=320, 64*10=640
-      - Stem: 3×3 conv / stride 1, 16*k channels
-      - Stages: 4 blocks each, strides 1,2,2
-      - Output: raw logits
-
-    Every Conv is followed by BatchNorm (no bias).
+    PreAct ResNet-18 adapted for CIFAR.
+    Features a 3x3 stride-1 stem (no maxpool) followed by 4 stages of [2, 2, 2, 2] blocks.
+    Channels: 64, 128, 256, 512.
     """
-
-    def __init__(self, depth: int = 28, width_multiplier: int = 10, n_classes: int = 10, rngs: nnx.Rngs = None):
-        assert (depth - 4) % 6 == 0, f"Depth {depth} not compatible with Wide ResNet"
-        n = (depth - 4) // 6  # blocks per stage
-
-        k = width_multiplier
-        self.stem = _BNConvFixed(3, 16 * k, kernel_size=3, strides=1, rngs=rngs)
-
-        self.stage1, c1 = _make_wide_resnet_stage(16 * k, 16 * k, n_blocks=n, strides=1, rngs=rngs)
-        self.stage2, c2 = _make_wide_resnet_stage(c1, 32 * k, n_blocks=n, strides=2, rngs=rngs)
-        self.stage3, c3 = _make_wide_resnet_stage(c2, 64 * k, n_blocks=n, strides=2, rngs=rngs)
-
-        self.fc = nnx.Linear(c3, n_classes, rngs=rngs)
+    def __init__(self, n_classes: int = 10, rngs: nnx.Rngs = None):
+        self.stem = nnx.Conv(in_features=3, out_features=64, kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=False, rngs=rngs)
+        
+        self.stage1 = _make_preact_resnet_stage(64, 64, n_blocks=2, strides=1, rngs=rngs)
+        self.stage2 = _make_preact_resnet_stage(64, 128, n_blocks=2, strides=2, rngs=rngs)
+        self.stage3 = _make_preact_resnet_stage(128, 256, n_blocks=2, strides=2, rngs=rngs)
+        self.stage4 = _make_preact_resnet_stage(256, 512, n_blocks=2, strides=2, rngs=rngs)
+        
+        self.final_bn = nnx.BatchNorm(num_features=512, rngs=rngs, momentum=0.9)
+        self.fc = nnx.Linear(512, n_classes, rngs=rngs)
 
     def _run_stages(self, x, use_running_average: bool):
         for blk in self.stage1:
@@ -369,12 +376,41 @@ class WideResNet(nnx.Module):
             x = blk(x, use_running_average=use_running_average)
         for blk in self.stage3:
             x = blk(x, use_running_average=use_running_average)
+        for blk in self.stage4:
+            x = blk(x, use_running_average=use_running_average)
         return x
 
     def __call__(self, x: Float[Array, "batch H W C"], use_running_average: bool = False) -> Float[Array, "batch n_classes"]:
-        # x: (N, 32, 32, 3)
-        x = jax.nn.relu(self.stem(x, use_running_average=use_running_average))
+        x = self.stem(x)
         x = self._run_stages(x, use_running_average=use_running_average)
-        x = jnp.mean(x, axis=(1, 2))   # global average pool
+        x = self.final_bn(x, use_running_average=use_running_average)
+        x = jax.nn.relu(x)
+        x = jnp.mean(x, axis=(1, 2))
         return self.fc(x)
 
+    def forward_from_stem_out(self, h: Float[Array, "batch H W C_in"], use_running_average: bool = True) -> Float[Array, "batch n_classes"]:
+        h = self._run_stages(h, use_running_average=use_running_average)
+        h = self.final_bn(h, use_running_average=use_running_average)
+        h = jax.nn.relu(h)
+        h = jnp.mean(h, axis=(1, 2))
+        return self.fc(h)
+
+
+class MCDropoutPreActResNet18(PreActResNet18):
+    """
+    PreAct ResNet-18 with MC Dropout before the classification head.
+    """
+    def __init__(self, n_classes: int = 10, dropout_rate: float = 0.1,
+                 rngs: nnx.Rngs = None):
+        super().__init__(n_classes=n_classes, rngs=rngs)
+        self.dropout = nnx.Dropout(rate=dropout_rate, rngs=rngs)
+
+    def __call__(self, x: Float[Array, "batch H W C"], use_running_average: bool = False,
+                 deterministic: bool = False) -> Float[Array, "batch n_classes"]:
+        x = self.stem(x)
+        x = self._run_stages(x, use_running_average=use_running_average)
+        x = self.final_bn(x, use_running_average=use_running_average)
+        x = jax.nn.relu(x)
+        x = jnp.mean(x, axis=(1, 2))
+        x = self.dropout(x, deterministic=deterministic)
+        return self.fc(x)

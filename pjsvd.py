@@ -50,8 +50,8 @@ def get_full_span_affine_residuals(outputs_batch: jax.Array, original_outputs_ba
     proj = jnp.dot(Q, jnp.dot(Q.T, outputs_batch))
 
     # The residual is the part orthogonal to the Affine Correction Subspace
-    residual_2d = out_2d - proj_2d
-    return residual_2d.reshape(out_shape)
+    residual = outputs_batch - proj
+    return residual
 
 
 # ==============================================================================

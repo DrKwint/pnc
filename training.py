@@ -9,7 +9,7 @@ import optax
 from flax import nnx
 import grain.python as grain
 import jax.flatten_util
-from jaxtyping_bridge import Array, Float
+from jaxtyping import Array, Float
 
 
 # Type aliases for readability

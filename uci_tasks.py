@@ -3,7 +3,6 @@ import json
 import pickle
 import time
 from pathlib import Path
-from jaxtyping_bridge import Array, Float
 from typing import Any
 
 import jax.numpy as jnp
@@ -139,6 +138,7 @@ class UCIStandardEnsemble(UCIBaseTask):
 
         train_time = time.time() - t0
         print(f"Training time: {train_time:.2f}s")
+        ensemble = StandardEnsemble(models)
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         metrics = _evaluate_uci("Standard Ensemble", ensemble, x_test, y_test,
@@ -172,6 +172,7 @@ class UCIMCDropout(UCIBaseTask):
 
         train_time = time.time() - t0
         print(f"Training time: {train_time:.2f}s")
+        ensemble = MCDropoutEnsemble(model, self.n_perturbations)
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         metrics = _evaluate_uci("MC Dropout", ensemble, x_test, y_test,
@@ -204,6 +205,7 @@ class UCISWAG(UCIBaseTask):
 
         train_time = time.time() - t0
         print(f"Training time: {train_time:.2f}s")
+        ensemble = SWAGEnsemble(model, swag_mean, swag_var, self.n_perturbations)
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         metrics = _evaluate_uci("SWAG", ensemble, x_test, y_test,

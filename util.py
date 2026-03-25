@@ -7,10 +7,10 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from flax import nnx
-from jaxtyping_bridge import Array, Float
+from jaxtyping import Array, Float
 
 from metrics import compute_calibration, compute_nll, compute_ood_metrics, print_metrics
-from pjsvd import find_optimal_perturbation, find_optimal_perturbation_full
+from pjsvd import find_optimal_perturbation
 
 # ---------------------------------------------------------------------------
 # Activation function registry
@@ -226,12 +226,11 @@ def _find_pjsvd_directions(
         v_opts_jax = jnp.array(v_opts_buf)
         mask_jax   = jnp.array(direction_mask)
 
-        solver_fn = find_optimal_perturbation_full if use_full_span else find_optimal_perturbation
-
-        v_opt, sigma = solver_fn(
+        v_opt, sigma = find_optimal_perturbation(
             model_fn, W_curr, max_iter=500,
             orthogonal_directions=v_opts_jax,
             direction_mask=mask_jax,
+            use_full_span=use_full_span,
             seed=seed + k,
         )
         v_opts_buf[k]    = np.array(v_opt.reshape(-1))

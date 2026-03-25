@@ -2,9 +2,9 @@ import time
 import json
 import pickle
 from pathlib import Path
-from jaxtyping_bridge import Array, Float
 
 import luigi
+import jax
 import jax.numpy as jnp
 from flax import nnx
 import numpy as np
@@ -15,7 +15,6 @@ from util import (
 )
 from pjsvd import (
     find_optimal_perturbation_multi_layer,
-    find_optimal_perturbation_multi_layer_full,
 )
 from models import ClassificationModel, MCDropoutClassificationModel
 from data import load_mnist
@@ -24,9 +23,11 @@ from training import (
 )
 from ensembles import (
     PJSVDEnsemble,
-    StandardEnsemble, MCDropoutEnsemble, SWAGEnsemble, LaplaceEnsemble,
-    SubspaceInferenceEnsemble,
+    LaplaceEnsemble,
     EnsemblePJSVDHybrid,
+    StandardEnsemble,
+    MCDropoutEnsemble,
+    SWAGEnsemble,
 )
 from laplace import compute_kfac_factors
 
@@ -103,6 +104,7 @@ class MNISTStandardEnsemble(luigi.Task):
 
         train_time = time.time() - t0
         print(f"Training time: {train_time:.2f}s")
+        ensemble = StandardEnsemble(models)
 
         metrics = _evaluate_mnist("Standard Ensemble", ensemble, x_test, y_test, n_cls)
         metrics["train_time"] = train_time
@@ -141,6 +143,7 @@ class MNISTMCDropout(luigi.Task):
 
         train_time = time.time() - t0
         print(f"Training time: {train_time:.2f}s")
+        ensemble = MCDropoutEnsemble(model, self.n_perturbations)
 
         metrics = _evaluate_mnist("MC Dropout", ensemble, x_test, y_test, n_cls)
         metrics["train_time"] = train_time
@@ -179,6 +182,7 @@ class MNISTSwag(luigi.Task):
 
         train_time = time.time() - t0
         print(f"Training time: {train_time:.2f}s")
+        ensemble = SWAGEnsemble(model, swag_mean, swag_var, self.n_perturbations)
 
         metrics = _evaluate_mnist("SWAG", ensemble, x_test, y_test, n_cls)
         metrics["train_time"] = train_time
@@ -528,9 +532,10 @@ class MNISTMultiLayerPJSVD(luigi.Task):
         for k in range(self.n_directions):
             v_opts_jax = jnp.array(v_opts_buf_full)
             mask_jax = jnp.array(direction_mask_full)
-            v_opts_list, sigma = find_optimal_perturbation_multi_layer_full(
+            v_opts_list, sigma = find_optimal_perturbation_multi_layer(
                 model_fn_layers, [W1, W2], max_iter=500,
                 orthogonal_directions=v_opts_jax, direction_mask=mask_jax,
+                use_full_span=True,
                 seed=self.seed + k)
             v_opts_buf_full[k] = np.array(jnp.concatenate([v.flatten() for v in v_opts_list]))
             direction_mask_full[k] = True

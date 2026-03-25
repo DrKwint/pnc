@@ -8,4 +8,4 @@ if typing.TYPE_CHECKING:
     f32 = typing.Any
     f64 = typing.Any
 else:
-    from jaxtyping import Array, Float, Int, Bool, Float32 as f32, Float64 as f64
+    pass

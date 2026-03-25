@@ -16,11 +16,9 @@ from util import (
 )
 from pjsvd import (
     find_optimal_perturbation_multi_layer,
-    find_optimal_perturbation_multi_layer_full,
 )
 from models import TransitionModel, MCDropoutTransitionModel, ProbabilisticRegressionModel
 from data import collect_data, id_policy_random, OODPolicyWrapper
-from jaxtyping_bridge import Array, Float
 from training import train_model, train_swag_model, train_probabilistic_model, train_subspace_model
 from ensembles import (
     PJSVDEnsemble,
@@ -363,8 +361,6 @@ class GymPJSVD(luigi.Task):
                 h2 = act_fn(h1 @ w2 + b2)
                 return h2
 
-            solver_fn = find_optimal_perturbation_multi_layer_full if self.use_full_span else find_optimal_perturbation_multi_layer
-            
             v_opts_buf = np.zeros((self.n_directions, W1.size + W2.size), dtype=np.float32)
             direction_mask = np.zeros(self.n_directions, dtype=bool)
             sigmas = []
@@ -373,9 +369,10 @@ class GymPJSVD(luigi.Task):
             for k in range(self.n_directions):
                 v_opts_jax = jnp.array(v_opts_buf)
                 mask_jax = jnp.array(direction_mask)
-                v_opts_list, sigma = solver_fn(
+                v_opts_list, sigma = find_optimal_perturbation_multi_layer(
                     model_fn_ws, [W1, W2], max_iter=500,
                     orthogonal_directions=v_opts_jax, direction_mask=mask_jax,
+                    use_full_span=self.use_full_span,
                     seed=self.seed + k)
                 v_opts_buf[k] = np.array(jnp.concatenate([v.flatten() for v in v_opts_list]))
                 direction_mask[k] = True
@@ -494,7 +491,6 @@ class AllGymExperiments(luigi.WrapperTask):
     activation         = luigi.Parameter(default="relu")
 
     def requires(self) -> list[luigi.Task]:
-        ml_ps   = [ps / 4 for ps in self.perturbation_sizes]
         shared  = dict(env=self.env, steps=self.steps,
                        seed=self.seed, activation=self.activation)
         tasks = [

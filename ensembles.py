@@ -1,17 +1,16 @@
 import jax
 import jax.numpy as jnp
 from flax import nnx
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Callable
 import numpy as np
 import math
 
-from jaxtyping_bridge import Array, Float, f32
+from jaxtyping import Array, Float
+from models import TransitionModel
 
 _BATCH_ANY = "batch ..."
 _ENS_BATCH_ANY = "ens batch ..."
 
-
-from models import TransitionModel
 
 def evaluate_tail_from_preact(
     base_model: Any,
@@ -109,6 +108,10 @@ class PJSVDEnsemble:
         # Store correction parameters (e.g., mu_old, std_old or next layer params)
         self.correction_params = correction_params or {}
 
+        self._precompute_corrections()
+
+    def set_perturbation_size(self, size: float):
+        self.perturbation_scale = size
         self._precompute_corrections()
 
     def _get_coeffs_all(self):
@@ -210,7 +213,7 @@ class PJSVDEnsemble:
                 bn_params.append(member_bn_params)
         
         # Transpose to get [perturbed_layer][member]
-        self.bn_refits = [jnp.stack([m[l] for m in bn_params]) for l in range(len(self.layers))]
+        self.bn_refits = [[m[idx] for m in bn_params] for idx in range(len(self.layers))]
 
     def _resnet_bn_refit_member(self, p, targets):
         # Helper for ResNet stem + stage1 refit
@@ -219,7 +222,12 @@ class PJSVDEnsemble:
         
         offset = 0
         for l_idx, l_name in enumerate(self.layers):
-            w_orig = self.layer_params[l_name]["W"]
+            try:
+                w_orig = self.layer_params[l_name]["W"]
+            except KeyError:
+                print(f"Layer {l_name} not found in layer_params. Available keys: {list(self.layer_params.keys())}")
+                print(type(self.layer_params))
+                raise
             w_shape = w_orig.shape
             w_size = w_orig.size
             dw = p[offset:offset+w_size].reshape(w_shape)
@@ -282,7 +290,7 @@ class PJSVDEnsemble:
         return evaluate_tail_from_preact(self.base_model, z_next, current_layer_idx=len(self.layers), activation=self.activation)
 
     def _forward_bn_refit(self, x, i, p):
-        # ResNet specific forward
+        # PreActResNet-18 specific forward
         if len(self.layers) == 1:
             w_stem_orig = self.layer_params["l1"]["W"]
             dw = p.reshape(w_stem_orig.shape)
@@ -292,10 +300,24 @@ class PJSVDEnsemble:
                 window_strides=(1, 1), padding='SAME',
                 dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
             g, b = self.bn_refits[0][i]["gamma"], self.bn_refits[0][i]["beta"]
-            h = jax.nn.relu(g * raw_pert + b)
-            return self.base_model.forward_from_stem_out(h, use_running_average=True)
+            
+            out_bn1 = g * raw_pert + b
+            out_relu1 = jax.nn.relu(out_bn1)
+            
+            blk0 = self.base_model.stage1[0]
+            y = blk0.conv1(out_relu1)
+            y = blk0.bn2(y, use_running_average=True)
+            y = jax.nn.relu(y)
+            y = blk0.conv2(y)
+            
+            identity = raw_pert
+            if blk0.downsample is not None:
+                identity = blk0.downsample(out_relu1)
+                
+            out = y + identity
+            
         else:
-            # Multi-layer BN refit (Stem + Stage1)
+            # Multi-layer BN refit (Stem + Stage1 b0 conv1)
             w1_orig = self.layer_params["l1"]["W"]
             w2_orig = self.layer_params["l2"]["W"]
             dw1 = p[:w1_orig.size].reshape(w1_orig.shape)
@@ -306,35 +328,40 @@ class PJSVDEnsemble:
                 lhs=x, rhs=(w1_orig+dw1).transpose(3, 2, 0, 1),
                 window_strides=(1, 1), padding='SAME',
                 dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            h_st = jax.nn.relu(self.bn_refits[0][i]["gamma"] * raw_st + self.bn_refits[0][i]["beta"])
+            g1, b1 = self.bn_refits[0][i]["gamma"], self.bn_refits[0][i]["beta"]
+            out_bn1 = g1 * raw_st + b1
+            out_relu1 = jax.nn.relu(out_bn1)
             
             # Stage1 block0 conv1
             blk0 = self.base_model.stage1[0]
             raw_c1 = jax.lax.conv_general_dilated(
-                lhs=h_st, rhs=(w2_orig+dw2).transpose(3, 2, 0, 1),
+                lhs=out_relu1, rhs=(w2_orig+dw2).transpose(3, 2, 0, 1),
                 window_strides=(1, 1), padding='SAME',
                 dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            out = jax.nn.relu(self.bn_refits[1][i]["gamma"] * raw_c1 + self.bn_refits[1][i]["beta"])
+            g2, b2 = self.bn_refits[1][i]["gamma"], self.bn_refits[1][i]["beta"]
+            out_bn2 = g2 * raw_c1 + b2
+            out_relu2 = jax.nn.relu(out_bn2)
             
-            # Tail of block0
-            out = jax.nn.relu(blk0.conv2(out, use_running_average=True))
-            out = blk0.conv3(out, use_running_average=True)
-            identity = h_st
+            y = blk0.conv2(out_relu2)
+            identity = raw_st
             if blk0.downsample is not None:
-                identity = blk0.downsample(h_st, use_running_average=True)
-            out = jax.nn.relu(out + identity)
+                identity = blk0.downsample(out_relu1)
+            out = y + identity
             
-            # Remainder of ResNet
-            for blk in list(self.base_model.stage1)[1:]:
-                out = blk(out, use_running_average=True)
-            for blk in self.base_model.stage2:
-                out = blk(out, use_running_average=True)
-            for blk in self.base_model.stage3:
-                out = blk(out, use_running_average=True)
-            for blk in self.base_model.stage4:
-                out = blk(out, use_running_average=True)
-            out = jnp.mean(out, axis=(1, 2))
-            return self.base_model.fc(out)
+        # Remainder of PreActResNet
+        for blk in list(self.base_model.stage1)[1:]:
+            out = blk(out, use_running_average=True)
+        for blk in self.base_model.stage2:
+            out = blk(out, use_running_average=True)
+        for blk in self.base_model.stage3:
+            out = blk(out, use_running_average=True)
+        for blk in self.base_model.stage4:
+            out = blk(out, use_running_average=True)
+        
+        out = self.base_model.final_bn(out, use_running_average=True)
+        out = jax.nn.relu(out)
+        out = jnp.mean(out, axis=(1, 2))
+        return self.base_model.fc(out)
 
     def predict(self, x: jax.Array) -> jax.Array:
         coeffs_all = self._get_coeffs_all()
@@ -453,29 +480,11 @@ class StandardEnsemble:
     def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
         ys = []
         for i, model in enumerate(self.models):
-            out = model(x)
-            if isinstance(out, tuple) and len(out) == 2:
-                # Probabilistic model: (mean, var)
-                # We return a "representative sample" for each member
-                # By adding Gaussian noise with the predicted variance,
-                # the across-ensemble variance will correctly match the mixture variance:
-                # Var_total = E[Var_aleatoric] + Var[E_epistemic]
-                rng = jax.random.PRNGKey(i) # Use a deterministic key based on the member index
-                mean, var = out
-                eps = jax.random.normal(rng, mean.shape)
-                ys.append(mean + jnp.sqrt(var) * eps)
-            else:
-                # Standard point-estimate model
-                ys.append(out)
+            ys.append(_sample_probabilistic(model(x), i))
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
-        out = self.models[idx](x)
-        if isinstance(out, tuple) and len(out) == 2:
-            mean, var = out
-            rng = jax.random.PRNGKey(idx)
-            return mean + jnp.sqrt(var) * jax.random.normal(rng, mean.shape)
-        return out
+        return _sample_probabilistic(self.models[idx](x), idx)
 
 
 class MCDropoutEnsemble:
@@ -513,22 +522,11 @@ class SWAGEnsemble:
         ys = []
         for i in range(self.n_models):
             sampled_m = self._sample_model()
-            out = sampled_m(x)
-            if isinstance(out, tuple) and len(out) == 2:
-                mean, var = out
-                rng = jax.random.PRNGKey(i)
-                ys.append(mean + jnp.sqrt(var) * jax.random.normal(rng, mean.shape))
-            else:
-                ys.append(out)
+            ys.append(_sample_probabilistic(sampled_m(x), i))
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
-        out = self._sample_model()(x)
-        if isinstance(out, tuple) and len(out) == 2:
-            mean, var = out
-            rng = jax.random.PRNGKey(idx)
-            return mean + jnp.sqrt(var) * jax.random.normal(rng, mean.shape)
-        return out
+        return _sample_probabilistic(self._sample_model()(x), idx)
 
 
 class LaplaceEnsemble:
@@ -712,25 +710,12 @@ class SubspaceInferenceEnsemble:
         ys = []
         for i in range(self.n_samples):
             sampled_m, _ = self._sample_model(i)
-            out = sampled_m(x)
-            if isinstance(out, tuple) and len(out) == 2:
-                # Probabilistic model: (mean, var)
-                mean, var = out
-                rng = jax.random.PRNGKey(i)
-                eps = jax.random.normal(rng, mean.shape)
-                ys.append(mean + jnp.sqrt(var) * eps)
-            else:
-                ys.append(out)
+            ys.append(_sample_probabilistic(sampled_m(x), i))
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
         sampled_m, _ = self._sample_model(idx)
-        out = sampled_m(x)
-        if isinstance(out, tuple) and len(out) == 2:
-            mean, var = out
-            rng = jax.random.PRNGKey(idx)
-            return mean + jnp.sqrt(var) * jax.random.normal(rng, mean.shape)
-        return out
+        return _sample_probabilistic(sampled_m(x), idx)
 
 
 # ==============================================================================
@@ -778,4 +763,215 @@ def _bn_refit_channel_wise(
     return gamma_new, beta_new
 
 
+def _sample_probabilistic(out: Any, seed: int) -> jax.Array:
+    if isinstance(out, tuple) and len(out) == 2:
+        mean, var = out
+        rng = jax.random.PRNGKey(seed)
+        return mean + jnp.sqrt(var) * jax.random.normal(rng, mean.shape)
+    return out
+
+# ==============================================================================
+# Perturb-and-Correct (PnC) Ensemble
+# ==============================================================================
+from pnc import solve_chunked_conv2_correction
+
+class PnCEnsemble:
+    """
+    Evaluates inference for a Perturb-and-Correct ensemble.
+    For each member, perturbs Conv1 weights and dynamically refits Conv2
+    using Ridge Regression to preserve the block output on calibration data.
+    """
+    def __init__(
+        self,
+        base_model: Any,
+        v_opts: jax.Array,
+        sigmas: jax.Array,
+        z_coeffs: np.ndarray,
+        perturbation_scale: float,
+        get_Y_fn: Callable,
+        w1_orig: jax.Array,
+        w2_orig: jax.Array,
+        chunks: List[jax.Array],
+        T_orig_chunks: List[jax.Array],
+        target_stage_idx: int,
+        target_block_idx: int,
+        lambda_reg: float = 1e-3,
+        sigma_sq_weights: bool = False
+    ):
+        self.base_model = base_model
+        self.v_opts = v_opts
+        self.sigmas = jnp.array(sigmas)
+        self.z_coeffs = z_coeffs
+        self.perturbation_scale = perturbation_scale
+        self.get_Y_fn = get_Y_fn
+        self.w1_orig = w1_orig
+        self.w2_orig = w2_orig
+        self.chunks = chunks
+        self.T_orig_chunks = T_orig_chunks
+        self.target_stage_idx = target_stage_idx
+        self.target_block_idx = target_block_idx
+        self.lambda_reg = lambda_reg
+        self.sigma_sq_weights = sigma_sq_weights
+        
+        self.members_w1 = []
+        self.members_w2 = []
+        
+        self._precompute_corrections()
+
+    def _get_coeffs_all(self):
+        safe_sigmas = self.sigmas + 1e-6
+        if self.sigma_sq_weights:
+            coeffs_all = self.z_coeffs / np.array(safe_sigmas ** 2)
+        else:
+            coeffs_all = self.z_coeffs / np.array(safe_sigmas)
+        norms = np.linalg.norm(coeffs_all, axis=1, keepdims=True) + 1e-12
+        return (coeffs_all / norms) * self.perturbation_scale
+
+    def _precompute_corrections(self):
+        coeffs_all = self._get_coeffs_all()
+        # dp_all: (N, D_flat)
+        dp_all = coeffs_all @ np.array(self.v_opts)
+
+        for i in range(len(self.z_coeffs)):
+            p = dp_all[i]
+            w1_pert = self.w1_orig + p.reshape(self.w1_orig.shape)
+            # solve_chunked_conv2_correction returns W2_new shaped (kh,kw,Cin,Cout)
+            w2_pert, b2_pert = solve_chunked_conv2_correction(
+                self.get_Y_fn, w1_pert, self.chunks, self.T_orig_chunks,
+                w2_shape=tuple(self.w2_orig.shape),
+                lambda_reg=self.lambda_reg
+            )
+            self.members_w1.append(w1_pert)
+            self.members_w2.append((w2_pert, b2_pert))
+
+        # Report calibration-set diagnostics once all members are solved.
+        self.calib_raw_arr, self.calib_corr_arr = self.compute_shift_diagnostics(
+            self.chunks, self.T_orig_chunks, label="calib")
+
+    def compute_shift_diagnostics(
+        self,
+        chunks: List[jax.Array],
+        T_orig_chunks: List[jax.Array],
+        label: str = "calib",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        For every ensemble member, compute the RMS per-sample L2 shift in block
+        output both *before* and *after* the Conv2 correction, evaluated on the
+        supplied chunked data.
+
+        Args:
+            chunks:        List of pre-activation input chunks to the target block,
+                           each shaped (n, H, W, C_in_block).
+            T_orig_chunks: Corresponding list of original block outputs (Conv2 output)
+                           from the unperturbed model, each shaped (n, H', W', C_out).
+            label:         String prefix used in console output (e.g. "calib", "test").
+
+        Returns:
+            raw_arr  : (N,) RMS shift before correction, one value per member.
+            corr_arr : (N,) RMS shift after  correction, one value per member.
+        """
+        kh, kw, C_in, C_out = self.w2_orig.shape
+        # Patch-ordered flat views: (C_in*kh*kw, C_out), matching get_Y_fn's patch layout.
+        w2_flat_orig = self.w2_orig.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+
+        raw_norms  = []
+        corr_norms = []
+        for w1_pert, (w2_pert, b2_pert) in zip(self.members_w1, self.members_w2):
+            w2_pert_flat = w2_pert.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+            total_samples   = 0
+            raw_norm_sq_sum  = 0.0
+            corr_norm_sq_sum = 0.0
+            for chunk, T_orig_chunk in zip(chunks, T_orig_chunks):
+                n = chunk.shape[0]
+                _, H_t, W_t, C_t = T_orig_chunk.shape
+                Y_pert = self.get_Y_fn(w1_pert, chunk)  # (n*H_t*W_t, C_in*kh*kw)
+
+                # Uncorrected: perturbed w1, original w2 (no bias)
+                T_raw_flat    = Y_pert @ w2_flat_orig
+                T_raw_spatial = T_raw_flat.reshape(n, H_t, W_t, C_t)
+                diff_raw = (T_raw_spatial - T_orig_chunk).reshape(n, -1)
+                raw_norm_sq_sum += float(jnp.sum(jnp.sum(diff_raw ** 2, axis=-1)))
+
+                # Corrected: perturbed w1, refitted w2 + bias
+                T_corr_flat    = Y_pert @ w2_pert_flat + b2_pert
+                T_corr_spatial = T_corr_flat.reshape(n, H_t, W_t, C_t)
+                diff_corr = (T_corr_spatial - T_orig_chunk).reshape(n, -1)
+                corr_norm_sq_sum += float(jnp.sum(jnp.sum(diff_corr ** 2, axis=-1)))
+
+                total_samples += n
+
+            raw_norms.append(float(np.sqrt(raw_norm_sq_sum  / total_samples)))
+            corr_norms.append(float(np.sqrt(corr_norm_sq_sum / total_samples)))
+
+        raw_arr  = np.array(raw_norms)
+        corr_arr = np.array(corr_norms)
+
+        N = len(self.z_coeffs)
+        print(f"[PnC diagnostic | {label}] perturbation_scale={self.perturbation_scale}")
+        print(f"  Uncorrected shift (mean±std, {N} members): "
+              f"{raw_arr.mean():.4f} ± {raw_arr.std():.4f}")
+        print(f"  Corrected   shift (mean±std, {N} members): "
+              f"{corr_arr.mean():.4f} ± {corr_arr.std():.4f}")
+        reduction = 1.0 - corr_arr.mean() / (raw_arr.mean() + 1e-12)
+        print(f"  Correction reduction: {reduction * 100:.1f}%")
+
+        return raw_arr, corr_arr
+
+    def _forward_member(self, x: jax.Array, idx: int) -> jax.Array:
+        # 1. Stem
+        h = self.base_model.stem(x)
+        
+        # 2. Stages
+        stages = [self.base_model.stage1, self.base_model.stage2, 
+                  self.base_model.stage3, self.base_model.stage4]
+                  
+        w1_pert = self.members_w1[idx]
+        w2_pert, b2_pert = self.members_w2[idx]
+        
+        for s_idx, stage in enumerate(stages):
+            for b_idx, blk in enumerate(stage):
+                if s_idx == self.target_stage_idx and b_idx == self.target_block_idx:
+                    # Custom forward for the perturbed block.
+                    # get_Y_fn returns RAW (pre-BN2) Conv1 patches, so w2_pert
+                    # is applied directly to the raw Conv1 output — BN2 is skipped
+                    # because W2_new has absorbed it via ridge regression.
+                    out_bn1 = blk.bn1(h, use_running_average=True)
+                    out_relu1 = jax.nn.relu(out_bn1)
+                    
+                    # Perturbed Conv1 (raw output, no BN2/ReLU)
+                    strides = blk.conv1.strides
+                    y_raw = jax.lax.conv_general_dilated(
+                        lhs=out_relu1, rhs=w1_pert.transpose(3, 2, 0, 1),
+                        window_strides=strides, padding='SAME',
+                        dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
+                    
+                    # Perturbed Conv2 applied directly to raw Conv1 output
+                    t = jax.lax.conv_general_dilated(
+                        lhs=y_raw, rhs=w2_pert.transpose(3, 2, 0, 1),
+                        window_strides=(1, 1), padding='SAME',
+                        dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
+                    t = t + b2_pert
+                    
+                    identity = h
+                    if blk.downsample is not None:
+                        identity = blk.downsample(out_relu1)
+                    
+                    h = t + identity
+                else:
+                    h = blk(h, use_running_average=True)
+                    
+        # 3. Head
+        h = self.base_model.final_bn(h, use_running_average=True)
+        h = jax.nn.relu(h)
+        h = jnp.mean(h, axis=(1, 2))
+        return self.base_model.fc(h)
+
+    def predict(self, x: jax.Array) -> jax.Array:
+        ys = []
+        for i in range(len(self.z_coeffs)):
+            ys.append(self._forward_member(x, i))
+        return jnp.stack(ys, axis=0)
+
+    def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
+        return self._forward_member(x, idx)
 

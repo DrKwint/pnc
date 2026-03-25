@@ -78,12 +78,16 @@ def main() -> None:
             if i + 1 < len(unknown) and not unknown[i+1].startswith("--"):
                 val = unknown[i+1]
                 # Try to cast to int/float/bool if possible
-                if val.lower() == "true": val = True
-                elif val.lower() == "false": val = False
+                if val.lower() == "true":
+                    val = True
+                elif val.lower() == "false":
+                    val = False
                 else:
                     try:
-                        if "." in val: val = float(val)
-                        else: val = int(val)
+                        if "." in val:
+                            val = float(val)
+                        else:
+                            val = int(val)
                     except ValueError:
                         pass
                 extra_kwargs[key] = val
