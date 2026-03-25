@@ -977,6 +977,236 @@ class PnCEnsemble:
         return self._forward_member(x, idx)
 
 
+class MultiBlockPnCEnsemble:
+    """
+    Perturb-and-Correct on every residual block (approach B): each block uses MAP
+    calibration for its ridge conv2 solve; directions are found independently per
+    block. Members share the same count N; z_coeffs has shape (N, n_blocks, K).
+    """
+
+    def __init__(
+        self,
+        base_model: Any,
+        block_specs: List[dict],
+        z_coeffs: np.ndarray,
+        perturbation_scale: float,
+        lambda_reg: float = 1e-3,
+        sigma_sq_weights: bool = False,
+        progress_desc: str = "Multi-block PnC: ridge solves",
+    ):
+        """
+        Args:
+            block_specs: ordered list, one dict per block, keys:
+                stage_idx, block_idx, w1_orig, w2_orig, v_opts, sigmas,
+                chunks, T_orig_chunks, get_Y_fn
+            z_coeffs: (N, n_blocks, K) Gaussian coefficients per block.
+        """
+        self.base_model = base_model
+        self.block_specs = block_specs
+        self.z_coeffs = np.asarray(z_coeffs, dtype=np.float64)
+        self.perturbation_scale = float(perturbation_scale)
+        self.lambda_reg = lambda_reg
+        self.sigma_sq_weights = sigma_sq_weights
+
+        n_mem, n_blk, _ = self.z_coeffs.shape
+        assert n_blk == len(block_specs), "z_coeffs middle dim must match len(block_specs)"
+        assert all(int(self.z_coeffs.shape[2]) == int(np.asarray(spec["v_opts"]).shape[0]) for spec in block_specs)
+
+        self.members: List[List[Tuple[jax.Array, jax.Array, jax.Array]]] = []
+
+        try:
+            from tqdm import tqdm as _tqdm
+        except ImportError:
+            class _TqdmFallback:
+                def __init__(self, total=None, desc=None, unit=None):
+                    pass
+
+                def update(self, n=1):
+                    pass
+
+                def close(self):
+                    pass
+
+            def _tqdm(*args, **kwargs):
+                return _TqdmFallback(*args, **kwargs)
+
+        total_solves = n_mem * n_blk
+        pbar = _tqdm(total=total_solves, desc=progress_desc, unit="solve")
+
+        for i in range(n_mem):
+            row: List[Tuple[jax.Array, jax.Array, jax.Array]] = []
+            for b, spec in enumerate(block_specs):
+                z_row = self.z_coeffs[i, b, :]
+                sigmas = np.asarray(spec["sigmas"])
+                v_opts = np.asarray(spec["v_opts"])
+                w1_orig = spec["w1_orig"]
+                coeffs = self._coeffs_from_z(z_row, sigmas)
+                dp = coeffs @ v_opts
+                w1_pert = w1_orig + dp.reshape(w1_orig.shape)
+                w2_pert, b2_pert = solve_chunked_conv2_correction(
+                    spec["get_Y_fn"],
+                    w1_pert,
+                    spec["chunks"],
+                    spec["T_orig_chunks"],
+                    w2_shape=tuple(spec["w2_orig"].shape),
+                    lambda_reg=self.lambda_reg,
+                )
+                row.append((w1_pert, w2_pert, b2_pert))
+                pbar.update(1)
+            self.members.append(row)
+        pbar.close()
+
+        raw_stack, corr_stack = [], []
+        for b, spec in enumerate(
+            _tqdm(block_specs, desc="Multi-block PnC: calib shift diagnostics", unit="block")
+        ):
+            r, c = self._shift_diagnostics_one_block(
+                b, spec["chunks"], spec["T_orig_chunks"], label=f"calib block {b}"
+            )
+            raw_stack.append(r)
+            corr_stack.append(c)
+        self.calib_raw_arr = np.mean(np.stack(raw_stack, axis=0), axis=0)
+        self.calib_corr_arr = np.mean(np.stack(corr_stack, axis=0), axis=0)
+        print(
+            f"[MultiBlock PnC | calib aggregated over {n_blk} blocks] "
+            f"perturbation_scale={self.perturbation_scale} | "
+            f"raw {self.calib_raw_arr.mean():.4f} | corr {self.calib_corr_arr.mean():.4f}"
+        )
+
+    def _coeffs_from_z(self, z_row: np.ndarray, sigmas: np.ndarray) -> np.ndarray:
+        safe_sigmas = sigmas + 1e-6
+        if self.sigma_sq_weights:
+            coeffs = z_row / (safe_sigmas ** 2)
+        else:
+            coeffs = z_row / safe_sigmas
+        norm = np.linalg.norm(coeffs) + 1e-12
+        return (coeffs / norm) * self.perturbation_scale
+
+    def _shift_diagnostics_one_block(
+        self,
+        block_index: int,
+        chunks: List[jax.Array],
+        T_orig_chunks: List[jax.Array],
+        label: str = "calib",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        spec = self.block_specs[block_index]
+        w2_orig = spec["w2_orig"]
+        get_Y_fn = spec["get_Y_fn"]
+        kh, kw, C_in, C_out = w2_orig.shape
+        w2_flat_orig = w2_orig.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+
+        raw_norms: List[float] = []
+        corr_norms: List[float] = []
+        for member_weights in self.members:
+            w1_pert, w2_pert, b2_pert = member_weights[block_index]
+            w2_pert_flat = w2_pert.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+            raw_norm_sq_sum = 0.0
+            corr_norm_sq_sum = 0.0
+            total_samples = 0
+            for chunk, T_orig_chunk in zip(chunks, T_orig_chunks):
+                n = chunk.shape[0]
+                _, H_t, W_t, C_t = T_orig_chunk.shape
+                Y_pert = get_Y_fn(w1_pert, chunk)
+                T_raw_flat = Y_pert @ w2_flat_orig
+                T_raw_spatial = T_raw_flat.reshape(n, H_t, W_t, C_t)
+                diff_raw = (T_raw_spatial - T_orig_chunk).reshape(n, -1)
+                raw_norm_sq_sum += float(jnp.sum(jnp.sum(diff_raw ** 2, axis=-1)))
+                T_corr_flat = Y_pert @ w2_pert_flat + b2_pert
+                T_corr_spatial = T_corr_flat.reshape(n, H_t, W_t, C_t)
+                diff_corr = (T_corr_spatial - T_orig_chunk).reshape(n, -1)
+                corr_norm_sq_sum += float(jnp.sum(jnp.sum(diff_corr ** 2, axis=-1)))
+                total_samples += n
+            raw_norms.append(float(np.sqrt(raw_norm_sq_sum / total_samples)))
+            corr_norms.append(float(np.sqrt(corr_norm_sq_sum / total_samples)))
+
+        raw_arr = np.array(raw_norms)
+        corr_arr = np.array(corr_norms)
+        return raw_arr, corr_arr
+
+    def compute_shift_diagnostics(
+        self,
+        block_chunks: List[List[jax.Array]],
+        block_T_orig: List[List[jax.Array]],
+        label: str = "test",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Aggregate mean shift over blocks (each block uses its chunked data)."""
+        try:
+            from tqdm import tqdm as _tqdm_diag
+        except ImportError:
+            def _tqdm_diag(x, **kwargs):
+                return x
+
+        n_blk = len(self.block_specs)
+        raw_stack, corr_stack = [], []
+        for b in _tqdm_diag(
+            range(n_blk),
+            desc=f"Multi-block PnC: {label} shift diagnostics",
+            unit="block",
+        ):
+            r, c = self._shift_diagnostics_one_block(
+                b, block_chunks[b], block_T_orig[b], label=f"{label} block {b}"
+            )
+            raw_stack.append(r)
+            corr_stack.append(c)
+        raw_arr = np.mean(np.stack(raw_stack, axis=0), axis=0)
+        corr_arr = np.mean(np.stack(corr_stack, axis=0), axis=0)
+        print(
+            f"[MultiBlock PnC diagnostic | {label}] perturbation_scale={self.perturbation_scale} | "
+            f"raw mean {raw_arr.mean():.4f} | corr mean {corr_arr.mean():.4f}"
+        )
+        return raw_arr, corr_arr
+
+    def _forward_member(self, x: jax.Array, idx: int) -> jax.Array:
+        h = self.base_model.stem(x)
+        stages = [
+            self.base_model.stage1,
+            self.base_model.stage2,
+            self.base_model.stage3,
+            self.base_model.stage4,
+        ]
+        bi = 0
+        for s_idx, stage in enumerate(stages):
+            for b_idx, blk in enumerate(stage):
+                w1_pert, w2_pert, b2_pert = self.members[idx][bi]
+                out_bn1 = blk.bn1(h, use_running_average=True)
+                out_relu1 = jax.nn.relu(out_bn1)
+                strides = blk.conv1.strides
+                y_raw = jax.lax.conv_general_dilated(
+                    lhs=out_relu1,
+                    rhs=w1_pert.transpose(3, 2, 0, 1),
+                    window_strides=strides,
+                    padding="SAME",
+                    dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                )
+                t = jax.lax.conv_general_dilated(
+                    lhs=y_raw,
+                    rhs=w2_pert.transpose(3, 2, 0, 1),
+                    window_strides=(1, 1),
+                    padding="SAME",
+                    dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                )
+                t = t + b2_pert
+                identity = h
+                if blk.downsample is not None:
+                    identity = blk.downsample(out_relu1)
+                h = t + identity
+                bi += 1
+
+        h = self.base_model.final_bn(h, use_running_average=True)
+        h = jax.nn.relu(h)
+        h = jnp.mean(h, axis=(1, 2))
+        return self.base_model.fc(h)
+
+    def predict(self, x: jax.Array) -> jax.Array:
+        ys = []
+        for i in range(len(self.z_coeffs)):
+            ys.append(self._forward_member(x, i))
+        return jnp.stack(ys, axis=0)
+
+    def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
+        return self._forward_member(x, idx)
+
+
 # ==============================================================================
 # Last-Layer Laplace Approximation (LLLA) Ensemble
 # ==============================================================================

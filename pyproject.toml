@@ -1,3 +1,10 @@
+[project]
+name = "pnc"
+version = "0.0.0"
+dependencies = [
+    "tqdm>=4.60",
+]
+
 [tool.pytest.ini_options]
 addopts = "--jaxtyping-packages=my_project,beartype.beartype"
 

@@ -19,7 +19,81 @@ from pjsvd import find_pjsvd_directions_randomized_svd
 from models import PreActResNet18, MCDropoutPreActResNet18
 from data import load_cifar10, load_cifar100
 from training import train_resnet_model
-from ensembles import SWAGEnsemble, PJSVDEnsemble, PnCEnsemble, LLLAEnsemble
+from ensembles import SWAGEnsemble, PJSVDEnsemble, PnCEnsemble, MultiBlockPnCEnsemble, LLLAEnsemble
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    def tqdm(x, **kwargs):
+        return x
+
+
+def preact_resnet18_block_indices() -> list[tuple[int, int]]:
+    """Ordered (stage_idx, block_idx) for all 8 residual blocks (stage1..stage4, 2 each)."""
+    return [(s, b) for s in range(4) for b in range(2)]
+
+
+def compute_cifar_block_preacts(
+    model: PreActResNet18,
+    X_data: np.ndarray,
+    chunk_sz: int,
+    target_stage_idx: int,
+    target_block_idx: int,
+    w1_orig: jax.Array,
+) -> tuple[list[jax.Array], list[jax.Array]]:
+    """
+    Return (pre_act_chunks, T_orig_chunks) for the target block: inputs to bn1,
+    and conv2 outputs on the unperturbed forward (MAP), chunked.
+    """
+    stages = [model.stage1, model.stage2, model.stage3, model.stage4]
+    n_ch = int(np.ceil(len(X_data) / chunk_sz))
+    batches = [X_data[i * chunk_sz : (i + 1) * chunk_sz] for i in range(n_ch)]
+    pa_chunks, t_chunks = [], []
+    for x_batch in batches:
+        h = model.stem(x_batch)
+        for s_idx, stage in enumerate(stages):
+            for b_idx, blk in enumerate(stage):
+                if s_idx == target_stage_idx and b_idx == target_block_idx:
+                    pa_chunks.append(h)
+                    out_bn1 = blk.bn1(h, use_running_average=True)
+                    out_relu1 = jax.nn.relu(out_bn1)
+                    y_raw = jax.lax.conv_general_dilated(
+                        lhs=out_relu1,
+                        rhs=w1_orig.transpose(3, 2, 0, 1),
+                        window_strides=blk.conv1.strides,
+                        padding="SAME",
+                        dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                    )
+                    y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                    y_relu2 = jax.nn.relu(y_bn2)
+                    t_chunks.append(blk.conv2(y_relu2))
+                    break
+                h = blk(h, use_running_average=True)
+            if s_idx == target_stage_idx:
+                break
+    return pa_chunks, t_chunks
+
+
+def make_cifar_block_get_Y_fn(target_blk: nnx.Module):
+    """get_Y_fn(w1, h_in) -> patch features of raw conv1 output (pre-bn2), for PnC ridge."""
+
+    def get_Y_fn(w1, h_in):
+        out_bn1 = target_blk.bn1(h_in, use_running_average=True)
+        out_relu1 = jax.nn.relu(out_bn1)
+        y_raw = jax.lax.conv_general_dilated(
+            lhs=out_relu1,
+            rhs=w1.transpose(3, 2, 0, 1),
+            window_strides=target_blk.conv1.strides,
+            padding="SAME",
+            dimension_numbers=("NHWC", "OIHW", "NHWC"),
+        )
+        from pnc import extract_patches
+
+        return extract_patches(y_raw, k=3, strides=1)
+
+    return get_Y_fn
+
+
 
 
 def _load_cifar_dataset(dataset: str):
@@ -641,62 +715,26 @@ class CIFARPnC(luigi.Task):
         idx   = rng.choice(len(x_tr), actual_sub, replace=False)
         X_sub = x_tr[idx]
         
-        # ── Precompute stage inputs ──────────────────────────────────────
         stages = [model.stage1, model.stage2, model.stage3, model.stage4]
-        target_stage = stages[self.target_stage_idx]
-        target_blk   = target_stage[self.target_block_idx]
+        target_blk = stages[self.target_stage_idx][self.target_block_idx]
 
         w1_orig = target_blk.conv1.kernel.value
         w2_orig = target_blk.conv2.kernel.value
 
-        def _compute_block_preacts(X_data, chunk_sz):
-            """Return (pre_act_chunks, T_orig_chunks) for the target block."""
-            n_ch = int(np.ceil(len(X_data) / chunk_sz))
-            batches = [X_data[i*chunk_sz:(i+1)*chunk_sz] for i in range(n_ch)]
-            pa_chunks, t_chunks = [], []
-            for x_batch in batches:
-                h = model.stem(x_batch)
-                for s_idx, stage in enumerate(stages):
-                    for b_idx, blk in enumerate(stage):
-                        if s_idx == self.target_stage_idx and b_idx == self.target_block_idx:
-                            pa_chunks.append(h)
-                            out_bn1   = blk.bn1(h, use_running_average=True)
-                            out_relu1 = jax.nn.relu(out_bn1)
-                            y_raw     = jax.lax.conv_general_dilated(
-                                lhs=out_relu1, rhs=w1_orig.transpose(3, 2, 0, 1),
-                                window_strides=blk.conv1.strides, padding='SAME',
-                                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-                            y_bn2   = blk.bn2(y_raw, use_running_average=True)
-                            y_relu2 = jax.nn.relu(y_bn2)
-                            t_chunks.append(blk.conv2(y_relu2))
-                            break
-                        else:
-                            h = blk(h, use_running_average=True)
-                    if s_idx == self.target_stage_idx:
-                        break
-            return pa_chunks, t_chunks
-
         print('  Precomputing calibration-set block inputs...')
-        pre_act_chunks, T_orig_chunks = _compute_block_preacts(X_sub, self.chunk_size)
+        pre_act_chunks, T_orig_chunks = compute_cifar_block_preacts(
+            model, X_sub, self.chunk_size,
+            self.target_stage_idx, self.target_block_idx, w1_orig,
+        )
 
         print('  Precomputing test-set block inputs...')
-        te_pre_act_chunks, te_T_orig_chunks = _compute_block_preacts(x_te, self.chunk_size)
-                    
-        # get_Y_fn returns RAW (pre-BN2, pre-ReLU) Conv1 output patches.
-        # BN2 is intentionally excluded so that the regression features are
-        # directly sensitive to w1 perturbations.  W2_new absorbs both the
-        # BN2 normalisation and the perturbation effect via least-squares.
-        def get_Y_fn(w1, h_in):
-            out_bn1 = target_blk.bn1(h_in, use_running_average=True)
-            out_relu1 = jax.nn.relu(out_bn1)
-            y_raw = jax.lax.conv_general_dilated(
-                lhs=out_relu1, rhs=w1.transpose(3, 2, 0, 1),
-                window_strides=target_blk.conv1.strides, padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            # No BN2 / ReLU — raw conv1 output so perturbations remain visible
-            from pnc import extract_patches
-            Y = extract_patches(y_raw, k=3, strides=1)
-            return Y
+        te_pre_act_chunks, te_T_orig_chunks = compute_cifar_block_preacts(
+            model, x_te, self.chunk_size,
+            self.target_stage_idx, self.target_block_idx, w1_orig,
+        )
+
+        # get_Y_fn: RAW (pre-BN2) conv1 patches; W2 ridge absorbs BN2 + perturbation.
+        get_Y_fn = make_cifar_block_get_Y_fn(target_blk)
 
         t0 = time.time()
         print(f'  Finding {self.n_directions} directions via Lanczos over chunks...')
@@ -751,6 +789,193 @@ class CIFARPnC(luigi.Task):
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, 'w') as f:
             json.dump(all_metrics, f, indent=2)
+
+
+class CIFARMultiBlockPnC(luigi.Task):
+    """
+    Multi-block PnC (approach B): Lanczos + ridge independently per residual block;
+    MAP calibration per block. z_coeffs shape (N, 8, K). Ridge solves show a tqdm bar.
+    """
+
+    dataset = luigi.Parameter(default="cifar10")
+    epochs = luigi.IntParameter(default=100)
+    n_directions = luigi.IntParameter(default=10)
+    n_perturbations = luigi.IntParameter(default=50)
+    perturbation_sizes = luigi.ListParameter(default=[10.0, 50.0, 100.0, 200.0])
+    subset_size = luigi.IntParameter(default=1024)
+    chunk_size = luigi.IntParameter(default=128)
+    seed = luigi.IntParameter(default=0)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
+
+    def output(self) -> luigi.LocalTarget:
+        ps = _ps_str(self.perturbation_sizes)
+        return luigi.LocalTarget(
+            str(
+                Path("results")
+                / self.dataset
+                / f"pnc_allblocks_k{self.n_directions}_n{self.n_perturbations}"
+                f"_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}.json"
+            )
+        )
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        if self.dataset.lower() == "cifar10":
+            from data import load_cifar10
+
+            x_train_full, y_train_full, x_te, y_te = load_cifar10()
+            n_cls = 10
+        elif self.dataset.lower() == "cifar100":
+            from data import load_cifar100
+
+            x_train_full, y_train_full, x_te, y_te = load_cifar100()
+            n_cls = 100
+        else:
+            raise ValueError(f"Unknown dataset: {self.dataset}")
+
+        from util import _split_data
+
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
+
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, "rb") as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt["state"])
+
+        print(
+            f"\\n=== CIFAR Multi-block PnC (8 blocks, K={self.n_directions}, n={self.n_perturbations}) ==="
+        )
+        t_start = time.time()
+
+        actual_sub = min(len(x_tr), self.subset_size)
+        rng = np.random.RandomState(self.seed)
+        idx = rng.choice(len(x_tr), actual_sub, replace=False)
+        X_sub = x_tr[idx]
+
+        stages = [model.stage1, model.stage2, model.stage3, model.stage4]
+        block_indices = preact_resnet18_block_indices()
+
+        pre_act_calib: list = []
+        T_calib: list = []
+        pre_act_test: list = []
+        T_test: list = []
+        v_opts_list: list = []
+        sigmas_list: list = []
+        w1_list: list = []
+        w2_list: list = []
+        get_Y_fns: list = []
+
+        from pnc import find_pnc_subspace_lanczos
+
+        for s_idx, b_idx in tqdm(
+            block_indices, desc="Multi-block PnC: Lanczos (8 blocks)", unit="block"
+        ):
+            target_blk = stages[s_idx][b_idx]
+            w1_orig = target_blk.conv1.kernel.value
+            w2_orig = target_blk.conv2.kernel.value
+            w1_list.append(w1_orig)
+            w2_list.append(w2_orig)
+            get_Y_fns.append(make_cifar_block_get_Y_fn(target_blk))
+
+            pa_c, T_c = compute_cifar_block_preacts(
+                model, X_sub, self.chunk_size, s_idx, b_idx, w1_orig
+            )
+            pa_te, T_te = compute_cifar_block_preacts(
+                model, x_te, self.chunk_size, s_idx, b_idx, w1_orig
+            )
+            pre_act_calib.append(pa_c)
+            T_calib.append(T_c)
+            pre_act_test.append(pa_te)
+            T_test.append(T_te)
+
+            t0 = time.time()
+            v_opts, sigmas = find_pnc_subspace_lanczos(
+                get_Y_fns[-1],
+                w1_orig,
+                pa_c,
+                K=self.n_directions,
+                seed=self.seed + 17 * s_idx + 31 * b_idx,
+            )
+            print(
+                f"    Block stage{s_idx + 1}[{b_idx}] Lanczos done in {time.time() - t0:.2f}s"
+            )
+            v_opts_list.append(v_opts)
+            sigmas_list.append(sigmas)
+
+        setup_time = time.time() - t_start
+
+        rng_z = np.random.RandomState(self.seed + 999)
+        n_blk = len(block_indices)
+        all_z = rng_z.normal(
+            0, 1, size=(self.n_perturbations, n_blk, self.n_directions)
+        )
+
+        block_specs = []
+        for b in range(n_blk):
+            block_specs.append(
+                {
+                    "stage_idx": block_indices[b][0],
+                    "block_idx": block_indices[b][1],
+                    "w1_orig": w1_list[b],
+                    "w2_orig": w2_list[b],
+                    "v_opts": v_opts_list[b],
+                    "sigmas": sigmas_list[b],
+                    "chunks": pre_act_calib[b],
+                    "T_orig_chunks": T_calib[b],
+                    "get_Y_fn": get_Y_fns[b],
+                }
+            )
+
+        all_metrics = {}
+
+        for p_size in self.perturbation_sizes:
+            print(f"  Building multi-block PnC ensemble (p_scale={p_size}) ...")
+            t1 = time.time()
+            ens = MultiBlockPnCEnsemble(
+                base_model=model,
+                block_specs=block_specs,
+                z_coeffs=all_z,
+                perturbation_scale=float(p_size),
+                progress_desc=f"Multi-block PnC ridge (p={p_size})",
+            )
+            print(f"  Precompute + diagnostics: {time.time() - t1:.2f}s")
+            m = _evaluate_cifar(
+                f"Multi-block PnC (scale={p_size})",
+                ens,
+                x_te,
+                y_te,
+                n_cls,
+                sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
+            )
+            m["train_time"] = setup_time
+
+            raw_calib, corr_calib = ens.calib_raw_arr, ens.calib_corr_arr
+            raw_test, corr_test = ens.compute_shift_diagnostics(
+                pre_act_test, T_test, label="test"
+            )
+
+            def _diag_stats(raw_arr, corr_arr, prefix):
+                return {
+                    f"{prefix}_raw_shift_mean": float(raw_arr.mean()),
+                    f"{prefix}_raw_shift_std": float(raw_arr.std()),
+                    f"{prefix}_corr_shift_mean": float(corr_arr.mean()),
+                    f"{prefix}_corr_shift_std": float(corr_arr.std()),
+                    f"{prefix}_reduction_pct": float(
+                        (1.0 - corr_arr.mean() / (raw_arr.mean() + 1e-12)) * 100
+                    ),
+                }
+
+            m.update(_diag_stats(raw_calib, corr_calib, "diag_calib"))
+            m.update(_diag_stats(raw_test, corr_test, "diag_test"))
+            all_metrics[str(p_size)] = m
+
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, "w") as f:
+            json.dump(all_metrics, f, indent=2)
+
+
 
 
 class CIFARLLLA(luigi.Task):
