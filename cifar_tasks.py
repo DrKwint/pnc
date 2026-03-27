@@ -16,7 +16,7 @@ import numpy as np
 
 from util import seed_everything, _evaluate_cifar, _ps_str, _split_data
 from pjsvd import find_pjsvd_directions_randomized_svd
-from models import PreActResNet18, MCDropoutPreActResNet18
+from models import PreActResNet18, MCDropoutPreActResNet18, _PreActBasicBlock
 from data import load_cifar10, load_cifar100
 from training import train_resnet_model
 from ensembles import SWAGEnsemble, PJSVDEnsemble, PnCEnsemble, MultiBlockPnCEnsemble, LLLAEnsemble
@@ -33,9 +33,32 @@ def preact_resnet18_block_indices() -> list[tuple[int, int]]:
     return [(s, b) for s in range(4) for b in range(2)]
 
 
+@nnx.jit
+def _forward_block_jit(blk: _PreActBasicBlock, h: jax.Array, w1: jax.Array) -> tuple[jax.Array, jax.Array]:
+    """JITed forward pass for one block, returning (h_next, T_conv2)."""
+    out_bn1 = blk.bn1(h, use_running_average=True)
+    out_relu1 = jax.nn.relu(out_bn1)
+    # y_raw uses the passed-in w1 (which might be orig OR perturbed later)
+    y_raw = jax.lax.conv_general_dilated(
+        lhs=out_relu1,
+        rhs=w1.transpose(3, 2, 0, 1),
+        window_strides=blk.conv1.strides,
+        padding="SAME",
+        dimension_numbers=("NHWC", "OIHW", "NHWC"),
+    )
+    y_bn2 = blk.bn2(y_raw, use_running_average=True)
+    y_relu2 = jax.nn.relu(y_bn2)
+    t = blk.conv2(y_relu2)
+    
+    if blk.downsample is not None:
+        identity = blk.downsample(out_relu1)
+    else:
+        identity = h
+    return (t + identity), t
+
 def compute_cifar_block_preacts(
     model: PreActResNet18,
-    X_data: np.ndarray,
+    X_data: jax.Array,
     chunk_sz: int,
     target_stage_idx: int,
     target_block_idx: int,
@@ -47,28 +70,26 @@ def compute_cifar_block_preacts(
     """
     stages = [model.stage1, model.stage2, model.stage3, model.stage4]
     n_ch = int(np.ceil(len(X_data) / chunk_sz))
-    batches = [X_data[i * chunk_sz : (i + 1) * chunk_sz] for i in range(n_ch)]
+    
     pa_chunks, t_chunks = [], []
-    for x_batch in batches:
-        h = model.stem(x_batch)
+    
+    # Process through stem once
+    @nnx.jit
+    def run_stem_jit(x):
+        return model.stem(x)
+    
+    for i in range(n_ch):
+        x_batch = X_data[i * chunk_sz : (i + 1) * chunk_sz]
+        h = run_stem_jit(x_batch)
         for s_idx, stage in enumerate(stages):
             for b_idx, blk in enumerate(stage):
                 if s_idx == target_stage_idx and b_idx == target_block_idx:
                     pa_chunks.append(h)
-                    out_bn1 = blk.bn1(h, use_running_average=True)
-                    out_relu1 = jax.nn.relu(out_bn1)
-                    y_raw = jax.lax.conv_general_dilated(
-                        lhs=out_relu1,
-                        rhs=w1_orig.transpose(3, 2, 0, 1),
-                        window_strides=blk.conv1.strides,
-                        padding="SAME",
-                        dimension_numbers=("NHWC", "OIHW", "NHWC"),
-                    )
-                    y_bn2 = blk.bn2(y_raw, use_running_average=True)
-                    y_relu2 = jax.nn.relu(y_bn2)
-                    t_chunks.append(blk.conv2(y_relu2))
+                    _, t = _forward_block_jit(blk, h, w1_orig)
+                    t_chunks.append(t)
                     break
-                h = blk(h, use_running_average=True)
+                # Only run the full block if we haven't reached target
+                h, _ = _forward_block_jit(blk, h, blk.conv1.kernel.value)
             if s_idx == target_stage_idx:
                 break
     return pa_chunks, t_chunks
@@ -671,7 +692,7 @@ class CIFARPnC(luigi.Task):
     n_perturbations    = luigi.IntParameter(default=50)
     perturbation_sizes = luigi.ListParameter(default=[10.0, 50.0, 100.0, 200.0])
     subset_size        = luigi.IntParameter(default=1024)
-    chunk_size         = luigi.IntParameter(default=128)
+    chunk_size         = luigi.IntParameter(default=1024)
     target_stage_idx   = luigi.IntParameter(default=3) # stage4 is index 3
     target_block_idx   = luigi.IntParameter(default=1) # block1 is index 1
     seed               = luigi.IntParameter(default=0)
@@ -799,11 +820,12 @@ class CIFARMultiBlockPnC(luigi.Task):
 
     dataset = luigi.Parameter(default="cifar10")
     epochs = luigi.IntParameter(default=100)
-    n_directions = luigi.IntParameter(default=10)
-    n_perturbations = luigi.IntParameter(default=50)
-    perturbation_sizes = luigi.ListParameter(default=[10.0, 50.0, 100.0, 200.0])
+    n_directions = luigi.IntParameter(default=16)
+    n_perturbations = luigi.IntParameter(default=32)
+    perturbation_sizes = luigi.ListParameter(default=[1.0, 5.0, 10.0, 50.0])
     subset_size = luigi.IntParameter(default=1024)
-    chunk_size = luigi.IntParameter(default=128)
+    chunk_size = luigi.IntParameter(default=64)
+    lambda_reg = luigi.FloatParameter(default=1e-3)
     seed = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
@@ -857,76 +879,176 @@ class CIFARMultiBlockPnC(luigi.Task):
         stages = [model.stage1, model.stage2, model.stage3, model.stage4]
         block_indices = preact_resnet18_block_indices()
 
-        pre_act_calib: list = []
-        T_calib: list = []
-        pre_act_test: list = []
-        T_test: list = []
+        # Sequential processing to avoid redundant forward passes and excessive memory usage
         v_opts_list: list = []
         sigmas_list: list = []
         w1_list: list = []
         w2_list: list = []
         get_Y_fns: list = []
+        
+        # Solved weights per block per member: (n_blk, n_mem, 3) where 3 is (w1, w2, b2)
+        block_member_weights = []
+        
+        # Full diagnostics (n_blk, n_mem)
+        raw_calib_full = []
+        corr_calib_full = []
+        raw_test_full = []
+        corr_test_full = []
 
-        from pnc import find_pnc_subspace_lanczos
+        from pnc import find_pnc_subspace_lanczos, solve_chunked_conv2_correction
 
-        for s_idx, b_idx in tqdm(
-            block_indices, desc="Multi-block PnC: Lanczos (8 blocks)", unit="block"
-        ):
+        # Initialize activations from stem
+        @nnx.jit
+        def run_stem_jit(x):
+            return model.stem(x)
+
+        n_ch_c = int(np.ceil(len(X_sub) / self.chunk_size))
+        n_ch_te = int(np.ceil(len(x_te) / self.chunk_size))
+
+        h_calib_chunks = [run_stem_jit(X_sub[i*self.chunk_size:(i+1)*self.chunk_size]) for i in range(n_ch_c)]
+        h_test_chunks = [run_stem_jit(x_te[i*self.chunk_size:(i+1)*self.chunk_size]) for i in range(n_ch_te)]
+        
+        n_mem = self.n_perturbations
+        rng_z = np.random.RandomState(self.seed + 999)
+        all_z = rng_z.normal(0, 1, size=(n_mem, len(block_indices), self.n_directions))
+
+        for b_idx_flat, (s_idx, b_idx) in enumerate(tqdm(
+            block_indices, desc="Multi-block PnC: Lanczos + Ridge + Diag", unit="block"
+        )):
             target_blk = stages[s_idx][b_idx]
             w1_orig = target_blk.conv1.kernel.value
             w2_orig = target_blk.conv2.kernel.value
             w1_list.append(w1_orig)
             w2_list.append(w2_orig)
-            get_Y_fns.append(make_cifar_block_get_Y_fn(target_blk))
+            
+            get_Y_fn = make_cifar_block_get_Y_fn(target_blk)
+            get_Y_fns.append(get_Y_fn)
 
-            pa_c, T_c = compute_cifar_block_preacts(
-                model, X_sub, self.chunk_size, s_idx, b_idx, w1_orig
-            )
-            pa_te, T_te = compute_cifar_block_preacts(
-                model, x_te, self.chunk_size, s_idx, b_idx, w1_orig
-            )
-            pre_act_calib.append(pa_c)
-            T_calib.append(T_c)
-            pre_act_test.append(pa_te)
-            T_test.append(T_te)
-
+            # 1. Run Lanczos (Calibration input is current h_calib_chunks)
             t0 = time.time()
             v_opts, sigmas = find_pnc_subspace_lanczos(
-                get_Y_fns[-1],
+                get_Y_fn,
                 w1_orig,
-                pa_c,
+                h_calib_chunks,
                 K=self.n_directions,
                 seed=self.seed + 17 * s_idx + 31 * b_idx,
-            )
-            print(
-                f"    Block stage{s_idx + 1}[{b_idx}] Lanczos done in {time.time() - t0:.2f}s"
             )
             v_opts_list.append(v_opts)
             sigmas_list.append(sigmas)
 
+            # 2. Advance h_calib and collect T_c for Ridge solve
+            T_c_chunks = []
+            new_h_c_chunks = []
+            for h in h_calib_chunks:
+                h_next, t = _forward_block_jit(target_blk, h, w1_orig)
+                new_h_c_chunks.append(h_next)
+                T_c_chunks.append(t)
+
+            # 3. Solve Ridge for each member
+            members_this_block = []
+            kh, kw, C_in, C_out = w2_orig.shape
+            w2_flat_orig = w2_orig.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+            
+            # Helper for diagnostics
+            def _coeffs_from_z(z_row, sigmas, p_scale):
+                safe_sigmas = sigmas + 1e-6
+                coeffs = z_row / safe_sigmas
+                norm = np.linalg.norm(coeffs) + 1e-12
+                return (coeffs / norm) * p_scale
+
+            for i in range(n_mem):
+                z_row = all_z[i, b_idx_flat, :]
+                coeffs = _coeffs_from_z(z_row, sigmas, self.perturbation_sizes[0])
+                dp = coeffs @ v_opts
+                w1_pert = w1_orig + dp.reshape(w1_orig.shape)
+                
+                w2_pert, b2_pert = solve_chunked_conv2_correction(
+                    get_Y_fn, w1_pert, h_calib_chunks, T_c_chunks,
+                    w2_shape=tuple(w2_orig.shape), lambda_reg=self.lambda_reg
+                )
+                members_this_block.append((w1_pert, w2_pert, b2_pert))
+
+            block_member_weights.append(members_this_block)
+
+            # 4. Compute Diagnostics and Advance h_test Chunks simultaneously
+            raw_c_norms, corr_c_norms = [], []
+            for w1_p, w2_p, b2_p in members_this_block:
+                w2_p_f = w2_p.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+                
+                raw_err_sq, corr_err_sq, n_tot = 0.0, 0.0, 0
+                for ch, to in zip(h_calib_chunks, T_c_chunks):
+                    n = ch.shape[0]
+                    Y_p = get_Y_fn(w1_p, ch)
+                    diff_raw = (Y_p @ w2_flat_orig).reshape(to.shape) - to
+                    diff_corr = (Y_p @ w2_p_f + b2_p).reshape(to.shape) - to
+                    raw_err_sq += float(jnp.sum(diff_raw**2))
+                    corr_err_sq += float(jnp.sum(diff_corr**2))
+                    n_tot += n
+                raw_c_norms.append(np.sqrt(raw_err_sq / n_tot))
+                corr_c_norms.append(np.sqrt(corr_err_sq / n_tot))
+            
+            raw_calib_full.append(raw_c_norms)
+            corr_calib_full.append(corr_c_norms)
+
+            # Process test chunks one by one
+            new_h_te_chunks = []
+            raw_te_err_sq_sum = np.zeros(n_mem)
+            corr_te_err_sq_sum = np.zeros(n_mem)
+            total_te_samples = 0
+
+            @nnx.jit
+            def diag_test_step(h_ch, w1_p, w2_p_f, b2_p, t_orig):
+                Y_p = get_Y_fn(w1_p, h_ch)
+                t_raw = (Y_p @ w2_flat_orig).reshape(t_orig.shape)
+                t_corr = (Y_p @ w2_p_f + b2_p).reshape(t_orig.shape)
+                return jnp.sum((t_raw - t_orig)**2), jnp.sum((t_corr - t_orig)**2)
+
+            for h in h_test_chunks:
+                h_next, t_orig = _forward_block_jit(target_blk, h, w1_orig)
+                new_h_te_chunks.append(h_next)
+                
+                n = h.shape[0]
+                total_te_samples += n
+                
+                for i in range(n_mem):
+                    w1_p, w2_p, b2_p = members_this_block[i]
+                    w2_p_f = w2_p.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+                    r_sq, c_sq = diag_test_step(h, w1_p, w2_p_f, b2_p, t_orig)
+                    raw_te_err_sq_sum[i] += float(r_sq)
+                    corr_te_err_sq_sum[i] += float(c_sq)
+                
+                del t_orig
+
+            raw_test_full.append(np.sqrt(raw_te_err_sq_sum / total_te_samples))
+            corr_test_full.append(np.sqrt(corr_te_err_sq_sum / total_te_samples))
+
+            # Update h_chunks
+            h_calib_chunks = new_h_c_chunks
+            h_test_chunks = new_h_te_chunks
+            
+            del T_c_chunks, new_h_c_chunks
+            jax.clear_caches()
+
         setup_time = time.time() - t_start
 
-        rng_z = np.random.RandomState(self.seed + 999)
-        n_blk = len(block_indices)
-        all_z = rng_z.normal(
-            0, 1, size=(self.n_perturbations, n_blk, self.n_directions)
-        )
+        # Transpose weights: (n_blk, n_mem) -> (n_mem, n_blk)
+        members_transposed = [[block_member_weights[b][i] for b in range(len(block_indices))] for i in range(n_mem)]
+        
+        # Aggregated diagnostics: (n_mem,) mean over blocks
+        final_raw_calib = np.mean(raw_calib_full, axis=0)
+        final_corr_calib = np.mean(corr_calib_full, axis=0)
+        final_raw_test = np.mean(raw_test_full, axis=0)
+        final_corr_test = np.mean(corr_test_full, axis=0)
 
-        block_specs = []
-        for b in range(n_blk):
-            block_specs.append(
-                {
-                    "stage_idx": block_indices[b][0],
-                    "block_idx": block_indices[b][1],
-                    "w1_orig": w1_list[b],
-                    "w2_orig": w2_list[b],
-                    "v_opts": v_opts_list[b],
-                    "sigmas": sigmas_list[b],
-                    "chunks": pre_act_calib[b],
-                    "T_orig_chunks": T_calib[b],
-                    "get_Y_fn": get_Y_fns[b],
-                }
-            )
+        # Prepare specs for the ensemble (weights already solved, chunks not needed)
+        block_specs_empty = []
+        for b in range(len(block_indices)):
+            block_specs_empty.append({
+                "stage_idx": block_indices[b][0], "block_idx": block_indices[b][1],
+                "w1_orig": w1_list[b], "w2_orig": w2_list[b],
+                "v_opts": v_opts_list[b], "sigmas": sigmas_list[b],
+                "chunks": [], "T_orig_chunks": [], "get_Y_fn": get_Y_fns[b]
+            })
 
         all_metrics = {}
 
@@ -935,26 +1057,21 @@ class CIFARMultiBlockPnC(luigi.Task):
             t1 = time.time()
             ens = MultiBlockPnCEnsemble(
                 base_model=model,
-                block_specs=block_specs,
+                block_specs=block_specs_empty,
                 z_coeffs=all_z,
                 perturbation_scale=float(p_size),
-                progress_desc=f"Multi-block PnC ridge (p={p_size})",
+                members=members_transposed,
+                raw_calib_arr=final_raw_calib,
+                corr_calib_arr=final_corr_calib,
             )
-            print(f"  Precompute + diagnostics: {time.time() - t1:.2f}s")
+            print(f"  Precompute (re-scaling): {time.time() - t1:.2f}s")
+            
             m = _evaluate_cifar(
                 f"Multi-block PnC (scale={p_size})",
-                ens,
-                x_te,
-                y_te,
-                n_cls,
+                ens, x_te, y_te, n_cls,
                 sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
             )
             m["train_time"] = setup_time
-
-            raw_calib, corr_calib = ens.calib_raw_arr, ens.calib_corr_arr
-            raw_test, corr_test = ens.compute_shift_diagnostics(
-                pre_act_test, T_test, label="test"
-            )
 
             def _diag_stats(raw_arr, corr_arr, prefix):
                 return {
@@ -967,8 +1084,10 @@ class CIFARMultiBlockPnC(luigi.Task):
                     ),
                 }
 
-            m.update(_diag_stats(raw_calib, corr_calib, "diag_calib"))
-            m.update(_diag_stats(raw_test, corr_test, "diag_test"))
+            # Scale diagnostics by p_size/original_p_size if p_size != first size
+            diag_scale = p_size / self.perturbation_sizes[0]
+            m.update(_diag_stats(final_raw_calib * diag_scale, final_corr_calib * diag_scale, "diag_calib"))
+            m.update(_diag_stats(final_raw_test * diag_scale, final_corr_test * diag_scale, "diag_test"))
             all_metrics[str(p_size)] = m
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)

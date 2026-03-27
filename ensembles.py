@@ -993,6 +993,9 @@ class MultiBlockPnCEnsemble:
         lambda_reg: float = 1e-3,
         sigma_sq_weights: bool = False,
         progress_desc: str = "Multi-block PnC: ridge solves",
+        members: List[List[Tuple[jax.Array, jax.Array, jax.Array]]] = None,
+        raw_calib_arr: np.ndarray = None,
+        corr_calib_arr: np.ndarray = None,
     ):
         """
         Args:
@@ -1000,6 +1003,7 @@ class MultiBlockPnCEnsemble:
                 stage_idx, block_idx, w1_orig, w2_orig, v_opts, sigmas,
                 chunks, T_orig_chunks, get_Y_fn
             z_coeffs: (N, n_blocks, K) Gaussian coefficients per block.
+            members: Optional pre-solved weights (n_mem, n_blk, (w1, w2, b2)).
         """
         self.base_model = base_model
         self.block_specs = block_specs
@@ -1007,6 +1011,12 @@ class MultiBlockPnCEnsemble:
         self.perturbation_scale = float(perturbation_scale)
         self.lambda_reg = lambda_reg
         self.sigma_sq_weights = sigma_sq_weights
+
+        if members is not None:
+            self.members = members
+            self.calib_raw_arr = raw_calib_arr
+            self.calib_corr_arr = corr_calib_arr
+            return
 
         n_mem, n_blk, _ = self.z_coeffs.shape
         assert n_blk == len(block_specs), "z_coeffs middle dim must match len(block_specs)"
