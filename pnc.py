@@ -20,21 +20,32 @@ def extract_patches(x: jax.Array, k: int = 3, strides: int = 1) -> jax.Array:
     return patches.reshape(-1, patches.shape[-1])
 
 
-def _pad_and_stack(chunks: List[jax.Array]) -> jax.Array:
+def _pad_and_stack(chunks: List[jax.Array]) -> Tuple[jax.Array, jax.Array]:
     """
     Stack a list of chunks into a single (n_chunks, chunk_size, ...) array.
     The last chunk is zero-padded to match the leading chunk size if needed.
+    Returns padded chunks and a boolean mask (n_chunks, chunk_size) where True indicates valid (non-padded) rows.
     """
     if not chunks:
         raise ValueError("chunks list is empty")
     chunk_size = chunks[0].shape[0]
-    last = chunks[-1]
-    if last.shape[0] < chunk_size:
-        pad = jnp.zeros(
-            (chunk_size - last.shape[0],) + last.shape[1:], dtype=last.dtype
-        )
-        chunks = list(chunks[:-1]) + [jnp.concatenate([last, pad], axis=0)]
-    return jnp.stack(chunks)
+    n_chunks = len(chunks)
+    padded_chunks = []
+    mask = jnp.zeros((n_chunks, chunk_size), dtype=bool)
+    
+    for i, chunk in enumerate(chunks):
+        if chunk.shape[0] < chunk_size:
+            pad = jnp.zeros(
+                (chunk_size - chunk.shape[0],) + chunk.shape[1:], dtype=chunk.dtype
+            )
+            padded_chunk = jnp.concatenate([chunk, pad], axis=0)
+            mask = mask.at[i, :chunk.shape[0]].set(True)
+        else:
+            padded_chunk = chunk
+            mask = mask.at[i, :].set(True)
+        padded_chunks.append(padded_chunk)
+    
+    return jnp.stack(padded_chunks), mask
 
 
 def build_chunked_geometry(
@@ -46,25 +57,28 @@ def build_chunked_geometry(
     Accumulates G = sum_i M_i^T M_i where M_i = [1, Y_i], via a single
     JIT-compiled lax.scan pass.  Returns G_inv = G^{-1}.
     """
-    chunks_stacked = _pad_and_stack(chunks)
+    chunks_stacked, mask = _pad_and_stack(chunks)
 
     # Determine D_M from one sample forward pass (outside JIT).
     Y0 = get_Y_fn(w1_orig, chunks[0][:1])
     D_M = 1 + Y0.shape[-1]  # [bias, Y]
 
-    def geo_body(G_acc, x_i):
+    def geo_body(G_acc, args):
+        x_i, mask_i = args
         Y_i = get_Y_fn(w1_orig, x_i)
         ones = jnp.ones((Y_i.shape[0], 1), dtype=jnp.float32)
         M_i = jnp.concatenate([ones, Y_i], axis=1)
+        # Mask out padded rows
+        M_i = M_i * mask_i[:, None]
         return G_acc + (M_i.T @ M_i), None
 
     @jax.jit
-    def run_geo(chunks_arr):
-        G, _ = jax.lax.scan(geo_body, jnp.zeros((D_M, D_M), jnp.float32), chunks_arr)
+    def run_geo(chunks_arr, mask_arr):
+        G, _ = jax.lax.scan(geo_body, jnp.zeros((D_M, D_M), jnp.float32), (chunks_arr, mask_arr))
         return G
 
     print("Building chunked geometry (scan)...")
-    G = run_geo(chunks_stacked)
+    G = run_geo(chunks_stacked, mask)
     G = G + 1e-6 * jnp.eye(D_M)
     G_inv = jnp.linalg.inv(G)
     return G_inv
@@ -89,7 +103,7 @@ def find_pnc_subspace_lanczos(
     print("Building chunked geometry...")
     G_inv = build_chunked_geometry(get_Y_fn, w1_orig, chunks)
 
-    chunks_stacked = _pad_and_stack(chunks)
+    chunks_stacked, mask = _pad_and_stack(chunks)
     D = int(w1_orig.size)
 
     Y0 = get_Y_fn(w1_orig, chunks[0][:1])
@@ -101,23 +115,28 @@ def find_pnc_subspace_lanczos(
         v = v_flat.reshape(w1_orig.shape)
 
         # ── Pass 1: c = Σ M_i^T Jv_i ──────────────────────────────────────
-        def pass1_body(c_acc, x_i):
+        def pass1_body(c_acc, args):
+            x_i, mask_i = args
             def f(w):
                 return get_Y_fn(w, x_i)
             Y_i, Jv_i = jax.jvp(f, (w1_orig,), (v,))
             ones = jnp.ones((Y_i.shape[0], 1), dtype=jnp.float32)
             M_i = jnp.concatenate([ones, Y_i], axis=1)
+            # Mask out padded rows
+            M_i = M_i * mask_i[:, None]
+            Jv_i = Jv_i * mask_i[:, None]
             return c_acc + M_i.T @ Jv_i, None
 
         c, _ = jax.lax.scan(
-            pass1_body, jnp.zeros((D_M, D_Y), jnp.float32), chunks_stacked
+            pass1_body, jnp.zeros((D_M, D_Y), jnp.float32), (chunks_stacked, mask)
         )
         alpha = G_inv @ c  # (D_M, D_Y)
 
         # ── Pass 2: result = Σ J_i^T r_i, r_i = Jv_i - M_i alpha ─────────
         # jax.vjp is fully compatible with jax.jit + lax.scan.
         # XLA CSE will fuse the forward passes from jvp and vjp in each body.
-        def pass2_body(r_acc, x_i):
+        def pass2_body(r_acc, args):
+            x_i, mask_i = args
             def f(w):
                 return get_Y_fn(w, x_i)
 
@@ -126,11 +145,13 @@ def find_pnc_subspace_lanczos(
             ones = jnp.ones((Y_i.shape[0], 1), dtype=jnp.float32)
             M_i = jnp.concatenate([ones, Y_i], axis=1)
             r_i = Jv_i - M_i @ alpha  # (S, D_Y)
+            # Mask out padded rows
+            r_i = r_i * mask_i[:, None]
             (JT_ri,) = vjp_fn(r_i)
             return r_acc + JT_ri.reshape(-1), None
 
         result, _ = jax.lax.scan(
-            pass2_body, jnp.zeros(D, jnp.float32), chunks_stacked
+            pass2_body, jnp.zeros(D, jnp.float32), (chunks_stacked, mask)
         )
         return result
 
@@ -188,8 +209,8 @@ def solve_chunked_conv2_correction(
     W2_flat (D, C_out) is reshaped as (C_in, kh, kw, C_out) then transposed
     to (kh, kw, C_in, C_out).
     """
-    chunks_stacked = _pad_and_stack(chunks)
-    T_stacked = _pad_and_stack(T_orig_chunks)
+    chunks_stacked, mask = _pad_and_stack(chunks)
+    T_stacked, _ = _pad_and_stack(T_orig_chunks)
 
     kh, kw, C_in, C_out = w2_shape
     Y0 = get_Y_fn(w1_pert, chunks[0][:1])
@@ -197,13 +218,16 @@ def solve_chunked_conv2_correction(
     D_M = D_Y + 1  # Y then bias (convention of original)
 
     @jax.jit
-    def run_ridge(chunks_arr, T_arr, w1_arg):
+    def run_ridge(chunks_arr, T_arr, mask_arr, w1_arg):
         def ridge_body(carry, args):
-            x_i, T_i = args
+            x_i, T_i, mask_i = args
             Y_v = get_Y_fn(w1_arg, x_i)
             ones = jnp.ones((Y_v.shape[0], 1), dtype=jnp.float32)
             Y_tilde = jnp.concatenate([Y_v, ones], axis=1)       # (S, D_M)
             T_i_flat = T_i.reshape(-1, T_i.shape[-1])            # (S, C_out)
+            # Mask out padded rows
+            Y_tilde = Y_tilde * mask_i[:, None]
+            T_i_flat = T_i_flat * mask_i[:, None]
             H_acc, b_acc = carry
             return (H_acc + Y_tilde.T @ Y_tilde,
                     b_acc + Y_tilde.T @ T_i_flat), None
@@ -212,12 +236,12 @@ def solve_chunked_conv2_correction(
             ridge_body,
             (jnp.zeros((D_M, D_M), jnp.float32),
              jnp.zeros((D_M, C_out), jnp.float32)),
-            (chunks_arr, T_arr),
+            (chunks_arr, T_arr, mask_arr),
         )
         return H, b
 
     print("Solving ridge regression (scan)...")
-    H, b = run_ridge(chunks_stacked, T_stacked, w1_pert)
+    H, b = run_ridge(chunks_stacked, T_stacked, mask, w1_pert)
 
     reg = H + lambda_reg * jnp.eye(D_M)
     Theta = jnp.linalg.solve(reg, b)   # (D_M, C_out)

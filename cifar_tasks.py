@@ -75,7 +75,7 @@ def compute_cifar_block_preacts(
 
 
 def make_cifar_block_get_Y_fn(target_blk: nnx.Module):
-    """get_Y_fn(w1, h_in) -> patch features of raw conv1 output (pre-bn2), for PnC ridge."""
+    """get_Y_fn(w1, h_in) -> patch features of post-bn2-relu conv1 output, for PnC ridge."""
 
     def get_Y_fn(w1, h_in):
         out_bn1 = target_blk.bn1(h_in, use_running_average=True)
@@ -87,9 +87,13 @@ def make_cifar_block_get_Y_fn(target_blk: nnx.Module):
             padding="SAME",
             dimension_numbers=("NHWC", "OIHW", "NHWC"),
         )
+        y_bn2 = target_blk.bn2(y_raw, use_running_average=True)
+        y_relu2 = jax.nn.relu(y_bn2)
         from pnc import extract_patches
-
-        return extract_patches(y_raw, k=3, strides=1)
+        kh = target_blk.conv2.kernel_size[0]
+        s = target_blk.conv2.strides[0]
+        Y = extract_patches(y_relu2, k=kh, strides=s)
+        return Y
 
     return get_Y_fn
 
@@ -768,8 +772,6 @@ class CIFARPnC(luigi.Task):
             # ── Block-output shift diagnostics (calib & test) ──────────────
             # Calibration arrays already computed during _precompute_corrections.
             raw_calib, corr_calib = ens.calib_raw_arr, ens.calib_corr_arr
-            raw_test,  corr_test  = ens.compute_shift_diagnostics(
-                te_pre_act_chunks, te_T_orig_chunks, label="test")
 
             def _diag_stats(raw_arr, corr_arr, prefix):
                 r = {
@@ -783,8 +785,14 @@ class CIFARPnC(luigi.Task):
                 return r
 
             m.update(_diag_stats(raw_calib, corr_calib, "diag_calib"))
-            m.update(_diag_stats(raw_test,  corr_test,  "diag_test"))
             all_metrics[str(p_size)] = m
+
+        # Compute test diagnostics once (independent of perturbation scale)
+        raw_test, corr_test = ens.compute_shift_diagnostics(
+            te_pre_act_chunks, te_T_orig_chunks, label="test")
+        test_diag = _diag_stats(raw_test, corr_test, "diag_test")
+        for p_size in self.perturbation_sizes:
+            all_metrics[str(p_size)].update(test_diag)
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, 'w') as f:

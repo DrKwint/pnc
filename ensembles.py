@@ -933,22 +933,25 @@ class PnCEnsemble:
             for b_idx, blk in enumerate(stage):
                 if s_idx == self.target_stage_idx and b_idx == self.target_block_idx:
                     # Custom forward for the perturbed block.
-                    # get_Y_fn returns RAW (pre-BN2) Conv1 patches, so w2_pert
-                    # is applied directly to the raw Conv1 output — BN2 is skipped
-                    # because W2_new has absorbed it via ridge regression.
+                    # get_Y_fn returns post-BN2-ReLU Conv1 patches, so apply BN2/ReLU
+                    # before applying W2_new to match the regression setup.
                     out_bn1 = blk.bn1(h, use_running_average=True)
                     out_relu1 = jax.nn.relu(out_bn1)
                     
-                    # Perturbed Conv1 (raw output, no BN2/ReLU)
-                    strides = blk.conv1.strides
+                    # Perturbed Conv1
+                    strides = tuple(blk.conv1.strides)
                     y_raw = jax.lax.conv_general_dilated(
                         lhs=out_relu1, rhs=w1_pert.transpose(3, 2, 0, 1),
                         window_strides=strides, padding='SAME',
                         dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
                     
-                    # Perturbed Conv2 applied directly to raw Conv1 output
+                    # Apply BN2 and ReLU before perturbed Conv2
+                    y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                    y_relu2 = jax.nn.relu(y_bn2)
+                    
+                    # Perturbed Conv2 applied to post-BN2-ReLU Conv1 output
                     t = jax.lax.conv_general_dilated(
-                        lhs=y_raw, rhs=w2_pert.transpose(3, 2, 0, 1),
+                        lhs=y_relu2, rhs=w2_pert.transpose(3, 2, 0, 1),
                         window_strides=(1, 1), padding='SAME',
                         dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
                     t = t + b2_pert
@@ -1170,7 +1173,7 @@ class MultiBlockPnCEnsemble:
                 w1_pert, w2_pert, b2_pert = self.members[idx][bi]
                 out_bn1 = blk.bn1(h, use_running_average=True)
                 out_relu1 = jax.nn.relu(out_bn1)
-                strides = blk.conv1.strides
+                strides = tuple(blk.conv1.strides)
                 y_raw = jax.lax.conv_general_dilated(
                     lhs=out_relu1,
                     rhs=w1_pert.transpose(3, 2, 0, 1),
@@ -1178,8 +1181,11 @@ class MultiBlockPnCEnsemble:
                     padding="SAME",
                     dimension_numbers=("NHWC", "OIHW", "NHWC"),
                 )
+                # Apply BN2 and ReLU before perturbed Conv2
+                y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                y_relu2 = jax.nn.relu(y_bn2)
                 t = jax.lax.conv_general_dilated(
-                    lhs=y_raw,
+                    lhs=y_relu2,
                     rhs=w2_pert.transpose(3, 2, 0, 1),
                     window_strides=(1, 1),
                     padding="SAME",
