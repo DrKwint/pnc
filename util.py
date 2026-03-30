@@ -10,30 +10,33 @@ from flax import nnx
 from jaxtyping import Array, Float
 
 from metrics import compute_calibration, compute_nll, compute_ood_metrics, print_metrics
-from pjsvd import find_optimal_perturbation
+from pjsvd import find_optimal_perturbation, find_optimal_perturbation_full
 
 # ---------------------------------------------------------------------------
 # Activation function registry
 # ---------------------------------------------------------------------------
 
 ACTIVATIONS: dict[str, callable] = {
-    "relu":  nnx.relu,
-    "gelu":  nnx.gelu,
-    "tanh":  jnp.tanh,
-    "silu":  jax.nn.silu,
-    "elu":   jax.nn.elu,
+    "relu": nnx.relu,
+    "gelu": nnx.gelu,
+    "tanh": jnp.tanh,
+    "silu": jax.nn.silu,
+    "elu": jax.nn.elu,
 }
 
 
 def _get_activation(name: str) -> callable:
     if name not in ACTIVATIONS:
-        raise ValueError(f"Unknown activation '{name}'. Choose from: {list(ACTIVATIONS)}")
+        raise ValueError(
+            f"Unknown activation '{name}'. Choose from: {list(ACTIVATIONS)}"
+        )
     return ACTIVATIONS[name]
 
 
 # ---------------------------------------------------------------------------
 # Seeding
 # ---------------------------------------------------------------------------
+
 
 def seed_everything(seed: int) -> None:
     """Seed all random number generators for reproducibility."""
@@ -48,10 +51,49 @@ def seed_everything(seed: int) -> None:
 # Shared evaluation helpers
 # ---------------------------------------------------------------------------
 
-def _evaluate_gym(ensemble_name: str, ensemble: Any,
-                  inputs_id_eval: Float[Array, "batch ..."], targets_id_eval: Array,
-                  inputs_ood: Float[Array, "batch ..."], targets_ood: Array,
-                  sidecar_path: str | None = None) -> dict[str, float]:
+
+def get_intermediate_state(model: Any, x: jax.Array, layer_idx: int) -> jax.Array:
+    """
+    Extracts the intermediate post-activation state from a model.
+    layer_idx=1 corresponds to the output of the first hidden layer (e.g. l1),
+    layer_idx=2 corresponds to the second (e.g. l2).
+    """
+    act = getattr(model, "activation", nnx.relu)
+    if hasattr(model, "layers"):
+        h = x
+        for i in range(layer_idx):
+            h = act(model.layers[i](h))
+        return h
+    else:
+        h = act(model.l1(x))
+        if layer_idx == 1:
+            return h
+        h = act(model.l2(h))
+        if layer_idx == 2:
+            return h
+        raise ValueError(f"layer_idx {layer_idx} not supported")
+
+
+def compute_l2_distance(perturbed_states: jax.Array, orig_state: jax.Array) -> float:
+    """
+    perturbed_states is (N_members, Batch, Dim)
+    orig_state is (Batch, Dim)
+    returns mean distance over members and batch
+    """
+    return float(
+        jnp.mean(jnp.sqrt(jnp.sum((perturbed_states - orig_state) ** 2, axis=-1)))
+    )
+
+
+def _evaluate_gym(
+    ensemble_name: str,
+    ensemble: Any,
+    inputs_id_eval: Float[Array, "batch ..."],
+    targets_id_eval: Array,
+    inputs_ood: Float[Array, "batch ..."],
+    targets_ood: Array,
+    sidecar_path: str | None = None,
+) -> dict[str, float]:
     """Evaluate a gym ensemble, return a scalar metrics dict.
 
     If sidecar_path is given, also writes a .npz file with per-point
@@ -63,59 +105,77 @@ def _evaluate_gym(ensemble_name: str, ensemble: Any,
     def _group(name, inputs, targets):
         # Warm-up
         _ = ensemble.predict(inputs[:1])
-        
+
         t0 = time.time()
-        preds    = ensemble.predict(inputs)          # (S, N, D)
+        preds = ensemble.predict(inputs)  # (S, N, D)
         preds.block_until_ready()
         eval_time = time.time() - t0
-        mean     = jnp.mean(preds, axis=0)           # (N, D)
-        var      = jnp.var(preds, axis=0)            # (N, D)
-        avg_var  = float(jnp.mean(var))
-        nll      = float(compute_nll(mean, var, targets))
-        ece      = float(compute_calibration(mean, var, targets))
-        rmse     = float(jnp.sqrt(jnp.mean((mean - targets) ** 2)))
+        mean = jnp.mean(preds, axis=0)  # (N, D)
+        var = 100 * jnp.var(preds, axis=0)  # (N, D)
+        avg_var = float(jnp.mean(var))
+        nll = float(compute_nll(mean, var, targets))
+        ece = float(compute_calibration(mean, var, targets))
+        rmse = float(jnp.sqrt(jnp.mean((mean - targets) ** 2)))
         print_metrics(name, rmse, avg_var, nll, ece)
         # Per-point scalars for error-variance plot:
         # sq_error: mean squared error per sample (averaged over output dims)
         sq_err_per_pt = np.array(jnp.mean((mean - targets) ** 2, axis=-1))  # (N,)
         # predictive_variance: mean predictive variance per sample
-        pred_var_per_pt = np.array(jnp.mean(var, axis=-1))                  # (N,)
+        pred_var_per_pt = np.array(jnp.mean(var, axis=-1))  # (N,)
         return rmse, avg_var, nll, ece, sq_err_per_pt, pred_var_per_pt, eval_time
 
-    rmse_id,  var_id,  nll_id,  ece_id,  sq_err_id,  pred_var_id, t_id  = \
-        _group("ID",  inputs_id_eval,  targets_id_eval)
-    rmse_ood, var_ood, nll_ood, ece_ood, sq_err_ood, pred_var_ood, t_ood = \
-        _group("OOD", inputs_ood, targets_ood)
+    rmse_id, var_id, nll_id, ece_id, sq_err_id, pred_var_id, t_id = _group(
+        "ID", inputs_id_eval, targets_id_eval
+    )
+    rmse_ood, var_ood, nll_ood, ece_ood, sq_err_ood, pred_var_ood, t_ood = _group(
+        "OOD", inputs_ood, targets_ood
+    )
 
     # Re-use the per-point predictive variance we already computed!
     auroc, aupr = compute_ood_metrics(pred_var_id, pred_var_ood)
 
     rmse_ratio = rmse_ood / (rmse_id + 1e-6)
-    var_ratio  = var_ood  / (var_id  + 1e-9)
+    var_ratio = var_ood / (var_id + 1e-9)
     print("\nOOD Detection Metrics:")
     print(f"AUROC: {auroc:.4f} | AUPR: {aupr:.4f}")
-    print(f"RMSE Ratio (OOD / ID): {rmse_ratio:.2f}x | Variance Ratio: {var_ratio:.2f}x")
+    print(
+        f"RMSE Ratio (OOD / ID): {rmse_ratio:.2f}x | Variance Ratio: {var_ratio:.2f}x"
+    )
 
     if sidecar_path is not None:
         np.savez(
             sidecar_path,
-            sq_error_id=sq_err_id,   pred_var_id=pred_var_id,
-            sq_error_ood=sq_err_ood, pred_var_ood=pred_var_ood,
+            sq_error_id=sq_err_id,
+            pred_var_id=pred_var_id,
+            sq_error_ood=sq_err_ood,
+            pred_var_ood=pred_var_ood,
         )
 
     return {
-        "rmse_id":  rmse_id,  "nll_id":  nll_id,  "ece_id":  ece_id,
-        "rmse_ood": rmse_ood, "nll_ood": nll_ood, "ece_ood": ece_ood,
-        "var_id": var_id, "var_ood": var_ood,
-        "auroc": auroc, "aupr": aupr,
-        "rmse_ratio": rmse_ratio, "var_ratio": var_ratio,
-        "eval_time": t_id # We report the ID inference time
+        "rmse_id": rmse_id,
+        "nll_id": nll_id,
+        "ece_id": ece_id,
+        "rmse_ood": rmse_ood,
+        "nll_ood": nll_ood,
+        "ece_ood": ece_ood,
+        "var_id": var_id,
+        "var_ood": var_ood,
+        "auroc": auroc,
+        "aupr": aupr,
+        "rmse_ratio": rmse_ratio,
+        "var_ratio": var_ratio,
+        "eval_time": t_id,  # We report the ID inference time
     }
 
 
-def _evaluate_mnist(ensemble_name: str, ensemble: Any, x_test: Float[Array, "batch ..."], y_test: Array,
-                    n_classes: int = 10,
-                    sidecar_path: str | None = None) -> dict[str, float]:
+def _evaluate_mnist(
+    ensemble_name: str,
+    ensemble: Any,
+    x_test: Float[Array, "batch ..."],
+    y_test: Array,
+    n_classes: int = 10,
+    sidecar_path: str | None = None,
+) -> dict[str, float]:
     """Evaluate a classification ensemble and return a metrics dict.
 
     ECE is computed via reliability diagram binning (confidence-accuracy).
@@ -131,37 +191,39 @@ def _evaluate_mnist(ensemble_name: str, ensemble: Any, x_test: Float[Array, "bat
     preds = jax.nn.softmax(ensemble.predict(x_test), axis=-1)  # (S, N, C)
     preds.block_until_ready()
     eval_time = time.time() - t0
-    mean  = jnp.mean(preds, axis=0)                            # (N, C)
+    mean = jnp.mean(preds, axis=0)  # (N, C)
 
-    pred_class  = jnp.argmax(mean, axis=-1)                    # (N,)
-    correct     = (pred_class == y_test).astype(jnp.float32)   # (N,)
-    confidence  = jnp.max(mean, axis=-1)                       # (N,)
+    pred_class = jnp.argmax(mean, axis=-1)  # (N,)
+    correct = (pred_class == y_test).astype(jnp.float32)  # (N,)
+    confidence = jnp.max(mean, axis=-1)  # (N,)
 
-    acc   = float(jnp.mean(correct))
-    y_oh  = jax.nn.one_hot(y_test, n_classes)
+    acc = float(jnp.mean(correct))
+    y_oh = jax.nn.one_hot(y_test, n_classes)
     brier = float(jnp.mean(jnp.sum((mean - y_oh) ** 2, axis=-1)))
     # Per-sample entropy for sidecar
     ent_per_sample = np.array(-jnp.sum(mean * jnp.log(mean + 1e-8), axis=-1))
     ent = float(np.mean(ent_per_sample))
-    nll  = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
+    nll = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
 
     # ECE: reliability-diagram binning (confidence → accuracy)
-    n_bins   = 15
+    n_bins = 15
     bin_edges = np.linspace(0.0, 1.0, n_bins + 1)
-    conf_np   = np.array(confidence)
-    corr_np   = np.array(correct)
-    ece_sum   = 0.0
-    n_total   = len(conf_np)
+    conf_np = np.array(confidence)
+    corr_np = np.array(correct)
+    ece_sum = 0.0
+    n_total = len(conf_np)
     for lo, hi in zip(bin_edges[:-1], bin_edges[1:], strict=True):
         mask = (conf_np >= lo) & (conf_np < hi)
         if mask.sum() == 0:
             continue
-        bin_acc  = corr_np[mask].mean()
+        bin_acc = corr_np[mask].mean()
         bin_conf = conf_np[mask].mean()
         ece_sum += mask.sum() * abs(bin_acc - bin_conf)
     ece = float(ece_sum / n_total)
 
-    print(f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | NLL: {nll:.4f} | ECE: {ece:.4f}")
+    print(
+        f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | NLL: {nll:.4f} | ECE: {ece:.4f}"
+    )
 
     if sidecar_path is not None:
         np.savez(
@@ -171,28 +233,46 @@ def _evaluate_mnist(ensemble_name: str, ensemble: Any, x_test: Float[Array, "bat
             pred_entropy=ent_per_sample,
         )
 
-    return {"accuracy": acc, "brier": brier, "entropy": ent, "nll": nll, "ece": ece, "eval_time": eval_time}
+    return {
+        "accuracy": acc,
+        "brier": brier,
+        "entropy": ent,
+        "nll": nll,
+        "ece": ece,
+        "eval_time": eval_time,
+    }
 
 
 # ---------------------------------------------------------------------------
 # Data I/O helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_gym_data(
-    paths: dict
+    paths: dict,
 ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
     """Load arrays written by CollectGymData."""
+
     def _npz(p):
         d = np.load(p)
         return jnp.array(d["inputs"]), jnp.array(d["targets"])
 
-    inputs_id,      targets_id      = _npz(paths["id_train"].path)
+    inputs_id, targets_id = _npz(paths["id_train"].path)
     inputs_id_eval, targets_id_eval = _npz(paths["id_eval"].path)
-    inputs_ood,     targets_ood     = _npz(paths["ood"].path)
-    return inputs_id, targets_id, inputs_id_eval, targets_id_eval, inputs_ood, targets_ood
+    inputs_ood, targets_ood = _npz(paths["ood"].path)
+    return (
+        inputs_id,
+        targets_id,
+        inputs_id_eval,
+        targets_id_eval,
+        inputs_ood,
+        targets_ood,
+    )
 
 
-def _split_data(inputs: Any, targets: Any, val_split: float = 0.1, seed: int = 99) -> tuple[Any, Any, Any, Any]:
+def _split_data(
+    inputs: Any, targets: Any, val_split: float = 0.1, seed: int = 99
+) -> tuple[Any, Any, Any, Any]:
     """Split ID data into train and validation sets."""
     n_val = max(1, int(len(inputs) * val_split)) if val_split > 0 else 0
     if n_val > 0:
@@ -208,44 +288,65 @@ def _ps_str(sizes) -> str:
     """Compact string for a list of perturbation sizes used in filenames."""
     return "-".join(str(s) for s in sizes)
 
+
 # ---------------------------------------------------------------------------
 # PJSVD null-space search (shared logic, called from multiple tasks)
 # ---------------------------------------------------------------------------
 
+
 def _find_pjsvd_directions(
-    model_fn: Callable, W_curr: Float[Array, "..."], n_directions: int,
-    use_full_span: bool = False, seed: int = 99
+    model_fn: Callable,
+    W_curr: Float[Array, "..."],
+    n_directions: int,
+    use_full_span: bool = False,
+    seed: int = 99,
 ) -> tuple[Float[Array, "k D_flat"], np.ndarray]:
     """Find n_directions orthogonal null-space directions for a single-layer model fn."""
     D = W_curr.size
-    v_opts_buf   = np.zeros((n_directions, D), dtype=np.float32)
+    v_opts_buf = np.zeros((n_directions, D), dtype=np.float32)
     direction_mask = np.zeros(n_directions, dtype=bool)
     sigmas = []
 
     for k in range(n_directions):
         v_opts_jax = jnp.array(v_opts_buf)
-        mask_jax   = jnp.array(direction_mask)
+        mask_jax = jnp.array(direction_mask)
 
-        v_opt, sigma = find_optimal_perturbation(
-            model_fn, W_curr, max_iter=500,
-            orthogonal_directions=v_opts_jax,
-            direction_mask=mask_jax,
-            use_full_span=use_full_span,
-            seed=seed + k,
-        )
-        v_opts_buf[k]    = np.array(v_opt.reshape(-1))
+        if use_full_span:
+            v_opt, sigma = find_optimal_perturbation_full(
+                model_fn,
+                W_curr,
+                max_iter=500,
+                orthogonal_directions=v_opts_jax,
+                direction_mask=mask_jax,
+                seed=seed + k,
+            )
+        else:
+            v_opt, sigma = find_optimal_perturbation(
+                model_fn,
+                W_curr,
+                max_iter=500,
+                orthogonal_directions=v_opts_jax,
+                direction_mask=mask_jax,
+                seed=seed + k,
+            )
+
+        v_opts_buf[k] = np.array(v_opt.reshape(-1))
         direction_mask[k] = True
         sigmas.append(float(sigma))
-        print(f"  Direction {k+1}: sigma={sigma:.6f}")
+        print(f"  Direction {k + 1}: sigma={sigma:.6f}")
 
     return jnp.array(v_opts_buf), np.array(sigmas)
 
 
 def _evaluate_cifar(
-    ensemble_name: str, ensemble: Any, x_test: Float[np.ndarray, "batch ..."], y_test: Array,
+    ensemble_name: str,
+    ensemble: Any,
+    x_test: Float[np.ndarray, "batch ..."],
+    y_test: Array,
     n_classes: int = 10,
     batch_size: int = 256,
-                    sidecar_path: str | None = None) -> dict[str, float]:
+    sidecar_path: str | None = None,
+) -> dict[str, float]:
     """
     Evaluate a classification ensemble on CIFAR images.
 
@@ -256,40 +357,40 @@ def _evaluate_cifar(
 
     # Collect per-batch softmax predictions
     all_preds = []
-    
+
     # Warm-up
     _ = ensemble.predict(x_test[:1])
 
     t0 = time.time()
     for start in range(0, len(x_test), batch_size):
-        x_batch = x_test[start:start + batch_size]
+        x_batch = x_test[start : start + batch_size]
         # ensemble.predict returns (S, N_batch, C) logits
         logits_batch = ensemble.predict(x_batch)  # (S, N_batch, C)
-        probs_batch  = jax.nn.softmax(logits_batch, axis=-1)  # (S, N_batch, C)
+        probs_batch = jax.nn.softmax(logits_batch, axis=-1)  # (S, N_batch, C)
         all_preds.append(probs_batch)
     preds = jnp.concatenate(all_preds, axis=1)  # (S, N, C)
     preds.block_until_ready()
     eval_time = time.time() - t0
 
-    mean         = jnp.mean(preds, axis=0)                             # (N, C)
-    pred_class   = jnp.argmax(mean, axis=-1)                           # (N,)
-    correct      = (pred_class == y_test).astype(jnp.float32)          # (N,)
-    confidence   = jnp.max(mean, axis=-1)                              # (N,)
+    mean = jnp.mean(preds, axis=0)  # (N, C)
+    pred_class = jnp.argmax(mean, axis=-1)  # (N,)
+    correct = (pred_class == y_test).astype(jnp.float32)  # (N,)
+    confidence = jnp.max(mean, axis=-1)  # (N,)
 
-    acc    = float(jnp.mean(correct))
-    y_oh   = jax.nn.one_hot(y_test, n_classes)
-    brier  = float(jnp.mean(jnp.sum((mean - y_oh) ** 2, axis=-1)))
+    acc = float(jnp.mean(correct))
+    y_oh = jax.nn.one_hot(y_test, n_classes)
+    brier = float(jnp.mean(jnp.sum((mean - y_oh) ** 2, axis=-1)))
     ent_ps = np.array(-jnp.sum(mean * jnp.log(mean + 1e-8), axis=-1))  # (N,)
-    ent    = float(np.mean(ent_ps))
-    nll    = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
+    ent = float(np.mean(ent_ps))
+    nll = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
 
     # ECE (reliability diagram)
-    n_bins    = 15
-    conf_np   = np.array(confidence)
-    corr_np   = np.array(correct)
+    n_bins = 15
+    conf_np = np.array(confidence)
+    corr_np = np.array(correct)
     bin_edges = np.linspace(0.0, 1.0, n_bins + 1)
-    ece_sum   = 0.0
-    n_total   = len(conf_np)
+    ece_sum = 0.0
+    n_total = len(conf_np)
     for lo, hi in zip(bin_edges[:-1], bin_edges[1:], strict=True):
         mask = (conf_np >= lo) & (conf_np < hi)
         if mask.sum() == 0:
@@ -297,11 +398,18 @@ def _evaluate_cifar(
         ece_sum += mask.sum() * abs(corr_np[mask].mean() - conf_np[mask].mean())
     ece = float(ece_sum / n_total)
 
-    print(f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | NLL: {nll:.4f} | ECE: {ece:.4f}")
+    print(
+        f"Acc: {acc:.4f} | Brier: {brier:.4f} | Entropy: {ent:.4f} | NLL: {nll:.4f} | ECE: {ece:.4f}"
+    )
 
     if sidecar_path is not None:
-        np.savez(sidecar_path,
-                 confidence=conf_np, correct=corr_np, pred_entropy=ent_ps)
+        np.savez(sidecar_path, confidence=conf_np, correct=corr_np, pred_entropy=ent_ps)
 
-    return {"accuracy": acc, "brier": brier, "entropy": ent, "nll": nll, "ece": ece, "eval_time": eval_time}
-
+    return {
+        "accuracy": acc,
+        "brier": brier,
+        "entropy": ent,
+        "nll": nll,
+        "ece": ece,
+        "eval_time": eval_time,
+    }
