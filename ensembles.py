@@ -12,6 +12,13 @@ from models import TransitionModel
 _BATCH_ANY = "batch ..."
 _ENS_BATCH_ANY = "ens batch ..."
 
+def _stack_predictions(ys: List[Any]) -> Any:
+    if len(ys) == 0:
+        return jnp.stack(ys, axis=0)
+    if isinstance(ys[0], tuple):
+        return tuple(jnp.stack([y[i] for y in ys], axis=0) for i in range(len(ys[0])))
+    return jnp.stack(ys, axis=0)
+
 
 def evaluate_tail_from_preact(
     base_model: Any,
@@ -28,16 +35,32 @@ def evaluate_tail_from_preact(
         current_layer_idx: The 0-indexed index of the preact's layer (e.g., 0 for 'l1', 1 for 'l2').
         activation: The activation function to apply.
     """
+    has_prob_heads = hasattr(base_model, "mean_layer") and hasattr(base_model, "var_layer")
     h = preact
     if hasattr(base_model, "layers"):
-        if current_layer_idx >= len(base_model.layers):
+        if current_layer_idx > len(base_model.layers):
             raise ValueError(
                 f"current_layer_idx {current_layer_idx} is out of bounds for model with {len(base_model.layers)} layers."
             )
-        for idx in range(current_layer_idx + 1, len(base_model.layers)):
+
+        # If current_layer_idx == len(base_model.layers), `preact` is already the
+        # final hidden representation and we should go straight into the heads.
+        if current_layer_idx < len(base_model.layers):
             h = activation(h)
+
+        for idx in range(current_layer_idx + 1, len(base_model.layers)):
             layer = base_model.layers[idx]
-            h = h @ layer.kernel.get_value() + layer.bias.get_value()
+            z = h @ layer.kernel.get_value() + layer.bias.get_value()
+            if idx == len(base_model.layers) - 1 and not has_prob_heads:
+                h = z
+            else:
+                h = activation(z)
+
+        if has_prob_heads:
+            mean = h @ base_model.mean_layer.kernel.get_value() + base_model.mean_layer.bias.get_value()
+            var_logits = h @ base_model.var_layer.kernel.get_value() + base_model.var_layer.bias.get_value()
+            var = jax.nn.softplus(var_logits) + 1e-6
+            return mean, var
         return h
     elif hasattr(base_model, f"l{current_layer_idx + 1}"):
         i = current_layer_idx + 2
@@ -186,7 +209,11 @@ class PJSVDEnsemble:
     def _precompute_least_squares(self, dp_all):
         # Target is the original unperturbed activations/outputs of the next layer
         Z = self.correction_params.get("target_act")
-        N_samples = Z.shape[0]
+        lambda_reg = self.kwargs.get("lambda_reg", 1e-3)
+
+        if len(self.layers) == 2:
+            self._precompute_least_squares_staged_two_layer(dp_all, Z, lambda_reg)
+            return
 
         next_w_news = []
         next_b_news = []
@@ -195,17 +222,77 @@ class PJSVDEnsemble:
             p = dp_all[i]
             perturbed_vals = self._apply_perturbations(self.X_sub, p)
             h_new = perturbed_vals[-1]
-
-            # Solve least squares: [h_new, 1] @ W_aug ≈ Z
-            ones = jnp.ones((N_samples, 1), dtype=h_new.dtype)
-            h_new_aug = jnp.concatenate([h_new, ones], axis=-1)
-            W_aug, _, _, _ = jnp.linalg.lstsq(h_new_aug, Z, rcond=None)
-
-            next_w_news.append(W_aug[:-1, :])
-            next_b_news.append(W_aug[-1, :])
+            W_h, W_b = self._solve_ridge_map(h_new, Z, lambda_reg)
+            next_w_news.append(W_h)
+            next_b_news.append(W_b)
 
         self.next_w_news = jnp.stack(next_w_news, axis=0)
         self.next_b_news = jnp.stack(next_b_news, axis=0)
+
+    def _solve_ridge_map(self, h_new, Z, lambda_reg):
+        N_samples = Z.shape[0]
+
+        # Standardizing the input features keeps the solve stable for large
+        # perturbation scales without changing the fitted affine map.
+        mu = jnp.mean(h_new, axis=0)
+        sigma = jnp.std(h_new, axis=0) + 1e-6
+        h_new_norm = (h_new - mu) / sigma
+
+        ones = jnp.ones((N_samples, 1), dtype=h_new.dtype)
+        h_new_aug = jnp.concatenate([h_new_norm, ones], axis=-1)
+
+        A_T_A = h_new_aug.T @ h_new_aug
+        lhs = A_T_A + lambda_reg * jnp.eye(A_T_A.shape[0], dtype=A_T_A.dtype)
+        # Do not regularize the bias term.
+        lhs = lhs.at[-1, -1].set(A_T_A[-1, -1])
+        rhs = h_new_aug.T @ Z
+
+        W_norm = jnp.linalg.solve(lhs, rhs)
+
+        # Convert the standardized fit back to the original feature scale.
+        W_h = W_norm[:-1, :] / sigma[:, None]
+        W_b = W_norm[-1, :] - jnp.dot(mu / sigma, W_norm[:-1, :])
+        return W_h, W_b
+
+    def _precompute_least_squares_staged_two_layer(self, dp_all, Z_final, lambda_reg):
+        w1_orig = self.layer_params["l1"]["W"]
+        b1_orig = self.layer_params["l1"]["b"]
+        w2_orig = self.layer_params["l2"]["W"]
+        b2_orig = self.layer_params["l2"]["b"]
+
+        h1_orig = self.activation(self.X_sub @ w1_orig + b1_orig)
+        z2_orig = h1_orig @ w2_orig + b2_orig
+
+        stage1_w_news = []
+        stage1_b_news = []
+        next_w_news = []
+        next_b_news = []
+
+        for i in range(len(self.z_coeffs)):
+            p = dp_all[i]
+            dw1 = p[: w1_orig.size].reshape(w1_orig.shape)
+            dw2 = p[w1_orig.size :].reshape(w2_orig.shape)
+
+            h1_pert = self.activation(self.X_sub @ (w1_orig + dw1) + b1_orig)
+
+            # First stage: repair the W1 perturbation by refitting W2.
+            w2_stage1, b2_stage1 = self._solve_ridge_map(h1_pert, z2_orig, lambda_reg)
+
+            # Second stage: apply the W2 perturbation on top of the repaired W2,
+            # then refit W3 against the original next-layer target.
+            h2_pert = self.activation(h1_pert @ (w2_stage1 + dw2) + b2_stage1)
+            w3_stage2, b3_stage2 = self._solve_ridge_map(h2_pert, Z_final, lambda_reg)
+
+            stage1_w_news.append(w2_stage1)
+            stage1_b_news.append(b2_stage1)
+            next_w_news.append(w3_stage2)
+            next_b_news.append(b3_stage2)
+
+        self.stage1_w_news = jnp.stack(stage1_w_news, axis=0)
+        self.stage1_b_news = jnp.stack(stage1_b_news, axis=0)
+        self.next_w_news = jnp.stack(next_w_news, axis=0)
+        self.next_b_news = jnp.stack(next_b_news, axis=0)
+
 
     def _precompute_bn_refit(self, dp_all):
         # Specialized ResNet logic
@@ -296,6 +383,15 @@ class PJSVDEnsemble:
         if self.correction_mode == "bn_refit":
             return self._forward_bn_refit(x, i, p)
 
+        if self.correction_mode == "least_squares" and len(self.layers) == 2:
+            h_last_perturbed, z_next = self._forward_two_layer_staged_ls(x, i, p)
+            return evaluate_tail_from_preact(
+                self.base_model,
+                z_next,
+                current_layer_idx=len(self.layers),
+                activation=self.activation,
+            )
+
         perturbed_vals = self._apply_perturbations(x, p)
         h_last_perturbed = perturbed_vals[-1]
 
@@ -307,12 +403,37 @@ class PJSVDEnsemble:
             b_next = self.next_b_news[i]
 
         z_next = h_last_perturbed @ w_next + b_next
+        if self.kwargs.get("tail_is_hidden", False):
+            return evaluate_tail_from_preact(
+                self.base_model,
+                z_next,
+                current_layer_idx=len(self.layer_params),
+                activation=self.activation,
+            )
         return evaluate_tail_from_preact(
             self.base_model,
             z_next,
             current_layer_idx=len(self.layers),
             activation=self.activation,
         )
+
+    def _forward_two_layer_staged_ls(self, x, i, p):
+        w1_orig = self.layer_params["l1"]["W"]
+        b1_orig = self.layer_params["l1"]["b"]
+        w2_orig = self.layer_params["l2"]["W"]
+
+        dw1 = p[: w1_orig.size].reshape(w1_orig.shape)
+        dw2 = p[w1_orig.size :].reshape(w2_orig.shape)
+
+        h1_pert = self.activation(x @ (w1_orig + dw1) + b1_orig)
+        w2_stage = self.stage1_w_news[i] + dw2
+        b2_stage = self.stage1_b_news[i]
+        h2_pert = self.activation(h1_pert @ w2_stage + b2_stage)
+
+        w3_stage = self.next_w_news[i]
+        b3_stage = self.next_b_news[i]
+        z_next = h2_pert @ w3_stage + b3_stage
+        return h2_pert, z_next
 
     def _forward_bn_refit(self, x, i, p):
         # PreActResNet-18 specific forward
@@ -404,7 +525,7 @@ class PJSVDEnsemble:
         ys = []
         for i in range(len(self.z_coeffs)):
             ys.append(self._forward_member(x, i, dp_all))
-        return jnp.stack(ys, axis=0)
+        return _stack_predictions(ys)
 
     def predict_intermediate_and_corrected(
         self, x: jax.Array
@@ -416,6 +537,12 @@ class PJSVDEnsemble:
         z_nexts = []
         for i in range(len(self.z_coeffs)):
             p = dp_all[i]
+            if self.correction_mode == "least_squares" and len(self.layers) == 2:
+                h_last_perturbed, z_next = self._forward_two_layer_staged_ls(x, i, p)
+                h_perts.append(h_last_perturbed)
+                z_nexts.append(z_next)
+                continue
+
             perturbed_vals = self._apply_perturbations(x, p)
             h_last_perturbed = perturbed_vals[-1]
             h_perts.append(h_last_perturbed)
@@ -557,13 +684,13 @@ class StandardEnsemble:
     def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
         ys = []
         for i, model in enumerate(self.models):
-            ys.append(_sample_probabilistic(model(x), i))
-        return jnp.stack(ys, axis=0)
+            ys.append(model(x))
+        return _stack_predictions(ys)
 
     def predict_one(
         self, x: Float[Array, "batch ..."], idx: int
     ) -> Float[Array, "batch ..."]:
-        return _sample_probabilistic(self.models[idx](x), idx)
+        return self.models[idx](x)
 
 
 class MCDropoutEnsemble:
@@ -610,8 +737,8 @@ class SWAGEnsemble:
         ys = []
         for i in range(self.n_models):
             sampled_m = self._sample_model()
-            ys.append(_sample_probabilistic(sampled_m(x), i))
-        return jnp.stack(ys, axis=0)
+            ys.append(sampled_m(x))
+        return _stack_predictions(ys)
 
     def predict_intermediate(self, x: jax.Array, layer_idx: int) -> jax.Array:
         from util import get_intermediate_state
@@ -625,7 +752,7 @@ class SWAGEnsemble:
     def predict_one(
         self, x: Float[Array, "batch ..."], idx: int
     ) -> Float[Array, "batch ..."]:
-        return _sample_probabilistic(self._sample_model()(x), idx)
+        return self._sample_model()(x)
 
 
 class LaplaceEnsemble:
@@ -839,8 +966,8 @@ class SubspaceInferenceEnsemble:
         ys = []
         for i in range(self.n_samples):
             sampled_m, _ = self._sample_model(i)
-            ys.append(_sample_probabilistic(sampled_m(x), i))
-        return jnp.stack(ys, axis=0)
+            ys.append(sampled_m(x))
+        return _stack_predictions(ys)
 
     def predict_intermediate(self, x: jax.Array, layer_idx: int) -> jax.Array:
         from util import get_intermediate_state
@@ -855,7 +982,7 @@ class SubspaceInferenceEnsemble:
         self, x: Float[Array, "batch ..."], idx: int
     ) -> Float[Array, "batch ..."]:
         sampled_m, _ = self._sample_model(idx)
-        return _sample_probabilistic(sampled_m(x), idx)
+        return sampled_m(x)
 
 
 # ==============================================================================
@@ -904,12 +1031,7 @@ def _bn_refit_channel_wise(
     return gamma_new, beta_new
 
 
-def _sample_probabilistic(out: Any, seed: int) -> jax.Array:
-    if isinstance(out, tuple) and len(out) == 2:
-        mean, var = out
-        rng = jax.random.PRNGKey(seed)
-        return mean + jnp.sqrt(var) * jax.random.normal(rng, mean.shape)
-    return out
+
 
 
 # ==============================================================================

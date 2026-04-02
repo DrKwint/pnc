@@ -26,20 +26,40 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 GYM_METRICS = [
-    ("rmse_id", "RMSE-ID"),
-    ("nll_id", "NLL-ID"),
-    ("ece_id", "ECE-ID"),
-    ("rmse_ood", "RMSE-OOD"),
-    ("nll_ood", "NLL-OOD"),
-    ("ece_ood", "ECE-OOD"),
-    ("auroc", "AUROC"),
-    ("aupr", "AUPR"),
-    ("uncorrected_l2_id", "Uncorr-L2-ID"),
-    ("uncorrected_l2_ood", "Uncorr-L2-OOD"),
-    ("corrected_l2_id", "Corr-L2-ID"),
-    ("corrected_l2_ood", "Corr-L2-OOD"),
-    ("train_time", "Train (s)"),
-    ("eval_time", "Eval (s)"),
+    # ID (Expert)
+    ("rmse_id", "RMSE|ID (Exp)"),
+    ("nll_id", "NLL|ID (Exp)"),
+    ("ece_id", "ECE|ID (Exp)"),
+    ("uncorrected_l2_id_h", "Unc-L2-h|ID (Exp)"),
+    ("uncorrected_l2_id_z", "Unc-L2-z|ID (Exp)"),
+    ("corrected_l2_id_z", "Corr-L2-z|ID (Exp)"),
+    # OOD Near (Medium)
+    ("rmse_ood_near", "RMSE|Near (Med)"),
+    ("nll_ood_near", "NLL|Near (Med)"),
+    ("ece_ood_near", "ECE|Near (Med)"),
+    ("auroc_ood_near", "AUROC|Near (Med)"),
+    ("uncorrected_l2_ood_near_h", "Unc-L2-h|Near (Med)"),
+    ("uncorrected_l2_ood_near_z", "Unc-L2-z|Near (Med)"),
+    ("corrected_l2_ood_near_z", "Corr-L2-z|Near (Med)"),
+    # OOD Mid (Simple)
+    ("rmse_ood_mid", "RMSE|Mid (Simp)"),
+    ("nll_ood_mid", "NLL|Mid (Simp)"),
+    ("ece_ood_mid", "ECE|Mid (Simp)"),
+    ("auroc_ood_mid", "AUROC|Mid (Simp)"),
+    ("uncorrected_l2_ood_mid_h", "Unc-L2-h|Mid (Simp)"),
+    ("uncorrected_l2_ood_mid_z", "Unc-L2-z|Mid (Simp)"),
+    ("corrected_l2_ood_mid_z", "Corr-L2-z|Mid (Simp)"),
+    # OOD Far (Random)
+    ("rmse_ood_far", "RMSE|Far (Rand)"),
+    ("nll_ood_far", "NLL|Far (Rand)"),
+    ("ece_ood_far", "ECE|Far (Rand)"),
+    ("auroc_ood_far", "AUROC|Far (Rand)"),
+    ("uncorrected_l2_ood_far_h", "Unc-L2-h|Far (Rand)"),
+    ("uncorrected_l2_ood_far_z", "Unc-L2-z|Far (Rand)"),
+    ("corrected_l2_ood_far_z", "Corr-L2-z|Far (Rand)"),
+    # System
+    ("train_time", "Train|(s)"),
+    ("eval_time", "Eval|(s)"),
 ]
 
 CLF_METRICS = [
@@ -120,6 +140,8 @@ def _friendly_name(canonical: str) -> str | None:
     """Human-readable method name from a canonical filename stem."""
     act = _extract(canonical, "act")
     act_suffix = f" [{act}]" if act != "?" else ""
+    calib_suffix = " + VCal" if "_vcal" in canonical else ""
+    prob_suffix = " + Prob" if "_prob" in canonical else ""
 
     backend = ""
     if "_activation_covariance" in canonical:
@@ -128,13 +150,13 @@ def _friendly_name(canonical: str) -> str | None:
         backend = "-Proj"
 
     if canonical.startswith("standard_ensemble"):
-        return f"Deep Ensemble (n={_extract(canonical, 'n')}){act_suffix}"
+        return f"Deep Ensemble{calib_suffix} (n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("mc_dropout"):
-        return f"MC Dropout (n={_extract(canonical, 'n')}){act_suffix}"
+        return f"MC Dropout{calib_suffix} (n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("swag"):
-        return f"SWAG (n={_extract(canonical, 'n')}){act_suffix}"
+        return f"SWAG{calib_suffix} (n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("laplace"):
-        return f"Laplace (n={_extract(canonical, 'n')}){act_suffix}"
+        return f"Laplace{calib_suffix} (n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("pjsvd"):
         scope = (
             "First"
@@ -163,22 +185,22 @@ def _friendly_name(canonical: str) -> str | None:
         
         family_str = f" ({family}{backend})" if (family or backend) else ""
         if not scope and not mode:
-            return f"PJSVD{family_str} (k={k}, n={n}){act_suffix}"
-        return f"PJSVD-{scope}-{mode}{full}{family_str} (k={k}, n={n}){act_suffix}"
+            return f"PJSVD{calib_suffix}{prob_suffix}{family_str} (k={k}, n={n}){act_suffix}"
+        return f"PJSVD-{scope}-{mode}{full}{calib_suffix}{prob_suffix}{family_str} (k={k}, n={n}){act_suffix}"
     if canonical.startswith("ml_pjsvd"):
-        return f"ML-PJSVD{backend} (k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}"
+        return f"ML-PJSVD{calib_suffix}{backend} (k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("ensemble_pjsvd"):
         return (
-            f"Ensemble+PJSVD{backend} (m={_extract(canonical, 'm')}, "
+            f"Ensemble+PJSVD{calib_suffix}{backend} (m={_extract(canonical, 'm')}, "
             f"k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}"
         )
     if canonical.startswith("subspace_inference"):
         n = _extract(canonical, "n")
         t = _extract(canonical, "T")
         t_str = f" (T={t})" if t != "?" else ""
-        return f"Subspace (n={n}){t_str}{act_suffix}"
-    if canonical.startswith("base_model"):
-        return None  # checkpoint — skip
+        return f"Subspace{calib_suffix} (n={n}){t_str}{act_suffix}"
+    if canonical.startswith("base_model") or canonical.startswith("data_") or canonical.endswith(".npz"):
+        return None  # skip checkpoints/metadata/data files
     return canonical + act_suffix
 
 
@@ -224,19 +246,33 @@ def _load_env_results(env_dir: Path) -> dict:
             for config_val, metrics in data.items():
                 if "uncorrected_l2_id_h" in metrics:
                     metrics["uncorrected_l2_id"] = metrics["uncorrected_l2_id_h"]
-                    metrics["uncorrected_l2_ood"] = metrics["uncorrected_l2_ood_h"]
+                elif "uncorrected_l2_id" in metrics:
+                    metrics["uncorrected_l2_id_h"] = metrics["uncorrected_l2_id"]
                 if "corrected_l2_id_z" in metrics:
                     metrics["corrected_l2_id"] = metrics["corrected_l2_id_z"]
-                    metrics["corrected_l2_ood"] = metrics["corrected_l2_ood_z"]
+                for reg in ["ood_near", "ood_mid", "ood_far", "ood"]:
+                    if f"uncorrected_l2_{reg}_h" in metrics:
+                        metrics[f"uncorrected_l2_{reg}"] = metrics[f"uncorrected_l2_{reg}_h"]
+                    elif f"uncorrected_l2_{reg}" in metrics:
+                        metrics[f"uncorrected_l2_{reg}_h"] = metrics[f"uncorrected_l2_{reg}"]
+                    if f"corrected_l2_{reg}_z" in metrics:
+                        metrics[f"corrected_l2_{reg}"] = metrics[f"corrected_l2_{reg}_z"]
                 for k, v in metrics.items():
                     groups[can][config_val][k].append(v)
         else:
             if "uncorrected_l2_id_h" in data:
                 data["uncorrected_l2_id"] = data["uncorrected_l2_id_h"]
-                data["uncorrected_l2_ood"] = data["uncorrected_l2_ood_h"]
+            elif "uncorrected_l2_id" in data:
+                data["uncorrected_l2_id_h"] = data["uncorrected_l2_id"]
             if "corrected_l2_id_z" in data:
                 data["corrected_l2_id"] = data["corrected_l2_id_z"]
-                data["corrected_l2_ood"] = data["corrected_l2_ood_z"]
+            for reg in ["ood_near", "ood_mid", "ood_far", "ood"]:
+                if f"uncorrected_l2_{reg}_h" in data:
+                    data[f"uncorrected_l2_{reg}"] = data[f"uncorrected_l2_{reg}_h"]
+                elif f"uncorrected_l2_{reg}" in data:
+                    data[f"uncorrected_l2_{reg}_h"] = data[f"uncorrected_l2_{reg}"]
+                if f"corrected_l2_{reg}_z" in data:
+                    data[f"corrected_l2_{reg}"] = data[f"corrected_l2_{reg}_z"]
             for k, v in data.items():
                 groups[can]["_flat"][k].append(v)
 
@@ -254,14 +290,26 @@ def _render_header(metrics_cfg, fmt):
     if fmt == "md":
         return (
             "| Method | "
-            + " | ".join(h for _, h in metrics_cfg)
+            + " | ".join(h.replace("|", " ") for _, h in metrics_cfg)
             + " |\n"
             + "|"
             + "|".join(["---"] * (len(metrics_cfg) + 1))
             + "|"
         )
     else:
-        return f"  {'Method':<44}" + "".join(f"{h:>{W}}" for _, h in metrics_cfg)
+        h_parts = [h.split("|") for _, h in metrics_cfg]
+        max_parts = max(len(p) for p in h_parts)
+        header_lines = []
+        for i in range(max_parts):
+            row = []
+            for p in h_parts:
+                row.append(p[i] if i < len(p) else "")
+            
+            if i == 0:
+                header_lines.append(f"  {'Method':<44}" + "".join(f"{item:>{W}}" for item in row))
+            else:
+                header_lines.append(f"  {'':<44}" + "".join(f"{item:>{W}}" for item in row))
+        return "\n".join(header_lines)
 
 
 def _render_row(label, metrics_cfg, agg_dict, fmt):

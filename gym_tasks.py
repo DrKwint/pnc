@@ -9,6 +9,7 @@ import luigi
 import jax.numpy as jnp
 from flax import nnx
 import numpy as np
+import tree
 
 from util import (
     _get_activation,
@@ -45,6 +46,80 @@ from ensembles import (
     SubspaceInferenceEnsemble,
 )
 from laplace import compute_kfac_factors
+import sys
+import os
+
+# Parse --cpu early, BEFORE importing jax, so JAX_PLATFORMS is set before JAX initializes any GPU
+if "--cpu" in sys.argv:
+    os.environ["JAX_PLATFORMS"] = "cpu"
+    os.environ["CUDA_VISIBLE_DEVICES"] = (
+        ""  # Belt-and-suspenders: hide GPU from CUDA too
+    )
+    sys.argv.remove("--cpu")
+else:
+    os.environ["JAX_PLATFORMS"] = "cuda,cpu"
+
+
+def _posthoc_suffix(enabled: bool) -> str:
+    return "_vcal" if enabled else ""
+
+
+def _get_next_layer_params(model, layer_idx: int) -> tuple[jax.Array, jax.Array]:
+    """Return the original next-layer affine map after the given hidden layer."""
+    if hasattr(model, "layers"):
+        layer = model.layers[layer_idx]
+        return layer.kernel.get_value(), layer.bias.get_value()
+    layer = getattr(model, f"l{layer_idx + 1}")
+    return layer.kernel.get_value(), layer.bias.get_value()
+
+
+def _add_uncorrected_local_l2_metrics(
+    metrics: dict,
+    model,
+    ensemble,
+    dataset: dict,
+    layer_idx: int = 1,
+) -> None:
+    """Add local hidden-state and next-layer preactivation L2 metrics."""
+    from util import get_intermediate_state, compute_l2_distance
+
+    w_next_orig, b_next_orig = _get_next_layer_params(model, layer_idx)
+
+    h_orig_id = get_intermediate_state(model, dataset["id_eval"][0], layer_idx=layer_idx)
+    h_ens_id = ensemble.predict_intermediate(dataset["id_eval"][0], layer_idx=layer_idx)
+    metrics["uncorrected_l2_id_h"] = compute_l2_distance(h_ens_id, h_orig_id)
+
+    z_orig_id = h_orig_id @ w_next_orig + b_next_orig
+    z_ens_id = h_ens_id @ w_next_orig + b_next_orig
+    metrics["uncorrected_l2_id_z"] = compute_l2_distance(z_ens_id, z_orig_id)
+
+    # Backward-compatible aggregate alias keeps older report paths working.
+    metrics["uncorrected_l2_id"] = metrics["uncorrected_l2_id_h"]
+
+    for reg in ["ood_near", "ood_mid", "ood_far"]:
+        h_orig = get_intermediate_state(model, dataset[reg][0], layer_idx=layer_idx)
+        h_ens = ensemble.predict_intermediate(dataset[reg][0], layer_idx=layer_idx)
+        metrics[f"uncorrected_l2_{reg}_h"] = compute_l2_distance(h_ens, h_orig)
+
+        z_orig = h_orig @ w_next_orig + b_next_orig
+        z_ens = h_ens @ w_next_orig + b_next_orig
+        metrics[f"uncorrected_l2_{reg}_z"] = compute_l2_distance(z_ens, z_orig)
+        metrics[f"uncorrected_l2_{reg}"] = metrics[f"uncorrected_l2_{reg}_h"]
+
+
+def _probabilistic_output_vector(
+    model: ProbabilisticRegressionModel,
+    hidden: jax.Array,
+    apply_hidden_activation: bool = False,
+) -> jax.Array:
+    """Map a hidden representation to the concatenated probabilistic outputs."""
+    if apply_hidden_activation:
+        hidden = model.activation(hidden)
+
+    mean = hidden @ model.mean_layer.kernel.get_value() + model.mean_layer.bias.get_value()
+    var_logits = hidden @ model.var_layer.kernel.get_value() + model.var_layer.bias.get_value()
+    var = jax.nn.softplus(var_logits) + 1e-6
+    return jnp.concatenate([mean, var], axis=-1)
 
 
 class CollectGymData(luigi.Task):
@@ -53,6 +128,7 @@ class CollectGymData(luigi.Task):
     env = luigi.Parameter()
     steps = luigi.IntParameter(default=10000)
     seed = luigi.IntParameter(default=0)
+    policy_preset = luigi.Parameter(default="")
 
     def _base(self) -> Path:
         return Path("results") / self.env
@@ -63,6 +139,9 @@ class CollectGymData(luigi.Task):
         return {
             "id_train": luigi.LocalTarget(str(b / f"data_id_train_{s}.npz")),
             "id_eval": luigi.LocalTarget(str(b / f"data_id_eval_{s}.npz")),
+            "ood_near": luigi.LocalTarget(str(b / f"data_ood_near_{s}.npz")),
+            "ood_mid": luigi.LocalTarget(str(b / f"data_ood_mid_{s}.npz")),
+            "ood_far": luigi.LocalTarget(str(b / f"data_ood_far_{s}.npz")),
             "ood": luigi.LocalTarget(str(b / f"data_ood_{s}.npz")),
         }
 
@@ -71,31 +150,31 @@ class CollectGymData(luigi.Task):
         self._base().mkdir(parents=True, exist_ok=True)
 
         print(f"\n=== Collecting gym data: {self.env} (steps={self.steps}) ===")
-        inputs_id, targets_id = collect_data(
-            self.env, self.steps, OODPolicyWrapper(), seed=self.seed
-        )
-        inputs_id_eval, targets_id_eval = collect_data(
-            self.env, self.steps, OODPolicyWrapper(), seed=self.seed + 1
-        )
-        inputs_ood, targets_ood = collect_data(
-            self.env, self.steps, id_policy_random, seed=self.seed + 2
-        )
-
-        np.savez(
-            self.output()["id_train"].path,
-            inputs=np.array(inputs_id),
-            targets=np.array(targets_id),
-        )
-        np.savez(
-            self.output()["id_eval"].path,
-            inputs=np.array(inputs_id_eval),
-            targets=np.array(targets_id_eval),
-        )
-        np.savez(
-            self.output()["ood"].path,
-            inputs=np.array(inputs_ood),
-            targets=np.array(targets_ood),
-        )
+        from data import get_policy_for_regime
+        
+        regimes = [("id_train", "id"), ("id_eval", "id_eval"), ("ood_near", "ood_near"), ("ood_mid", "ood_mid"), ("ood_far", "ood_far")]
+        for i, (out_key, reg) in enumerate(regimes):
+            policy_fn, metadata = get_policy_for_regime(self.env, reg.replace("_eval", ""), preset=self.policy_preset, strict=True)
+            inputs, targets = collect_data(
+                self.env, self.steps, policy_fn, seed=self.seed + i
+            )
+            out_path = self.output()[out_key].path
+            np.savez(
+                out_path,
+                inputs=np.array(inputs),
+                targets=np.array(targets),
+            )
+            metadata["environment"] = self.env
+            metadata["regime"] = reg
+            metadata["seed"] = self.seed + i
+            with open(out_path + ".json", "w") as f:
+                json.dump(metadata, f, indent=2)
+            if out_key == "ood_far":
+                np.savez(
+                    self.output()["ood"].path,
+                    inputs=np.array(inputs),
+                    targets=np.array(targets),
+                )
         print("Data saved.")
 
 
@@ -105,30 +184,27 @@ class GymStandardEnsemble(luigi.Task):
     n_baseline = luigi.IntParameter(default=5)
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed)
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"standard_ensemble_n{self.n_baseline}_act-{self.activation}_seed{self.seed}.json"
+                / f"standard_ensemble{calib_str}_n{self.n_baseline}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
         act_fn = _get_activation(self.activation)
-        (
-            inputs_id,
-            targets_id,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
-        ) = _load_gym_data(self.input())
+        dataset = _load_gym_data(self.input())
+        inputs_id, targets_id = dataset["id_train"]
+        inputs_id_eval, targets_id_eval = dataset["id_eval"]
         x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
 
         print(
@@ -163,11 +239,10 @@ class GymStandardEnsemble(luigi.Task):
         metrics = _evaluate_gym(
             "Standard Ensemble",
             ensemble,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
+            dataset,
             sidecar_path=self.output().path.replace(".json", ".npz"),
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
         )
         metrics["train_time"] = train_time
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
@@ -181,30 +256,27 @@ class GymMCDropout(luigi.Task):
     n_perturbations = luigi.IntParameter(default=1000)
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed)
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"mc_dropout_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}.json"
+                / f"mc_dropout{calib_str}_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
         act_fn = _get_activation(self.activation)
-        (
-            inputs_id,
-            targets_id,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
-        ) = _load_gym_data(self.input())
+        dataset = _load_gym_data(self.input())
+        inputs_id, targets_id = dataset["id_train"]
+        inputs_id_eval, targets_id_eval = dataset["id_eval"]
         x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
 
         print(
@@ -232,11 +304,10 @@ class GymMCDropout(luigi.Task):
         metrics = _evaluate_gym(
             "MC Dropout",
             ensemble,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
+            dataset,
             sidecar_path=self.output().path.replace(".json", ".npz"),
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
         )
         metrics["train_time"] = train_time
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
@@ -250,30 +321,27 @@ class GymSWAG(luigi.Task):
     n_perturbations = luigi.IntParameter(default=1000)
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed)
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"swag_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}.json"
+                / f"swag{calib_str}_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
         act_fn = _get_activation(self.activation)
-        (
-            inputs_id,
-            targets_id,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
-        ) = _load_gym_data(self.input())
+        dataset = _load_gym_data(self.input())
+        inputs_id, targets_id = dataset["id_train"]
+        inputs_id_eval, targets_id_eval = dataset["id_eval"]
         x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
 
         print(
@@ -302,24 +370,14 @@ class GymSWAG(luigi.Task):
         metrics = _evaluate_gym(
             "SWAG",
             ensemble,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
+            dataset,
             sidecar_path=self.output().path.replace(".json", ".npz"),
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
         )
         metrics["train_time"] = train_time
 
-        # Intermediate Metrics
-        from util import get_intermediate_state, compute_l2_distance
-
-        h_orig_id = get_intermediate_state(model, inputs_id_eval, layer_idx=1)
-        h_orig_ood = get_intermediate_state(model, inputs_ood, layer_idx=1)
-        h_ens_id = ensemble.predict_intermediate(inputs_id_eval, layer_idx=1)
-        h_ens_ood = ensemble.predict_intermediate(inputs_ood, layer_idx=1)
-
-        metrics["uncorrected_l2_id"] = compute_l2_distance(h_ens_id, h_orig_id)
-        metrics["uncorrected_l2_ood"] = compute_l2_distance(h_ens_ood, h_orig_ood)
+        _add_uncorrected_local_l2_metrics(metrics, model, ensemble, dataset, layer_idx=1)
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, "w") as f:
@@ -334,31 +392,28 @@ class GymLaplace(luigi.Task):
     laplace_priors = luigi.ListParameter(default=[1.0, 5.0, 10.0, 50.0, 100.0])
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed)
 
     def output(self) -> luigi.LocalTarget:
         priors_str = _ps_str(self.laplace_priors)
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"laplace_priors{priors_str}_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}.json"
+                / f"laplace{calib_str}_priors{priors_str}_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
         act_fn = _get_activation(self.activation)
-        (
-            inputs_id,
-            targets_id,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
-        ) = _load_gym_data(self.input())
+        dataset = _load_gym_data(self.input())
+        inputs_id, targets_id = dataset["id_train"]
+        inputs_id_eval, targets_id_eval = dataset["id_eval"]
         x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
 
         print(
@@ -402,24 +457,14 @@ class GymLaplace(luigi.Task):
             m = _evaluate_gym(
                 f"Laplace (prior={prior})",
                 lap_ens,
-                inputs_id_eval,
-                targets_id_eval,
-                inputs_ood,
-                targets_ood,
+                dataset,
                 sidecar_path=f"{base_npz}_prior{prior}.npz",
+                calibration_data=(x_va, y_va),
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time  # Consistent, non-cumulative setup time
 
-            # Intermediate Metrics
-            from util import get_intermediate_state, compute_l2_distance
-
-            h_orig_id = get_intermediate_state(model, inputs_id_eval, layer_idx=1)
-            h_orig_ood = get_intermediate_state(model, inputs_ood, layer_idx=1)
-            h_ens_id = lap_ens.predict_intermediate(inputs_id_eval, layer_idx=1)
-            h_ens_ood = lap_ens.predict_intermediate(inputs_ood, layer_idx=1)
-
-            m["uncorrected_l2_id"] = compute_l2_distance(h_ens_id, h_orig_id)
-            m["uncorrected_l2_ood"] = compute_l2_distance(h_ens_ood, h_orig_ood)
+            _add_uncorrected_local_l2_metrics(m, model, lap_ens, dataset, layer_idx=1)
 
             all_metrics[str(prior)] = m
 
@@ -448,6 +493,9 @@ class GymPJSVD(luigi.Task):
     )
     use_full_span = luigi.BoolParameter(default=False)
     hidden_dims = luigi.ListParameter(default=[64, 64])
+    probabilistic_base_model = luigi.BoolParameter(default=False)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+    compute_l2 = luigi.BoolParameter(default=True)
     compute_geometry = luigi.BoolParameter(default=True)
     geometry_rank = luigi.IntParameter(default=None)
 
@@ -457,37 +505,44 @@ class GymPJSVD(luigi.Task):
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
         full_str = "_full" if self.use_full_span else ""
+        l2_str = "" if self.compute_l2 else "_nol2"
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        prob_str = "_prob" if self.probabilistic_base_model else ""
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}_act-{self.activation}_seed{self.seed}.json"
+                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
         act_fn = _get_activation(self.activation)
-        (
-            inputs_id,
-            targets_id,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
-        ) = _load_gym_data(self.input())
+        dataset = _load_gym_data(self.input())
+        inputs_id, targets_id = dataset["id_train"]
+        inputs_id_eval, targets_id_eval = dataset["id_eval"]
         x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
 
         print(
             f"\n=== Gym PJSVD ({self.env}, scope={self.layer_scope}, mode={self.correction_mode}, full={self.use_full_span}) ==="
         )
         t_start = time.time()
-        model = TransitionModel(
-            inputs_id.shape[1],
-            targets_id.shape[1],
-            nnx.Rngs(params=self.seed),
-            activation=act_fn,
-        )
+        if self.probabilistic_base_model:
+            model = ProbabilisticRegressionModel(
+                inputs_id.shape[1],
+                targets_id.shape[1],
+                nnx.Rngs(params=self.seed),
+                hidden_dims=[64, 64],
+                activation=act_fn,
+            )
+        else:
+            model = TransitionModel(
+                inputs_id.shape[1],
+                targets_id.shape[1],
+                nnx.Rngs(params=self.seed),
+                activation=act_fn,
+            )
         # model depth check for multi-layer
         if self.layer_scope == "multi" and len(self.hidden_dims) < 2:
             print("Skipping Multi-Layer PJSVD: model too shallow.")
@@ -496,7 +551,17 @@ class GymPJSVD(luigi.Task):
                 json.dump({"skipped": True}, f)
             return
 
-        model = train_model(model, x_tr, y_tr, x_va, y_va)
+        if self.probabilistic_base_model and self.correction_mode == "affine" and self.layer_scope == "multi":
+            print("Skipping probabilistic multi-layer affine PJSVD: affine correction expects a single next layer.")
+            Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+            with open(self.output().path, "w") as f:
+                json.dump({"skipped": True}, f)
+            return
+
+        if self.probabilistic_base_model:
+            model = train_probabilistic_model(model, x_tr, y_tr, x_va, y_va)
+        else:
+            model = train_model(model, x_tr, y_tr, x_va, y_va)
 
         # End of base training
         for p in jax.tree_util.tree_leaves(nnx.state(model)):
@@ -509,10 +574,16 @@ class GymPJSVD(luigi.Task):
         subset_idx = np.random.choice(len(inputs_id), actual_subset, replace=False)
         X_sub = inputs_id[subset_idx]
 
-        W1 = model.l1.kernel.get_value()
-        b1 = model.l1.bias.get_value()
-        W2 = model.l2.kernel.get_value()
-        b2 = model.l2.bias.get_value()
+        if self.probabilistic_base_model:
+            W1 = model.layers[0].kernel.get_value()
+            b1 = model.layers[0].bias.get_value()
+            W2 = model.layers[1].kernel.get_value()
+            b2 = model.layers[1].bias.get_value()
+        else:
+            W1 = model.l1.kernel.get_value()
+            b1 = model.l1.bias.get_value()
+            W2 = model.l2.kernel.get_value()
+            b2 = model.l2.bias.get_value()
 
         if self.layer_scope == "first":
 
@@ -551,6 +622,8 @@ class GymPJSVD(luigi.Task):
 
             correction_params = {}
             if self.correction_mode == "affine":
+                if self.probabilistic_base_model:
+                    raise ValueError("Probabilistic first-layer affine PJSVD is not supported.")
                 correction_params = {
                     "mu_old": mu_old,
                     "std_old": std_old,
@@ -564,8 +637,14 @@ class GymPJSVD(luigi.Task):
             perturbed_layers = ["l1"]
 
         else:  # multi
-            W3 = model.l3.kernel.get_value()
-            b3 = model.l3.bias.get_value()
+            if self.probabilistic_base_model:
+                W_mean = model.mean_layer.kernel.get_value()
+                b_mean = model.mean_layer.bias.get_value()
+                W_var = model.var_layer.kernel.get_value()
+                b_var = model.var_layer.bias.get_value()
+            else:
+                W3 = model.l3.kernel.get_value()
+                b3 = model.l3.bias.get_value()
 
             def model_fn_ws(ws):
                 w1, w2 = ws
@@ -611,6 +690,8 @@ class GymPJSVD(luigi.Task):
 
             correction_params = {}
             if self.correction_mode == "affine":
+                if self.probabilistic_base_model:
+                    raise ValueError("Probabilistic multi-layer affine PJSVD is not supported.")
                 correction_params = {
                     "mu_old": mu_old,
                     "std_old": std_old,
@@ -618,7 +699,10 @@ class GymPJSVD(luigi.Task):
                     "next_b": b3,
                 }
             else:
-                correction_params = {"target_act": h_old @ W3 + b3}
+                if self.probabilistic_base_model:
+                    correction_params = {"target_act": h_old}
+                else:
+                    correction_params = {"target_act": h_old @ W3 + b3}
 
             layer_params = {"l1": {"W": W1, "b": b1}, "l2": {"W": W2, "b": b2}}
             perturbed_layers = ["l1", "l2"]
@@ -651,87 +735,112 @@ class GymPJSVD(luigi.Task):
                 activation=act_fn,
                 layer_params=layer_params,
                 correction_params=correction_params,
+                tail_is_hidden=self.probabilistic_base_model and self.layer_scope == "multi",
             )
             m = _evaluate_gym(
                 f"PJSVD-{self.layer_scope}-{self.correction_mode} (size={p_size})",
                 ens,
-                inputs_id_eval,
-                targets_id_eval,
-                inputs_ood,
-                targets_ood,
+                dataset,
                 sidecar_path=f"{base_npz}_ps{p_size}.npz",
+                calibration_data=(x_va, y_va),
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time  # Consistent, non-cumulative setup time
 
-            # Intermediate Metrics
-            from util import get_intermediate_state, compute_l2_distance
+            if self.compute_l2 or self.compute_geometry:
+                # Optional intermediate-state analysis for perturbation behavior.
+                from util import get_intermediate_state, compute_l2_distance
 
-            layer_idx = 1 if self.layer_scope == "first" else 2
-            h_orig_id = get_intermediate_state(
-                model, inputs_id_eval, layer_idx=layer_idx
-            )
-            h_orig_ood = get_intermediate_state(model, inputs_ood, layer_idx=layer_idx)
+                layer_idx = 1 if self.layer_scope == "first" else 2
+                h_orig_id = get_intermediate_state(model, dataset["id_eval"][0], layer_idx=layer_idx)
+                h_perts_id, z_nexts_id = ens.predict_intermediate_and_corrected(dataset["id_eval"][0])
+                geom_out = {}
+                vmap_dist = None
 
-            h_perts_id, z_nexts_id = ens.predict_intermediate_and_corrected(
-                inputs_id_eval
-            )
-            h_perts_ood, z_nexts_ood = ens.predict_intermediate_and_corrected(
-                inputs_ood
-            )
+                if self.probabilistic_base_model:
+                    if self.layer_scope == "first":
+                        w_next_orig = model.layers[1].kernel.get_value()
+                        b_next_orig = model.layers[1].bias.get_value()
+                        z_orig_hidden_id = h_orig_id @ w_next_orig + b_next_orig
+                        z_uncorr_hidden_id = h_perts_id @ w_next_orig + b_next_orig
+                        z_orig_id = _probabilistic_output_vector(
+                            model, z_orig_hidden_id, apply_hidden_activation=True
+                        )
+                        z_uncorr_id = _probabilistic_output_vector(
+                            model, z_uncorr_hidden_id, apply_hidden_activation=True
+                        )
+                        z_corr_id = _probabilistic_output_vector(
+                            model, z_nexts_id, apply_hidden_activation=True
+                        )
+                    else:
+                        z_orig_id = _probabilistic_output_vector(model, h_orig_id)
+                        z_uncorr_id = _probabilistic_output_vector(model, h_perts_id)
+                        z_corr_id = _probabilistic_output_vector(model, z_nexts_id)
+                else:
+                    w_next_orig = (
+                        model.l2.kernel.get_value()
+                        if self.layer_scope == "first"
+                        else model.l3.kernel.get_value()
+                    )
+                    b_next_orig = (
+                        model.l2.bias.get_value()
+                        if self.layer_scope == "first"
+                        else model.l3.bias.get_value()
+                    )
+                    z_orig_id = h_orig_id @ w_next_orig + b_next_orig
+                    z_uncorr_id = h_perts_id @ w_next_orig + b_next_orig
+                    z_corr_id = z_nexts_id
 
-            m["uncorrected_l2_id_h"] = compute_l2_distance(h_perts_id, h_orig_id)
-            m["uncorrected_l2_ood_h"] = compute_l2_distance(h_perts_ood, h_orig_ood)
+                if self.compute_l2:
+                    m["uncorrected_l2_id_h"] = compute_l2_distance(h_perts_id, h_orig_id)
+                    m["uncorrected_l2_id_z"] = compute_l2_distance(z_uncorr_id, z_orig_id)
+                    m["corrected_l2_id_z"] = compute_l2_distance(z_corr_id, z_orig_id)
 
-            w_next_orig = (
-                model.l2.kernel.get_value()
-                if self.layer_scope == "first"
-                else model.l3.kernel.get_value()
-            )
-            b_next_orig = (
-                model.l2.bias.get_value()
-                if self.layer_scope == "first"
-                else model.l3.bias.get_value()
-            )
+                if self.compute_geometry and geom is not None:
+                    vmap_dist = jax.vmap(geom.distance)
+                    geom_out["geom_dist_id"] = np.array(vmap_dist(h_perts_id))
+                    geom_out["uncorr_l2_id"] = np.array(jnp.linalg.norm(z_uncorr_id - z_orig_id, axis=-1))
+                    geom_out["corr_l2_id"] = np.array(jnp.linalg.norm(z_corr_id - z_orig_id, axis=-1))
 
-            z_orig_id = h_orig_id @ w_next_orig + b_next_orig
-            z_orig_ood = h_orig_ood @ w_next_orig + b_next_orig
+                for reg in ["ood_near", "ood_mid", "ood_far"]:
+                    h_o = get_intermediate_state(model, dataset[reg][0], layer_idx=layer_idx)
+                    h_p, z_n = ens.predict_intermediate_and_corrected(dataset[reg][0])
 
-            z_uncorr_id = h_perts_id @ w_next_orig + b_next_orig
-            z_uncorr_ood = h_perts_ood @ w_next_orig + b_next_orig
+                    if self.probabilistic_base_model:
+                        if self.layer_scope == "first":
+                            z_orig_hidden = h_o @ w_next_orig + b_next_orig
+                            z_uncorr_hidden = h_p @ w_next_orig + b_next_orig
+                            z_o = _probabilistic_output_vector(
+                                model, z_orig_hidden, apply_hidden_activation=True
+                            )
+                            z_u = _probabilistic_output_vector(
+                                model, z_uncorr_hidden, apply_hidden_activation=True
+                            )
+                            z_c = _probabilistic_output_vector(
+                                model, z_n, apply_hidden_activation=True
+                            )
+                        else:
+                            z_o = _probabilistic_output_vector(model, h_o)
+                            z_u = _probabilistic_output_vector(model, h_p)
+                            z_c = _probabilistic_output_vector(model, z_n)
+                    else:
+                        z_o = h_o @ w_next_orig + b_next_orig
+                        z_u = h_p @ w_next_orig + b_next_orig
+                        z_c = z_n
 
-            m["uncorrected_l2_id_z"] = compute_l2_distance(z_uncorr_id, z_orig_id)
-            m["uncorrected_l2_ood_z"] = compute_l2_distance(z_uncorr_ood, z_orig_ood)
+                    if self.compute_l2:
+                        m[f"uncorrected_l2_{reg}_h"] = compute_l2_distance(h_p, h_o)
+                        m[f"uncorrected_l2_{reg}_z"] = compute_l2_distance(z_u, z_o)
+                        m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
 
-            m["corrected_l2_id_z"] = compute_l2_distance(z_nexts_id, z_orig_id)
-            m["corrected_l2_ood_z"] = compute_l2_distance(z_nexts_ood, z_orig_ood)
+                    if self.compute_geometry and geom is not None and vmap_dist is not None:
+                        geom_out[f"geom_dist_{reg}"] = np.array(vmap_dist(h_p))
+                        geom_out[f"uncorr_l2_{reg}"] = np.array(jnp.linalg.norm(z_u - z_o, axis=-1))
+                        geom_out[f"corr_l2_{reg}"] = np.array(jnp.linalg.norm(z_c - z_o, axis=-1))
 
-            # Geometry Analysis & Export
-            if self.compute_geometry and geom is not None:
-                # vmap over perturbed members (axis 0 of h_perts) and evaluate distance.
-                # h_perts is (N_members, N_samples, D)
-                # geom.distance operates on the trailing dimension.
-                vmap_dist = jax.vmap(geom.distance)
-                geom_dist_id = vmap_dist(h_perts_id)  # (N_members, N_samples)
-                geom_dist_ood = vmap_dist(h_perts_ood)  # (N_members, N_samples)
-
-                # Pointwise L2 differences (uncorrected and corrected) at the next affine layer
-                pw_uncorr_l2_id = jnp.linalg.norm(z_uncorr_id - z_orig_id, axis=-1)
-                pw_uncorr_l2_ood = jnp.linalg.norm(z_uncorr_ood - z_orig_ood, axis=-1)
-
-                pw_corr_l2_id = jnp.linalg.norm(z_nexts_id - z_orig_id, axis=-1)
-                pw_corr_l2_ood = jnp.linalg.norm(z_nexts_ood - z_orig_ood, axis=-1)
-
-                # Export the per-datapoint distance mapping
-                geom_npz = f"{base_npz}_ps{p_size}_geometry.npz"
-                np.savez(
-                    geom_npz,
-                    geom_dist_id=np.array(geom_dist_id),
-                    geom_dist_ood=np.array(geom_dist_ood),
-                    uncorr_l2_id=np.array(pw_uncorr_l2_id),
-                    uncorr_l2_ood=np.array(pw_uncorr_l2_ood),
-                    corr_l2_id=np.array(pw_corr_l2_id),
-                    corr_l2_ood=np.array(pw_corr_l2_ood),
-                )
+                if self.compute_geometry and geom is not None:
+                    geom_npz = f"{base_npz}_ps{p_size}_geometry.npz"
+                    np.savez(geom_npz, **geom_out)
 
             all_metrics[str(p_size)] = m
 
@@ -747,30 +856,27 @@ class GymSubspaceInference(luigi.Task):
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
     temperature = luigi.FloatParameter(default=0.0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed)
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"subspace_inference_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}_T{self.temperature}.json"
+                / f"subspace_inference{calib_str}_n{self.n_perturbations}_act-{self.activation}_seed{self.seed}_T{self.temperature}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
         act_fn = _get_activation(self.activation)
-        (
-            inputs_id,
-            targets_id,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
-        ) = _load_gym_data(self.input())
+        dataset = _load_gym_data(self.input())
+        inputs_id, targets_id = dataset["id_train"]
+        inputs_id_eval, targets_id_eval = dataset["id_eval"]
         x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
 
         print(
@@ -825,24 +931,14 @@ class GymSubspaceInference(luigi.Task):
         metrics = _evaluate_gym(
             "Subspace Inference",
             ensemble,
-            inputs_id_eval,
-            targets_id_eval,
-            inputs_ood,
-            targets_ood,
+            dataset,
             sidecar_path=self.output().path.replace(".json", ".npz"),
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
         )
         metrics["train_time"] = setup_time
 
-        # Intermediate Metrics
-        from util import get_intermediate_state, compute_l2_distance
-
-        h_orig_id = get_intermediate_state(model, inputs_id_eval, layer_idx=1)
-        h_orig_ood = get_intermediate_state(model, inputs_ood, layer_idx=1)
-        h_ens_id = ensemble.predict_intermediate(inputs_id_eval, layer_idx=1)
-        h_ens_ood = ensemble.predict_intermediate(inputs_ood, layer_idx=1)
-
-        metrics["uncorrected_l2_id"] = compute_l2_distance(h_ens_id, h_orig_id)
-        metrics["uncorrected_l2_ood"] = compute_l2_distance(h_ens_ood, h_orig_ood)
+        _add_uncorrected_local_l2_metrics(metrics, model, ensemble, dataset, layer_idx=1)
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, "w") as f:
@@ -865,10 +961,16 @@ class AllGymExperiments(luigi.WrapperTask):
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
     pjsvd_family = luigi.ChoiceParameter(default="low", choices=["low", "random"])
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+    probabilistic_pjsvd = luigi.BoolParameter(default=False)
 
     def requires(self) -> list[luigi.Task]:
         shared = dict(
-            env=self.env, steps=self.steps, seed=self.seed, activation=self.activation
+            env=self.env,
+            steps=self.steps,
+            seed=self.seed,
+            activation=self.activation,
+            posthoc_calibrate=self.posthoc_calibrate,
         )
         tasks = [
             GymStandardEnsemble(n_baseline=self.n_baseline, **shared),
@@ -885,25 +987,22 @@ class AllGymExperiments(luigi.WrapperTask):
 
         # Add all PJSVD variants
         for pjsvd_family in ["low", "random"]:
-            for safe_subspace_backend in [
-                "activation_covariance",
-                "projected_residual",
-            ]:
-                ps = self.perturbation_sizes
-                tasks.append(
-                    GymPJSVD(
-                        subset_size=self.subset_size,
-                        n_directions=self.n_directions,
-                        n_perturbations=self.n_perturbations,
-                        perturbation_sizes=ps,
-                        pjsvd_family=pjsvd_family,
-                        layer_scope="multi",
-                        correction_mode="least_squares",
-                        use_full_span=True,
-                        safe_subspace_backend=safe_subspace_backend,
-                        **shared,
-                    )
+            ps = self.perturbation_sizes
+            tasks.append(
+                GymPJSVD(
+                    subset_size=self.subset_size,
+                    n_directions=self.n_directions,
+                    n_perturbations=self.n_perturbations,
+                    perturbation_sizes=ps,
+                    pjsvd_family=pjsvd_family,
+                    layer_scope="multi",
+                    correction_mode="least_squares",
+                    use_full_span=True,
+                    safe_subspace_backend="projected_residual",
+                    probabilistic_base_model=self.probabilistic_pjsvd,
+                    **shared,
                 )
+            )
         return tasks
 
 
@@ -916,16 +1015,18 @@ class AllGymExperimentsMultiSeed(luigi.WrapperTask):
     n_directions = luigi.IntParameter(default=40)
     n_perturbations = luigi.IntParameter(default=100)
     n_baseline = luigi.IntParameter(default=10)
-    perturbation_sizes = luigi.ListParameter(default=[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
+    perturbation_sizes = luigi.ListParameter(default=[1, 2, 4, 8, 16, 32, 64])
     laplace_priors = luigi.ListParameter(
-        default=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0]
+        default=[10.0, 100.0, 1000.0, 10000.0, 100000.0]
     )
     seeds = luigi.ListParameter(default=[0, 10, 200])
     activation = luigi.Parameter(default="relu")
     pjsvd_family = luigi.ChoiceParameter(default="low", choices=["low", "random"])
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+    probabilistic_pjsvd = luigi.BoolParameter(default=False)
 
     def requires(self) -> list[luigi.Task]:
-        return [
+        return tree.flatten([
             [
                 AllGymExperiments(
                     env=env,
@@ -939,8 +1040,10 @@ class AllGymExperimentsMultiSeed(luigi.WrapperTask):
                     seed=seed,
                     activation=self.activation,
                     pjsvd_family=self.pjsvd_family,
+                    posthoc_calibrate=self.posthoc_calibrate,
+                    probabilistic_pjsvd=self.probabilistic_pjsvd,
                 )
                 for env in self.envs
             ]
             for seed in self.seeds
-        ]
+        ])

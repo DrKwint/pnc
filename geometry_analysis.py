@@ -17,22 +17,36 @@ def analyze_geometry_metrics(
     data = np.load(npz_path)
 
     geom_dist_id = data["geom_dist_id"].flatten()
-    geom_dist_ood = data["geom_dist_ood"].flatten()
-
     corr_l2_id = data["corr_l2_id"].flatten()
-    corr_l2_ood = data["corr_l2_ood"].flatten()
-
-    uncorr_l2_id = data["uncorr_l2_id"].flatten()
-    uncorr_l2_ood = data["uncorr_l2_ood"].flatten()
+    
+    regime_geom = {"ID (Expert)": geom_dist_id}
+    regime_corr = {"ID (Expert)": corr_l2_id}
+    
+    for reg in ["ood_near", "ood_mid", "ood_far", "ood"]:
+        gk = f"geom_dist_{reg}"
+        ck = f"corr_l2_{reg}"
+        if gk in data and ck in data:
+            if reg == "ood_near":
+                label = "OOD-Near (Medium)"
+            elif reg == "ood_mid":
+                label = "OOD-Mid (Simple)"
+            elif reg == "ood_far":
+                label = "OOD-Far (Random)"
+            elif reg == "ood":
+                label = "OOD-Legacy"
+            else:
+                label = reg
+            regime_geom[label] = data[gk].flatten()
+            regime_corr[label] = data[ck].flatten()
 
     os.makedirs(out_dir, exist_ok=True)
 
     # 1. Compute correlations
     results = {}
-    for split, geom, corr in [
-        ("ID", geom_dist_id, corr_l2_id),
-        ("OOD", geom_dist_ood, corr_l2_ood),
-    ]:
+    for split in regime_geom.keys():
+        geom = regime_geom[split]
+        corr = regime_corr[split]
+        
         # Pearson
         pearson_r, _ = pearsonr(geom, corr)
         # Spearman
@@ -49,8 +63,8 @@ def analyze_geometry_metrics(
         }
 
     # Combined
-    all_geom = np.concatenate([geom_dist_id, geom_dist_ood])
-    all_corr = np.concatenate([corr_l2_id, corr_l2_ood])
+    all_geom = np.concatenate(list(regime_geom.values()))
+    all_corr = np.concatenate(list(regime_corr.values()))
     p_all, _ = pearsonr(all_geom, all_corr)
     s_all, _ = spearmanr(all_geom, all_corr)
     slope_all, intercept_all, r_val_all, _, _ = linregress(all_geom, all_corr)
@@ -83,37 +97,26 @@ def analyze_geometry_metrics(
 
         return bucket_centers, bucket_means, bucket_medians
 
-    bc_id, bm_id, bmed_id = bucket_data(geom_dist_id, corr_l2_id)
-    bc_ood, bm_ood, bmed_ood = bucket_data(geom_dist_ood, corr_l2_ood)
-
-    results["Buckets_ID"] = {"centers": bc_id, "means": bm_id, "medians": bmed_id}
-    results["Buckets_OOD"] = {"centers": bc_ood, "means": bm_ood, "medians": bmed_ood}
+    for split in regime_geom.keys():
+        bc, bm, bmed = bucket_data(regime_geom[split], regime_corr[split])
+        results[f"Buckets_{split}"] = {"centers": bc, "means": bm, "medians": bmed}
 
     # 3. Plotting
     if not no_plots:
         base_name = os.path.basename(npz_path).replace(".npz", "")
 
         # Scatter plot
-        plt.figure(figsize=(8, 6))
-        plt.scatter(geom_dist_id, corr_l2_id, alpha=0.1, color="blue", label="ID")
-        plt.scatter(geom_dist_ood, corr_l2_ood, alpha=0.1, color="red", label="OOD")
-
-        # Trendlines
-        x_id = np.linspace(geom_dist_id.min(), geom_dist_id.max(), 100)
-        plt.plot(
-            x_id,
-            results["ID"]["intercept"] + results["ID"]["slope"] * x_id,
-            color="darkblue",
-            lw=2,
-        )
-
-        x_ood = np.linspace(geom_dist_ood.min(), geom_dist_ood.max(), 100)
-        plt.plot(
-            x_ood,
-            results["OOD"]["intercept"] + results["OOD"]["slope"] * x_ood,
-            color="darkred",
-            lw=2,
-        )
+        plt.figure(figsize=(10, 8))
+        colors = ["blue", "gold", "orange", "red", "darkred"]
+        idx = 0
+        for split in regime_geom.keys():
+            geom = regime_geom[split]
+            corr = regime_corr[split]
+            c = colors[idx % len(colors)]
+            plt.scatter(geom, corr, alpha=0.1, color=c, label=split)
+            x_line = np.linspace(geom.min(), geom.max(), 100)
+            plt.plot(x_line, results[split]["intercept"] + results[split]["slope"] * x_line, color=c, lw=2)
+            idx += 1
 
         plt.xlabel("Geometry Distance $d(x)$")
         plt.ylabel("Post-Correction Residual (Corr-L2)")
@@ -124,11 +127,14 @@ def analyze_geometry_metrics(
         plt.close()
 
         # Bucketed plot
-        plt.figure(figsize=(8, 6))
-        plt.plot(bc_id, bm_id, "o-", color="blue", label="ID Mean")
-        plt.plot(bc_ood, bm_ood, "s-", color="red", label="OOD Mean")
-        plt.plot(bc_id, bmed_id, "--", color="lightblue", label="ID Median")
-        plt.plot(bc_ood, bmed_ood, "--", color="lightcoral", label="OOD Median")
+        plt.figure(figsize=(10, 8))
+        idx = 0
+        for split in regime_geom.keys():
+            bc = results[f"Buckets_{split}"]["centers"]
+            bm = results[f"Buckets_{split}"]["means"]
+            c = colors[idx % len(colors)]
+            plt.plot(bc, bm, "o-", color=c, label=f"{split} Mean")
+            idx += 1
 
         plt.xlabel("Geometry Distance $d(x)$")
         plt.ylabel("Post-Correction Residual (Corr-L2)")
@@ -143,7 +149,7 @@ def analyze_geometry_metrics(
 
 def print_report(results: Dict[str, Any], npz_path: str):
     print(f"=== Geometry Analysis Report for {os.path.basename(npz_path)} ===")
-    for split in ["ID", "OOD", "Combined"]:
+    for split in list(regime_geom.keys()) + ["Combined"]:
         res = results[split]
         print(
             f"[{split}] Pearson R: {res['pearson']:.4f} | Spearman R: {res['spearman']:.4f}"
@@ -264,12 +270,17 @@ if __name__ == "__main__":
         summary_path = os.path.join(args.out, "summary_report.txt")
         with open(summary_path, "w") as sf:
             sf.write("=== Batch Geometry Analysis Summary ===\n\n")
-            sf.write(f"{'File':<60} | {'Env':<15} | {'P-Size':<8} | {'ID Pearson':<10} | {'OOD Pearson':<10}\n")
+            sf.write(f"{'File':<50} | {'Env':<15} | {'P-Size':<8} | {'ID Pearson':<10} | {'OOD-Far Pearson':<15}\n")
             sf.write("-" * 115 + "\n")
             for f, env, ps, res in all_results:
                 fname = os.path.basename(f)
                 id_p = res["ID"]["pearson"]
-                ood_p = res["OOD"]["pearson"]
-                sf.write(f"{fname[:60]:<60} | {env:<15} | {ps:<8.1f} | {id_p:<10.4f} | {ood_p:<10.4f}\n")
+                if "OOD-Far" in res:
+                    ood_p = res["OOD-Far"]["pearson"]
+                elif "OOD-Legacy" in res:
+                    ood_p = res["OOD-Legacy"]["pearson"]
+                else:
+                    ood_p = res["ID"]["pearson"]
+                sf.write(f"{fname[:50]:<50} | {env:<15} | {ps:<8.1f} | {id_p:<10.4f} | {ood_p:<15.4f}\n")
 
         print(f"\nSummary report saved to {summary_path}")

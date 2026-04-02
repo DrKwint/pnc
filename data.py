@@ -140,8 +140,8 @@ def collect_data(
     return jnp.array(np.stack(inputs)), jnp.array(np.stack(targets))
 
 
-class OODPolicyWrapper:
-    """A stateful wrapper for half_cheetah_expert_policy that keeps track of the step count."""
+class ExpertPolicyWrapper:
+    """A stateful wrapper for expert policies that keeps track of the step count."""
 
     def __init__(self):
         self.step_count = 0
@@ -157,6 +157,82 @@ class OODPolicyWrapper:
             raise NotImplementedError(f"Unknown environment: {env.spec.id}")
         self.step_count += 1
         return action
+
+
+# For backward compatibility with existing configs/scripts
+OODPolicyWrapper = ExpertPolicyWrapper
+
+
+class GaussianActionNoiseWrapper:
+    """Wraps a base policy and injects normal noise to actions."""
+
+    def __init__(
+        self,
+        base_policy: Callable[[gym.Env, np.ndarray], np.ndarray],
+        noise_std: float = 0.1,
+    ):
+        self.base_policy = base_policy
+        self.noise_std = noise_std
+
+    def __call__(self, env: gym.Env, obs: np.ndarray) -> np.ndarray:
+        action = self.base_policy(env, obs)
+        noise = np.random.normal(scale=self.noise_std, size=action.shape)
+        # Assuming typical PyBullet/MuJoCo continuous actions in [-1, 1]
+        action = np.clip(action + noise, -env.action_space.high[0], env.action_space.high[0])
+        return action.astype(np.float32)
+
+
+class ActionDropoutWrapper:
+    """Wraps a base policy and zeros out individual action dimensions randomly."""
+
+    def __init__(
+        self,
+        base_policy: Callable[[gym.Env, np.ndarray], np.ndarray],
+        drop_prob: float = 0.2,
+    ):
+        self.base_policy = base_policy
+        self.drop_prob = drop_prob
+
+    def __call__(self, env: gym.Env, obs: np.ndarray) -> np.ndarray:
+        action = self.base_policy(env, obs)
+        mask = np.random.uniform(size=action.shape) > self.drop_prob
+        action = action * mask
+        return action.astype(np.float32)
+
+
+def get_policy_for_regime(env_name: str, regime: str, preset: str = "", strict: bool = True) -> tuple[Callable[[gym.Env, np.ndarray], np.ndarray], dict]:
+    """
+    Returns the appropriate policy or policy wrapper for a given environment and regime severity.
+    Regimes: "id", "ood_near", "ood_mid", "ood_far"
+    Legacy mapping: "ood" -> mapped to "ood_far"
+    Returns: (policy_fn, metadata_dict)
+    """
+    if preset == "neurips_mujoco_ladder":
+        from policy_loader import load_neurips_policy
+        return load_neurips_policy(env_name, regime, strict=strict)
+
+    if regime == "id" or regime == "id_train":
+        policy = ExpertPolicyWrapper()
+    elif regime == "ood_near":
+        policy = GaussianActionNoiseWrapper(ExpertPolicyWrapper(), noise_std=0.2)
+    elif regime == "ood_mid":
+        # Combines high noise and dropouts for stronger degradation
+        policy = ActionDropoutWrapper(
+            GaussianActionNoiseWrapper(ExpertPolicyWrapper(), noise_std=0.4),
+            drop_prob=0.3
+        )
+    elif regime in ("ood_far", "ood"):
+        # The ultimate severity: purely random actions
+        policy = id_policy_random
+    else:
+        raise ValueError(f"Unknown regime: {regime}")
+
+    metadata = {
+        "policy_id": "legacy_wrapper",
+        "algo_family": "wrapper",
+        "source": "local_testing"
+    }
+    return policy, metadata
 
 
 def _download_idx(url: str, cache_dir: str) -> np.ndarray:

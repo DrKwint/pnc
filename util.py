@@ -85,87 +85,142 @@ def compute_l2_distance(perturbed_states: jax.Array, orig_state: jax.Array) -> f
     )
 
 
+def _block_until_ready_tree(tree: Any) -> Any:
+    return jax.tree_util.tree_map(
+        lambda x: x.block_until_ready() if hasattr(x, "block_until_ready") else x,
+        tree,
+    )
+
+
+def _predictive_mean_var(preds: Any) -> tuple[jax.Array, jax.Array]:
+    if isinstance(preds, tuple) and len(preds) == 2:
+        means, vars = preds
+        mean = jnp.mean(means, axis=0)
+        var = jnp.mean(vars, axis=0) + jnp.var(means, axis=0)
+    else:
+        mean = jnp.mean(preds, axis=0)
+        var = jnp.var(preds, axis=0)
+    return mean, var
+
+
+def _fit_posthoc_variance_scale(
+    ensemble: Any,
+    inputs: jax.Array,
+    targets: jax.Array,
+) -> float:
+    """Fit a single multiplicative variance scale by minimizing Gaussian NLL."""
+    if len(inputs) == 0:
+        return 1.0
+
+    _ = ensemble.predict(inputs[:1])
+    preds = ensemble.predict(inputs)
+    _block_until_ready_tree(preds)
+
+    mean, var = _predictive_mean_var(preds)
+    sq_err = (targets - mean) ** 2
+    raw_scale = jnp.mean(sq_err / (var + 1e-6))
+    scale = float(jnp.clip(raw_scale, 1e-6, 1e6))
+
+    if not np.isfinite(scale):
+        return 1.0
+    return scale
+
+
 def _evaluate_gym(
     ensemble_name: str,
     ensemble: Any,
-    inputs_id_eval: Float[Array, "batch ..."],
-    targets_id_eval: Array,
-    inputs_ood: Float[Array, "batch ..."],
-    targets_ood: Array,
+    dataset: dict,
     sidecar_path: str | None = None,
+    calibration_data: tuple[jax.Array, jax.Array] | None = None,
+    posthoc_calibrate: bool = False,
 ) -> dict[str, float]:
-    """Evaluate a gym ensemble, return a scalar metrics dict.
+    """Evaluate a gym ensemble, return a scalar metrics dict over multiple regimes."""
+    print(f"\\n--- Results: {ensemble_name} ---")
 
-    If sidecar_path is given, also writes a .npz file with per-point
-    sq_error and predictive_variance arrays (ID and OOD) so that
-    error-variance plots can be reconstructed post-hoc.
-    """
-    print(f"\n--- Results: {ensemble_name} ---")
+    variance_scale = 1.0
+    if posthoc_calibrate and calibration_data is not None:
+        cal_inputs, cal_targets = calibration_data
+        variance_scale = _fit_posthoc_variance_scale(ensemble, cal_inputs, cal_targets)
+        print(
+            f"[posthoc] Learned variance scale on validation split: {variance_scale:.6f}"
+        )
 
     def _group(name, inputs, targets):
+        if len(inputs) == 0:
+            return float("nan"), float("nan"), float("nan"), float("nan"), np.array([]), np.array([]), 0.0
         # Warm-up
         _ = ensemble.predict(inputs[:1])
 
         t0 = time.time()
-        preds = ensemble.predict(inputs)  # (S, N, D)
-        preds.block_until_ready()
+        preds = ensemble.predict(inputs)
+        _block_until_ready_tree(preds)
         eval_time = time.time() - t0
-        mean = jnp.mean(preds, axis=0)  # (N, D)
-        var = 100 * jnp.var(preds, axis=0)  # (N, D)
+
+        mean, raw_var = _predictive_mean_var(preds)
+        var = raw_var * variance_scale
+
         avg_var = float(jnp.mean(var))
         nll = float(compute_nll(mean, var, targets))
         ece = float(compute_calibration(mean, var, targets))
         rmse = float(jnp.sqrt(jnp.mean((mean - targets) ** 2)))
         print_metrics(name, rmse, avg_var, nll, ece)
-        # Per-point scalars for error-variance plot:
-        # sq_error: mean squared error per sample (averaged over output dims)
-        sq_err_per_pt = np.array(jnp.mean((mean - targets) ** 2, axis=-1))  # (N,)
-        # predictive_variance: mean predictive variance per sample
-        pred_var_per_pt = np.array(jnp.mean(var, axis=-1))  # (N,)
+        sq_err_per_pt = np.array(jnp.mean((mean - targets) ** 2, axis=-1))
+        pred_var_per_pt = np.array(jnp.mean(var, axis=-1))
         return rmse, avg_var, nll, ece, sq_err_per_pt, pred_var_per_pt, eval_time
 
-    rmse_id, var_id, nll_id, ece_id, sq_err_id, pred_var_id, t_id = _group(
-        "ID", inputs_id_eval, targets_id_eval
-    )
-    rmse_ood, var_ood, nll_ood, ece_ood, sq_err_ood, pred_var_ood, t_ood = _group(
-        "OOD", inputs_ood, targets_ood
-    )
+    results = {}
+    sidecar_data = {}
+    
+    # ID
+    inputs_id, targets_id = dataset["id_eval"]
+    rmse_id, var_id, nll_id, ece_id, sq_err_id, pred_var_id, t_id = _group("ID", inputs_id, targets_id)
+    
+    results["rmse_id"] = rmse_id
+    results["nll_id"] = nll_id
+    results["ece_id"] = ece_id
+    results["var_id"] = var_id
+    results["eval_time"] = t_id
+    if posthoc_calibrate:
+        results["posthoc_variance_scale"] = variance_scale
+    
+    sidecar_data["sq_error_id"] = sq_err_id
+    sidecar_data["pred_var_id"] = pred_var_id
 
-    # Re-use the per-point predictive variance we already computed!
-    auroc, aupr = compute_ood_metrics(pred_var_id, pred_var_ood)
-
-    rmse_ratio = rmse_ood / (rmse_id + 1e-6)
-    var_ratio = var_ood / (var_id + 1e-9)
-    print("\nOOD Detection Metrics:")
-    print(f"AUROC: {auroc:.4f} | AUPR: {aupr:.4f}")
-    print(
-        f"RMSE Ratio (OOD / ID): {rmse_ratio:.2f}x | Variance Ratio: {var_ratio:.2f}x"
-    )
-
+    print("\\nOOD Metrics:")
+    ood_keys = ["ood_near", "ood_mid", "ood_far", "ood"]
+    
+    for reg in ood_keys:
+        if reg not in dataset: continue
+        inputs_ood, targets_ood = dataset[reg]
+        r_ood, v_ood, n_ood, e_ood, sq_ood, pv_ood, t_ood = _group(f"OOD ({reg})", inputs_ood, targets_ood)
+        
+        results[f"rmse_{reg}"] = r_ood
+        results[f"nll_{reg}"] = n_ood
+        results[f"ece_{reg}"] = e_ood
+        results[f"var_{reg}"] = v_ood
+        
+        sidecar_data[f"sq_error_{reg}"] = sq_ood
+        sidecar_data[f"pred_var_{reg}"] = pv_ood
+        
+        if len(pred_var_id) > 0 and len(pv_ood) > 0:
+            auroc, aupr = compute_ood_metrics(pred_var_id, pv_ood)
+            results[f"auroc_{reg}"] = auroc
+            results[f"aupr_{reg}"] = aupr
+            rmse_rat = r_ood / (rmse_id + 1e-6) if rmse_id > 0 else float('inf')
+            var_rat = v_ood / (var_id + 1e-9) if var_id > 0 else float('inf')
+            print(f"[{reg}] AUROC: {auroc:.4f} | AUPR: {aupr:.4f} | RMSE Rat: {rmse_rat:.2f}x")
+            
+            # Populate un-suffixed keys from ood_far to not break backward compatibility completely
+            if reg == "ood_far":
+                results["auroc"] = auroc
+                results["aupr"] = aupr
+                results["rmse_ratio"] = rmse_rat
+                results["var_ratio"] = var_rat
+                
     if sidecar_path is not None:
-        np.savez(
-            sidecar_path,
-            sq_error_id=sq_err_id,
-            pred_var_id=pred_var_id,
-            sq_error_ood=sq_err_ood,
-            pred_var_ood=pred_var_ood,
-        )
+        np.savez(sidecar_path, **sidecar_data)
 
-    return {
-        "rmse_id": rmse_id,
-        "nll_id": nll_id,
-        "ece_id": ece_id,
-        "rmse_ood": rmse_ood,
-        "nll_ood": nll_ood,
-        "ece_ood": ece_ood,
-        "var_id": var_id,
-        "var_ood": var_ood,
-        "auroc": auroc,
-        "aupr": aupr,
-        "rmse_ratio": rmse_ratio,
-        "var_ratio": var_ratio,
-        "eval_time": t_id,  # We report the ID inference time
-    }
+    return results
 
 
 def _evaluate_mnist(
@@ -250,24 +305,18 @@ def _evaluate_mnist(
 
 def _load_gym_data(
     paths: dict,
-) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+) -> dict:
     """Load arrays written by CollectGymData."""
 
     def _npz(p):
         d = np.load(p)
         return jnp.array(d["inputs"]), jnp.array(d["targets"])
 
-    inputs_id, targets_id = _npz(paths["id_train"].path)
-    inputs_id_eval, targets_id_eval = _npz(paths["id_eval"].path)
-    inputs_ood, targets_ood = _npz(paths["ood"].path)
-    return (
-        inputs_id,
-        targets_id,
-        inputs_id_eval,
-        targets_id_eval,
-        inputs_ood,
-        targets_ood,
-    )
+    ds = {}
+    for k in ["id_train", "id_eval", "ood_near", "ood_mid", "ood_far", "ood"]:
+        if k in paths:
+            ds[k] = _npz(paths[k].path)
+    return ds
 
 
 def _split_data(
