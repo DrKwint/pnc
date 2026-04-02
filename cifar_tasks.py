@@ -42,6 +42,10 @@ def preact_resnet18_block_indices() -> list[tuple[int, int]]:
     return [(s, b) for s in range(4) for b in range(2)]
 
 
+def _posthoc_suffix(enabled: bool) -> str:
+    return "_vcal" if enabled else ""
+
+
 def compute_cifar_block_preacts(
     model: PreActResNet18,
     X_data: np.ndarray,
@@ -167,6 +171,7 @@ class CIFARStandardEnsemble(luigi.Task):
     lr = luigi.FloatParameter(default=1e-3)
     weight_decay = luigi.FloatParameter(default=1e-4)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> list[luigi.Task]:
         return [
@@ -177,22 +182,25 @@ class CIFARStandardEnsemble(luigi.Task):
                 lr=self.lr,
                 weight_decay=self.weight_decay,
                 seed=self.seed + i,
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             for i in range(self.n_models)
         ]
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"standard_ensemble_n{self.n_models}_e{self.epochs}_seed{self.seed}.json"
+                / f"standard_ensemble{calib_str}_n{self.n_models}_e{self.epochs}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        _, _, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         print(f"\n=== CIFAR Standard Ensemble (n={self.n_models}) ===")
         t0 = time.time()
@@ -222,7 +230,15 @@ class CIFARStandardEnsemble(luigi.Task):
                 if hasattr(p, "block_until_ready"):
                     p.block_until_ready()
 
-        metrics = _evaluate_cifar("Standard Ensemble", ens, x_te, y_te, n_cls)
+        metrics = _evaluate_cifar(
+            "Standard Ensemble",
+            ens,
+            x_te,
+            y_te,
+            n_cls,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
         metrics["train_time"] = train_time
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, "w") as f:
@@ -302,6 +318,7 @@ class CIFARPreActMCDropout(luigi.Task):
     lr = luigi.FloatParameter(default=1e-3)
     weight_decay = luigi.FloatParameter(default=1e-4)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainMCDropoutPreActResNet18(
@@ -315,18 +332,20 @@ class CIFARPreActMCDropout(luigi.Task):
         )
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"mc_dropout_n{self.n_perturbations}_dr{self.dropout_rate}"
+                / f"mc_dropout{calib_str}_n{self.n_perturbations}_dr{self.dropout_rate}"
                 f"_e{self.epochs}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        _, _, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         print(
             f"\n=== CIFAR MC Dropout (n={self.n_perturbations}, dr={self.dropout_rate}) ==="
@@ -361,7 +380,15 @@ class CIFARPreActMCDropout(luigi.Task):
             if hasattr(p, "block_until_ready"):
                 p.block_until_ready()
 
-        metrics = _evaluate_cifar("MC Dropout", ens, x_te, y_te, n_cls)
+        metrics = _evaluate_cifar(
+            "MC Dropout",
+            ens,
+            x_te,
+            y_te,
+            n_cls,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
         metrics["train_time"] = train_time
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, "w") as f:
@@ -468,6 +495,7 @@ class CIFARPreActSWAG(luigi.Task):
     lr = luigi.FloatParameter(default=1e-3)
     weight_decay = luigi.FloatParameter(default=1e-4)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainSWAGPreActResNet18(
@@ -480,17 +508,19 @@ class CIFARPreActSWAG(luigi.Task):
         )
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"swag_n{self.n_perturbations}_e{self.epochs}_seed{self.seed}.json"
+                / f"swag{calib_str}_n{self.n_perturbations}_e{self.epochs}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        _, _, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         print(f"\n=== CIFAR SWAG (n={self.n_perturbations}) ===")
         t0 = time.time()
@@ -514,7 +544,15 @@ class CIFARPreActSWAG(luigi.Task):
 
         ens.predict = _patched_predict
 
-        metrics = _evaluate_cifar("SWAG", ens, x_te, y_te, n_cls)
+        metrics = _evaluate_cifar(
+            "SWAG",
+            ens,
+            x_te,
+            y_te,
+            n_cls,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
         metrics["train_time"] = time.time() - t0
 
         # Ensure model is ready
@@ -537,26 +575,32 @@ class CIFARPJSVD(luigi.Task):
     subset_size = luigi.IntParameter(default=512)
     n_oversampling = luigi.IntParameter(default=10)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, seed=self.seed
+            dataset=self.dataset,
+            epochs=self.epochs,
+            seed=self.seed,
+            posthoc_calibrate=self.posthoc_calibrate,
         )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"pjsvd_bnrefit_k{self.n_directions}_n{self.n_perturbations}"
+                / f"pjsvd_bnrefit{calib_str}_k{self.n_directions}_n{self.n_perturbations}"
                 f"_ps{ps}_e{self.epochs}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
         with open(self.input().path, "rb") as f:
@@ -630,6 +674,8 @@ class CIFARPJSVD(luigi.Task):
                 y_te,
                 n_cls,
                 sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
+                calibration_data=(x_va, y_va),
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time
             all_metrics[str(p_size)] = m
@@ -650,26 +696,32 @@ class CIFARMLPJSVDv(luigi.Task):
     subset_size = luigi.IntParameter(default=512)
     n_oversampling = luigi.IntParameter(default=10)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, seed=self.seed
+            dataset=self.dataset,
+            epochs=self.epochs,
+            seed=self.seed,
+            posthoc_calibrate=self.posthoc_calibrate,
         )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"ml_pjsvd_bnrefit_k{self.n_directions}_n{self.n_perturbations}"
+                / f"ml_pjsvd_bnrefit{calib_str}_k{self.n_directions}_n{self.n_perturbations}"
                 f"_ps{ps}_e{self.epochs}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
         with open(self.input().path, "rb") as f:
@@ -761,6 +813,8 @@ class CIFARMLPJSVDv(luigi.Task):
                 y_te,
                 n_cls,
                 sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
+                calibration_data=(x_va, y_va),
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time
             all_metrics[str(p_size)] = m
@@ -779,13 +833,15 @@ class CIFARTrainPreActResNet18(luigi.Task):
     lr = luigi.FloatParameter(default=1e-3)
     weight_decay = luigi.FloatParameter(default=1e-4)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"preact_resnet18_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}"
+                / f"preact_resnet18{calib_str}_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}"
                 f"_seed{self.seed}.pkl"
             )
         )
@@ -838,7 +894,15 @@ class CIFARTrainPreActResNet18(luigi.Task):
                 return jnp.expand_dims(self.m(x, use_running_average=True), axis=0)
 
         ens = _SingleEns(model)
-        metrics = _evaluate_cifar("PreAct ResNet-18", ens, x_te, y_te, n_cls)
+        metrics = _evaluate_cifar(
+            "PreAct ResNet-18",
+            ens,
+            x_te,
+            y_te,
+            n_cls,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
 
         state = nnx.state(model)
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
@@ -864,19 +928,24 @@ class CIFARPnC(luigi.Task):
         choices=["activation_covariance", "projected_residual"],
     )
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, seed=self.seed
+            dataset=self.dataset,
+            epochs=self.epochs,
+            seed=self.seed,
+            posthoc_calibrate=self.posthoc_calibrate,
         )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"pnc_s{self.target_stage_idx}b{self.target_block_idx}_{self.safe_subspace_backend}_k{self.n_directions}_n{self.n_perturbations}"
+                / f"pnc{calib_str}_s{self.target_stage_idx}b{self.target_block_idx}_{self.safe_subspace_backend}_k{self.n_directions}_n{self.n_perturbations}"
                 f"_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}.json"
             )
         )
@@ -989,6 +1058,8 @@ class CIFARPnC(luigi.Task):
                 y_te,
                 n_cls,
                 sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
+                calibration_data=(x_va, y_va),
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time
 
@@ -1042,19 +1113,24 @@ class CIFARMultiBlockPnC(luigi.Task):
         choices=["activation_covariance", "projected_residual"],
     )
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, seed=self.seed
+            dataset=self.dataset,
+            epochs=self.epochs,
+            seed=self.seed,
+            posthoc_calibrate=self.posthoc_calibrate,
         )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"pnc_allblocks_{self.safe_subspace_backend}_k{self.n_directions}_n{self.n_perturbations}"
+                / f"pnc_allblocks{calib_str}_{self.safe_subspace_backend}_k{self.n_directions}_n{self.n_perturbations}"
                 f"_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}.json"
             )
         )
@@ -1188,6 +1264,8 @@ class CIFARMultiBlockPnC(luigi.Task):
                 y_te,
                 n_cls,
                 sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
+                calibration_data=(x_va, y_va),
+                posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time
 
@@ -1227,6 +1305,7 @@ class CIFARLLLA(luigi.Task):
     weight_decay = luigi.FloatParameter(default=1e-4)
     prior_precision = luigi.FloatParameter(default=1.0)
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
@@ -1236,21 +1315,24 @@ class CIFARLLLA(luigi.Task):
             lr=self.lr,
             weight_decay=self.weight_decay,
             seed=self.seed,
+            posthoc_calibrate=self.posthoc_calibrate,
         )
 
     def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
-                / f"llla_n{self.n_perturbations}_prec{self.prior_precision}"
+                / f"llla{calib_str}_n{self.n_perturbations}_prec{self.prior_precision}"
                 f"_e{self.epochs}_seed{self.seed}.json"
             )
         )
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         print(
             f"\n=== CIFAR LLLA (n={self.n_perturbations}, prior_prec={self.prior_precision}) ==="
@@ -1310,7 +1392,15 @@ class CIFARLLLA(luigi.Task):
 
         train_time = time.time() - t0
         print("  Evaluating LLLA Ensemble...")
-        metrics = _evaluate_cifar("LLLA", ens, x_te, y_te, n_cls)
+        metrics = _evaluate_cifar(
+            "LLLA",
+            ens,
+            x_te,
+            y_te,
+            n_cls,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
         metrics["train_time"] = train_time
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
@@ -1328,9 +1418,15 @@ class AllCIFARExperiments(luigi.WrapperTask):
     n_directions = luigi.IntParameter(default=40)
     perturbation_sizes = luigi.ListParameter(default=[0.01, 0.05, 0.1, 0.5])
     seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> list[luigi.Task]:
-        shared = dict(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
+        shared = dict(
+            dataset=self.dataset,
+            epochs=self.epochs,
+            seed=self.seed,
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
         ml_ps = [ps / 5 for ps in self.perturbation_sizes]
         return [
             CIFARTrainPreActResNet18(**shared),

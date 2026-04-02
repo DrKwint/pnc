@@ -126,6 +126,70 @@ def _fit_posthoc_variance_scale(
     return scale
 
 
+def _predict_cifar_logits(
+    ensemble: Any,
+    inputs: Float[np.ndarray, "batch ..."],
+    batch_size: int = 256,
+) -> jax.Array:
+    """Run CIFAR ensemble inference in mini-batches and concatenate logits."""
+    logits_batches = []
+    for start in range(0, len(inputs), batch_size):
+        x_batch = inputs[start : start + batch_size]
+        logits_batches.append(ensemble.predict(x_batch))
+    return jnp.concatenate(logits_batches, axis=1)
+
+
+def _fit_posthoc_temperature(
+    logits: jax.Array,
+    targets: Array,
+    max_iters: int = 40,
+) -> float:
+    """Fit a positive temperature by minimizing validation cross-entropy."""
+    if logits.shape[1] == 0:
+        return 1.0
+
+    targets = jnp.asarray(targets)
+    idx = jnp.arange(targets.shape[0])
+
+    def objective(log_temperature: float) -> float:
+        temperature = jnp.exp(log_temperature)
+        probs = jax.nn.softmax(logits / temperature, axis=-1)
+        mean_probs = jnp.mean(probs, axis=0)
+        nll = -jnp.mean(jnp.log(mean_probs[idx, targets] + 1e-8))
+        return float(nll)
+
+    # Golden-section search over log-temperature for positivity and stability.
+    left = float(np.log(1e-2))
+    right = float(np.log(1e2))
+    phi = (1.0 + np.sqrt(5.0)) / 2.0
+    inv_phi = 1.0 / phi
+
+    c = right - (right - left) * inv_phi
+    d = left + (right - left) * inv_phi
+    fc = objective(c)
+    fd = objective(d)
+
+    for _ in range(max_iters):
+        if fc <= fd:
+            right = d
+            d = c
+            fd = fc
+            c = right - (right - left) * inv_phi
+            fc = objective(c)
+        else:
+            left = c
+            c = d
+            fc = fd
+            d = left + (right - left) * inv_phi
+            fd = objective(d)
+
+    best_log_temperature = c if fc <= fd else d
+    temperature = float(np.exp(best_log_temperature))
+    if not np.isfinite(temperature):
+        return 1.0
+    return temperature
+
+
 def _evaluate_gym(
     ensemble_name: str,
     ensemble: Any,
@@ -395,6 +459,8 @@ def _evaluate_cifar(
     n_classes: int = 10,
     batch_size: int = 256,
     sidecar_path: str | None = None,
+    calibration_data: tuple[np.ndarray, Array] | None = None,
+    posthoc_calibrate: bool = False,
 ) -> dict[str, float]:
     """
     Evaluate a classification ensemble on CIFAR images.
@@ -404,20 +470,20 @@ def _evaluate_cifar(
     """
     print(f"\n--- Results: {ensemble_name} ---")
 
-    # Collect per-batch softmax predictions
-    all_preds = []
-
     # Warm-up
     _ = ensemble.predict(x_test[:1])
 
+    temperature = 1.0
+    if posthoc_calibrate and calibration_data is not None:
+        cal_inputs, cal_targets = calibration_data
+        cal_logits = _predict_cifar_logits(ensemble, cal_inputs, batch_size=batch_size)
+        _block_until_ready_tree(cal_logits)
+        temperature = _fit_posthoc_temperature(cal_logits, cal_targets)
+        print(f"[posthoc] Learned temperature on validation split: {temperature:.6f}")
+
     t0 = time.time()
-    for start in range(0, len(x_test), batch_size):
-        x_batch = x_test[start : start + batch_size]
-        # ensemble.predict returns (S, N_batch, C) logits
-        logits_batch = ensemble.predict(x_batch)  # (S, N_batch, C)
-        probs_batch = jax.nn.softmax(logits_batch, axis=-1)  # (S, N_batch, C)
-        all_preds.append(probs_batch)
-    preds = jnp.concatenate(all_preds, axis=1)  # (S, N, C)
+    logits = _predict_cifar_logits(ensemble, x_test, batch_size=batch_size)
+    preds = jax.nn.softmax(logits / temperature, axis=-1)  # (S, N, C)
     preds.block_until_ready()
     eval_time = time.time() - t0
 
@@ -461,4 +527,5 @@ def _evaluate_cifar(
         "nll": nll,
         "ece": ece,
         "eval_time": eval_time,
+        "posthoc_temperature": temperature,
     }
