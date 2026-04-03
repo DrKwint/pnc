@@ -14,6 +14,11 @@ def get_affine_residuals(
     This effectively measures the 'Unfixable Error' that cannot be removed by
     an affine transformation of the next layer.
     """
+    outputs_batch = outputs_batch.reshape(outputs_batch.shape[0], -1)
+    original_outputs_batch = original_outputs_batch.reshape(
+        original_outputs_batch.shape[0], -1
+    )
+
     # A. Bias Correction (Project onto vector of 1s)
     mean_correction = jnp.mean(outputs_batch, axis=0, keepdims=True)
     centered = outputs_batch - mean_correction
@@ -40,6 +45,11 @@ def get_full_span_affine_residuals(
     Project the perturbed outputs onto the orthogonal complement of the
     full Affine Correction Subspace spanned by [Original Signal (Y), 1].
     """
+    outputs_batch = outputs_batch.reshape(outputs_batch.shape[0], -1)
+    original_outputs_batch = original_outputs_batch.reshape(
+        original_outputs_batch.shape[0], -1
+    )
+
     # Augment Y with a column of 1s representing the bias
     # Y is shape (B, D)
     B = original_outputs_batch.shape[0]

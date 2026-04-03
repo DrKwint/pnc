@@ -66,6 +66,7 @@ CLF_METRICS = [
     ("accuracy", "Accuracy"),
     ("brier", "Brier"),
     ("entropy", "Entropy"),
+    ("nll", "NLL"),
     ("ece", "ECE"),
     ("train_time", "Train (s)"),
     ("eval_time", "Eval (s)"),
@@ -124,8 +125,10 @@ def _canonical(stem: str) -> str:
     return re.sub(r"_seed\d+", "", stem).replace("__", "_")
 
 
-def _is_nested(data: dict) -> bool:
-    return bool(data) and isinstance(next(iter(data.values())), dict)
+def _is_nested(data) -> bool:
+    return isinstance(data, dict) and bool(data) and isinstance(
+        next(iter(data.values())), dict
+    )
 
 
 def _extract(stem: str, key: str) -> str:
@@ -241,6 +244,10 @@ def _load_env_results(env_dir: Path) -> dict:
             continue  # skip checkpoints etc.
         with open(path) as f:
             data = json.load(f)
+
+        # Skip auxiliary JSON artifacts that are not metric dictionaries.
+        if not isinstance(data, dict):
+            continue
 
         if _is_nested(data):
             for config_val, metrics in data.items():
@@ -446,6 +453,8 @@ def main():
             for sub_d in sorted(d.iterdir()):
                 if sub_d.is_dir():
                     envs.append((f"uci-{sub_d.name}", sub_d, UCI_METRICS))
+        elif d.name.lower() in {"cifar10", "cifar100"}:
+            envs.append((d.name, d, CLF_METRICS))
         else:
             envs.append((d.name, d, GYM_METRICS))
 

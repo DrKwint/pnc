@@ -187,15 +187,15 @@ class CIFARStandardEnsemble(luigi.Task):
     def requires(self) -> list[luigi.Task]:
         return [CIFARTrainPreActResNet18(
             dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed + i,
-            posthoc_calibrate=self.posthoc_calibrate
+            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed + i
         ) for i in range(self.n_models)]
 
     def output(self) -> luigi.LocalTarget:
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'standard_ensemble{calib_str}_n{self.n_models}_e{self.epochs}_seed{self.seed}.json'))
+                f'standard_ensemble{calib_str}_n{self.n_models}_e{self.epochs}'
+                f'_bs{self.batch_size}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -250,7 +250,8 @@ class CIFARTrainMCDropoutPreActResNet18(luigi.Task):
     def output(self) -> luigi.LocalTarget:
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'preact_resnet18_mcdropout_dr{self.dropout_rate}_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.pkl'))
+                f'preact_resnet18_mcdropout_dr{self.dropout_rate}_e{self.epochs}'
+                f'_bs{self.batch_size}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.pkl'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -303,7 +304,7 @@ class CIFARPreActMCDropout(luigi.Task):
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
                 f'mc_dropout{calib_str}_n{self.n_perturbations}_dr{self.dropout_rate}'
-                f'_e{self.epochs}_seed{self.seed}.json'))
+                f'_e{self.epochs}_bs{self.batch_size}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -353,7 +354,8 @@ class CIFARTrainSWAGPreActResNet18(luigi.Task):
     def output(self) -> luigi.LocalTarget:
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'preact_resnet18_swag_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.pkl'))
+                f'preact_resnet18_swag_e{self.epochs}_bs{self.batch_size}'
+                f'_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.pkl'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -412,15 +414,15 @@ class CIFARPreActSWAG(luigi.Task):
     def requires(self) -> luigi.Task:
         return CIFARTrainSWAGPreActResNet18(
             dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed,
-            posthoc_calibrate=self.posthoc_calibrate
+            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed
         )
 
     def output(self) -> luigi.LocalTarget:
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'swag{calib_str}_n{self.n_perturbations}_e{self.epochs}_seed{self.seed}.json'))
+                f'swag{calib_str}_n{self.n_perturbations}_e{self.epochs}'
+                f'_bs{self.batch_size}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -460,218 +462,6 @@ class CIFARPreActSWAG(luigi.Task):
         with open(self.output().path, 'w') as f:
             json.dump(metrics, f, indent=2)
 
-
-class CIFARPJSVD(luigi.Task):
-    """Single-layer BatchNorm Refit PJSVD on ResNet-50 stem conv."""
-    dataset            = luigi.Parameter(default='cifar10')
-    epochs             = luigi.IntParameter(default=100)
-    n_directions       = luigi.IntParameter(default=40)
-    n_perturbations    = luigi.IntParameter(default=100)
-    perturbation_sizes = luigi.ListParameter(default=[0.005, 0.01, 0.05, 0.1])
-    subset_size        = luigi.IntParameter(default=512)
-    n_oversampling     = luigi.IntParameter(default=10)
-    random_directions  = luigi.BoolParameter(default=False)
-    seed               = luigi.IntParameter(default=0)
-    posthoc_calibrate = luigi.BoolParameter(default=False)
-
-    def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed,
-                                        posthoc_calibrate=self.posthoc_calibrate)
-
-    def output(self) -> luigi.LocalTarget:
-        ps = _ps_str(self.perturbation_sizes)
-        calib_str = _posthoc_suffix(self.posthoc_calibrate)
-        suffix = "_random" if self.random_directions else ""
-        return luigi.LocalTarget(
-            str(Path('results') / self.dataset /
-                f'pjsvd_bnrefit{calib_str}_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_seed{self.seed}{suffix}.json'))
-
-    def run(self) -> None:
-        seed_everything(self.seed)
-        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
-        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
-
-        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
-        with open(self.input().path, 'rb') as f:
-            ckpt = pickle.load(f)
-        nnx.update(model, ckpt['state'])
-
-        print(f'\n=== CIFAR PJSVD BN Refit (K={self.n_directions}, n={self.n_perturbations}) ===')
-        t_start = time.time()
-        actual_sub = min(len(x_tr), self.subset_size)
-        rng   = np.random.RandomState(self.seed)
-        idx   = rng.choice(len(x_tr), actual_sub, replace=False)
-        X_sub = x_tr[idx]
-
-        W_stem = model.stem.kernel.value  # (3, 3, 3, 64)
-
-        def model_fn_stem(w):
-            return jax.lax.conv_general_dilated(
-                lhs=X_sub, rhs=w.transpose(3, 2, 0, 1),
-                window_strides=(1, 1), padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-
-        t0 = time.time()
-        if self.random_directions:
-            print(f'  Generating {self.n_directions} random directions...')
-            from pnc import find_random_directions
-            v_opts, sigmas = find_random_directions(W_stem.size, self.n_directions, seed=self.seed)
-        else:
-            print(f'  Finding {self.n_directions} directions via randomized SVD '
-                  f'(oversampling={self.n_oversampling})...')
-            v_opts, sigmas = find_pjsvd_directions_randomized_svd(
-                model_fn_stem, W_stem,
-                n_directions=self.n_directions,
-                n_oversampling=self.n_oversampling,
-                use_full_span=True, seed=self.seed)
-        v_opts.block_until_ready()
-        print(f'  Direction finding: {time.time()-t0:.2f}s')
-        
-        setup_time = time.time() - t_start
-
-        rng_z = np.random.RandomState(self.seed)
-        all_z = rng_z.normal(0, 1, size=(self.n_perturbations, self.n_directions))
-        all_metrics = {}
-
-        for p_size in self.perturbation_sizes:
-            print(f'  Building ensemble (p_scale={p_size}) ...')
-            t1 = time.time()
-            raw_orig = model.stem(X_sub)
-            z_orig   = model.stage1[0].bn1(raw_orig, use_running_average=True)
-            ens = PJSVDEnsemble(
-                base_model=model, v_opts=v_opts, sigmas=sigmas, z_coeffs=all_z,
-                perturbation_scale=p_size, X_sub=X_sub,
-                layers=["l1"], correction_mode="bn_refit",
-                layer_params={"l1": {"W": W_stem}},
-                correction_params={"targets": [z_orig]}
-            )
-            print(f'  Precompute time: {time.time()-t1:.2f}s')
-            m = _evaluate_cifar(f'PJSVD BN Refit (scale={p_size})', ens, x_te, y_te, n_cls,
-                                sidecar_path=self.output().path.replace('.json', f'_ps{p_size}.npz'),
-                                calibration_data=(x_va, y_va),
-                                posthoc_calibrate=self.posthoc_calibrate)
-            m["train_time"] = setup_time
-            all_metrics[str(p_size)] = m
-
-        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.output().path, 'w') as f:
-            json.dump(all_metrics, f, indent=2)
-
-
-class CIFARMLPJSVDv(luigi.Task):
-    """Multi-layer BatchNorm Refit PJSVD: stem + stage1-block0-conv1."""
-    dataset            = luigi.Parameter(default='cifar10')
-    epochs             = luigi.IntParameter(default=100)
-    n_directions       = luigi.IntParameter(default=40)
-    n_perturbations    = luigi.IntParameter(default=100)
-    perturbation_sizes = luigi.ListParameter(default=[0.005, 0.01, 0.05, 0.1])
-    subset_size        = luigi.IntParameter(default=512)
-    n_oversampling     = luigi.IntParameter(default=10)
-    random_directions  = luigi.BoolParameter(default=False)
-    seed               = luigi.IntParameter(default=0)
-    posthoc_calibrate = luigi.BoolParameter(default=False)
-
-    def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed,
-                                        posthoc_calibrate=self.posthoc_calibrate)
-
-    def output(self) -> luigi.LocalTarget:
-        ps = _ps_str(self.perturbation_sizes)
-        calib_str = _posthoc_suffix(self.posthoc_calibrate)
-        suffix = "_random" if self.random_directions else ""
-        return luigi.LocalTarget(
-            str(Path('results') / self.dataset /
-                f'ml_pjsvd_bnrefit{calib_str}_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_seed{self.seed}{suffix}.json'))
-
-    def run(self) -> None:
-        seed_everything(self.seed)
-        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
-        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
-
-        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
-        with open(self.input().path, 'rb') as f:
-            ckpt = pickle.load(f)
-        nnx.update(model, ckpt['state'])
-
-        print(f'\n=== CIFAR ML-PJSVD BN Refit (K={self.n_directions}, n={self.n_perturbations}) ===')
-        t_start = time.time()
-        actual_sub = min(len(x_tr), self.subset_size)
-        rng   = np.random.RandomState(self.seed)
-        idx   = rng.choice(len(x_tr), actual_sub, replace=False)
-        X_sub = x_tr[idx]
-
-        W_stem = model.stem.kernel.value           # (3,3,3,64)
-        W_s1c1 = model.stage1[0].conv1.kernel.value  # (1,1,64,64)
-        W_joint_flat = jnp.concatenate([W_stem.reshape(-1), W_s1c1.reshape(-1)])
-
-        def model_fn_flat(w_flat):
-            w_st = w_flat[:W_stem.size].reshape(W_stem.shape)
-            w_sc = w_flat[W_stem.size:].reshape(W_s1c1.shape)
-            h_st = jax.lax.conv_general_dilated(
-                lhs=X_sub, rhs=w_st.transpose(3, 2, 0, 1),
-                window_strides=(1, 1), padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            h_st_bn  = model.stage1[0].bn1(h_st, use_running_average=True)
-            h_st_act = jax.nn.relu(h_st_bn)
-            h_sc = jax.lax.conv_general_dilated(
-                lhs=h_st_act, rhs=w_sc.transpose(3, 2, 0, 1),
-                window_strides=(1, 1), padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            return h_sc
-
-        t0 = time.time()
-        if self.random_directions:
-            print(f'  Generating {self.n_directions} random multi-layer directions...')
-            from pnc import find_random_directions
-            v_opts, sigmas = find_random_directions(W_joint_flat.size, self.n_directions, seed=self.seed)
-        else:
-            print(f'  Finding {self.n_directions} multi-layer directions via randomized SVD...')
-            v_opts, sigmas = find_pjsvd_directions_randomized_svd(
-                model_fn_flat, W_joint_flat,
-                n_directions=self.n_directions,
-                n_oversampling=self.n_oversampling,
-                use_full_span=True, seed=self.seed)
-        v_opts.block_until_ready()
-        print(f'  Direction finding: {time.time()-t0:.2f}s')
-        
-        setup_time = time.time() - t_start
-
-        rng_z = np.random.RandomState(self.seed)
-        all_z = rng_z.normal(0, 1, size=(self.n_perturbations, self.n_directions))
-        all_metrics = {}
-
-        for p_size in self.perturbation_sizes:
-            print(f'  Building ML ensemble (p_scale={p_size}) ...')
-            t1 = time.time()
-            raw_stem_orig = model.stem.conv(X_sub)
-            z_stem_orig   = model.stem.bn(raw_stem_orig, use_running_average=True)
-            h_st_orig     = jax.nn.relu(z_stem_orig)
-            blk0 = model.stage1[0]
-            raw_s1c1_orig = blk0.conv1.conv(h_st_orig)
-            z_s1c1_orig   = blk0.conv1.bn(raw_s1c1_orig, use_running_average=True)
-
-            ens = PJSVDEnsemble(
-                base_model=model, v_opts=v_opts, sigmas=sigmas, z_coeffs=all_z,
-                perturbation_scale=p_size, X_sub=X_sub,
-                layers=["l1", "l2"], correction_mode="bn_refit",
-                layer_params={"l1": {"W": W_stem}, "l2": {"W": W_s1c1}},
-                correction_params={"targets": [z_stem_orig, z_s1c1_orig]}
-            )
-            print(f'  Precompute time: {time.time()-t1:.2f}s')
-            m = _evaluate_cifar(f'ML-PJSVD BN Refit (scale={p_size})', ens, x_te, y_te, n_cls,
-                                sidecar_path=self.output().path.replace('.json', f'_ps{p_size}.npz'),
-                                calibration_data=(x_va, y_va),
-                                posthoc_calibrate=self.posthoc_calibrate)
-            m["train_time"] = setup_time
-            all_metrics[str(p_size)] = m
-
-        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.output().path, 'w') as f:
-            json.dump(all_metrics, f, indent=2)
-
-
 class CIFARTrainPreActResNet18(luigi.Task):
     """Train and checkpoint a PreAct ResNet-18 on CIFAR-10."""
     dataset      = luigi.Parameter(default='cifar10')
@@ -680,13 +470,12 @@ class CIFARTrainPreActResNet18(luigi.Task):
     lr           = luigi.FloatParameter(default=1e-3)
     weight_decay = luigi.FloatParameter(default=1e-4)
     seed         = luigi.IntParameter(default=0)
-    posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def output(self) -> luigi.LocalTarget:
-        calib_str = _posthoc_suffix(self.posthoc_calibrate)
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'preact_resnet18{calib_str}_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}'
+                f'preact_resnet18_e{self.epochs}_bs{self.batch_size}'
+                f'_lr{self.lr:.0e}_wd{self.weight_decay:.0e}'
                 f'_seed{self.seed}.pkl'))
 
     def run(self) -> None:
@@ -720,21 +509,70 @@ class CIFARTrainPreActResNet18(luigi.Task):
 
         print(f'Training time: {time.time()-t0:.2f}s')
 
+        state = nnx.state(model)
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, 'wb') as f:
+            pickle.dump({'state': state}, f)
+        print(f'Checkpoint saved to {self.output().path}')
+
+
+class CIFAREvalPreActResNet18(luigi.Task):
+    """Evaluate a trained PreAct ResNet-18 checkpoint, optionally with post-hoc calibration."""
+    dataset      = luigi.Parameter(default='cifar10')
+    epochs       = luigi.IntParameter(default=100)
+    batch_size   = luigi.IntParameter(default=128)
+    lr           = luigi.FloatParameter(default=1e-3)
+    weight_decay = luigi.FloatParameter(default=1e-4)
+    seed         = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset,
+            epochs=self.epochs,
+            batch_size=self.batch_size,
+            lr=self.lr,
+            weight_decay=self.weight_decay,
+            seed=self.seed,
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        return luigi.LocalTarget(
+            str(Path('results') / self.dataset /
+                f'preact_resnet18{calib_str}_e{self.epochs}_bs{self.batch_size}'
+                f'_lr{self.lr:.0e}_wd{self.weight_decay:.0e}'
+                f'_seed{self.seed}.json'))
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        _, _, x_va, y_va = _split_data(x_train_full, y_train_full)
+
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, 'rb') as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt['state'])
+
         class _SingleEns:
             def __init__(self, m): self.m = m
             def predict(self, x):
                 return jnp.expand_dims(self.m(x, use_running_average=True), axis=0)
 
         ens = _SingleEns(model)
-        metrics = _evaluate_cifar('PreAct ResNet-18', ens, x_te, y_te, n_cls,
-                                  calibration_data=(x_va, y_va),
-                                  posthoc_calibrate=self.posthoc_calibrate)
+        metrics = _evaluate_cifar(
+            'PreAct ResNet-18',
+            ens,
+            x_te,
+            y_te,
+            n_cls,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+        )
 
-        state = nnx.state(model)
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.output().path, 'wb') as f:
-            pickle.dump({'state': state, 'metrics': metrics}, f)
-        print(f'Checkpoint saved to {self.output().path}')
+        with open(self.output().path, 'w') as f:
+            json.dump(metrics, f, indent=2)
 
 
 
@@ -756,8 +594,9 @@ class CIFARPnC(luigi.Task):
     posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed,
-                                        posthoc_calibrate=self.posthoc_calibrate)
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed
+        )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
@@ -766,7 +605,8 @@ class CIFARPnC(luigi.Task):
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
                 f'pnc{calib_str}_s{self.target_stage_idx}b{self.target_block_idx}_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_lr{self.lambda_reg}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}{suffix}.json'))
+                f'_ps{ps}_lr{self.lambda_reg}_e{self.epochs}_subsetsize{self.subset_size}'
+                f'_chunksize{self.chunk_size}_seed{self.seed}{suffix}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -901,8 +741,9 @@ class CIFARMultiBlockPnC(luigi.Task):
     posthoc_calibrate = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed,
-                                        posthoc_calibrate=self.posthoc_calibrate)
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed
+        )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
@@ -913,7 +754,8 @@ class CIFARMultiBlockPnC(luigi.Task):
                 Path("results")
                 / self.dataset
                 / f"pnc_allblocks{calib_str}_k{self.n_directions}_n{self.n_perturbations}"
-                f"_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}{suffix}.json"
+                f"_ps{ps}_lr{self.lambda_reg}_e{self.epochs}_subsetsize{self.subset_size}"
+                f"_chunksize{self.chunk_size}_seed{self.seed}{suffix}.json"
             )
         )
 
@@ -1196,8 +1038,7 @@ class CIFARLLLA(luigi.Task):
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
             dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed,
-            posthoc_calibrate=self.posthoc_calibrate
+            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed
         )
 
     def output(self) -> luigi.LocalTarget:
@@ -1205,7 +1046,7 @@ class CIFARLLLA(luigi.Task):
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
                 f'llla{calib_str}_n{self.n_perturbations}_prec{self.prior_precision}'
-                f'_e{self.epochs}_seed{self.seed}.json'))
+                f'_e{self.epochs}_bs{self.batch_size}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -1286,24 +1127,23 @@ class AllCIFARExperiments(luigi.WrapperTask):
     perturbation_sizes = luigi.ListParameter(default=[0.01, 0.05, 0.1, 0.5])
     seed               = luigi.IntParameter(default=0)
     posthoc_calibrate = luigi.BoolParameter(default=False)
+    random_directions = luigi.BoolParameter(default=False)
 
     def requires(self) -> list[luigi.Task]:
         shared = dict(dataset=self.dataset, epochs=self.epochs, seed=self.seed,
                       posthoc_calibrate=self.posthoc_calibrate)
-        ml_ps  = [ps / 5 for ps in self.perturbation_sizes]
         return [
-            CIFARTrainPreActResNet18(**shared),
+            CIFAREvalPreActResNet18(**shared),
             CIFARStandardEnsemble(n_models=self.n_models, **shared),
             CIFARPreActMCDropout(n_perturbations=self.n_perturbations, **shared),
             CIFARPreActSWAG(n_perturbations=self.n_perturbations, **shared),
-            CIFARPJSVD(n_directions=self.n_directions,
-                       n_perturbations=self.n_perturbations,
-                       perturbation_sizes=self.perturbation_sizes, **shared),
-            CIFARMLPJSVDv(n_directions=self.n_directions,
-                           n_perturbations=self.n_perturbations,
-                           perturbation_sizes=ml_ps, **shared),
             CIFARPnC(n_directions=self.n_directions,
                            n_perturbations=self.n_perturbations,
-                           perturbation_sizes=self.perturbation_sizes, **shared),
+                           perturbation_sizes=self.perturbation_sizes,
+                           random_directions=self.random_directions, **shared),
+            CIFARMultiBlockPnC(n_directions=self.n_directions,
+                           n_perturbations=self.n_perturbations,
+                           perturbation_sizes=self.perturbation_sizes,
+                           random_directions=self.random_directions, **shared),
             CIFARLLLA(n_perturbations=self.n_perturbations, **shared),
         ]
