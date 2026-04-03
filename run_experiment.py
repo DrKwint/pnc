@@ -64,6 +64,11 @@ def main() -> None:
     parser.add_argument("--activation",        type=str,   default="relu",
                         choices=list(ACTIVATIONS),
                         help="Activation function for all models (default: relu)")
+    parser.add_argument("--pjsvd_family",      type=str,   default="low",
+                        choices=["low", "random"],
+                        help="Which PJSVD direction family to use for gym experiments")
+    parser.add_argument("--posthoc_calibrate", action="store_true",
+                        help="Fit post-hoc calibration on the validation split before evaluation")
     parser.add_argument("--task",              type=str,   default=None,
                         help="Specific Luigi task class name to run (e.g., GymPJSVD)")
     args, unknown = parser.parse_known_args()
@@ -163,6 +168,7 @@ def main() -> None:
             n_directions=args.n_directions,
             perturbation_sizes=args.perturbation_sizes,
             seed=args.seed,
+            posthoc_calibrate=args.posthoc_calibrate,
         )
     else:
         task = AllGymExperiments(
@@ -173,6 +179,7 @@ def main() -> None:
             n_baseline=args.n_baseline,
             perturbation_sizes=args.perturbation_sizes,
             laplace_priors=args.laplace_priors,
+            pjsvd_family=args.pjsvd_family,
             seed=args.seed, activation=args.activation,
         )
 
