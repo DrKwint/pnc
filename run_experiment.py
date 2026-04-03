@@ -43,16 +43,16 @@ def main() -> None:
                         help="Gym environment name, 'MNIST', 'uci-<dataset>', 'cifar10', 'cifar100'")
     parser.add_argument("--steps",             type=int,   default=10000,
                         help="Training steps / env interactions per policy")
-    parser.add_argument("--subset_size",       type=int,   default=4096,
+    parser.add_argument("--subset_size",       type=int,   default=1024,
                         help="Data subset size for PJSVD null-space search")
-    parser.add_argument("--n_directions",      type=int,   default=40,
+    parser.add_argument("--n_directions",      type=int,   default=16,
                         help="Number of singular directions (K)")
-    parser.add_argument("--n_perturbations",   type=int,   default=1000,
+    parser.add_argument("--n_perturbations",   type=int,   default=32,
                         help="Number of ensemble members to generate")
     parser.add_argument("--n_baseline",        type=int,   default=5,
                         help="Number of models for the deep ensemble baseline")
     parser.add_argument("--perturbation_sizes", nargs="+", type=float,
-                        default=[20.0, 40.0, 80.0, 160.0, 320.0, 640.0, 1280.0],
+                        default=[1.0, 5.0, 10.0, 50.0],
                         help="List of perturbation norms to sweep")
     parser.add_argument("--laplace_priors",    nargs="+",  type=float,
                         default=[1.0, 10.0, 100.0, 1000.0, 10000.0],

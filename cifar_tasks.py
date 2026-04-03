@@ -96,7 +96,7 @@ def compute_cifar_block_preacts(
 
 
 def make_cifar_block_get_Y_fn(target_blk: nnx.Module):
-    """get_Y_fn(w1, h_in) -> patch features of raw conv1 output (pre-bn2), for PnC ridge."""
+    """get_Y_fn(w1, h_in) -> patch features of post-bn2-relu conv1 output, for PnC ridge."""
 
     def get_Y_fn(w1, h_in):
         out_bn1 = target_blk.bn1(h_in, use_running_average=True)
@@ -108,9 +108,13 @@ def make_cifar_block_get_Y_fn(target_blk: nnx.Module):
             padding="SAME",
             dimension_numbers=("NHWC", "OIHW", "NHWC"),
         )
+        y_bn2 = target_blk.bn2(y_raw, use_running_average=True)
+        y_relu2 = jax.nn.relu(y_bn2)
         from pnc import extract_patches
-
-        return extract_patches(y_raw, k=3, strides=1)
+        kh = target_blk.conv2.kernel_size[0]
+        s = target_blk.conv2.strides[0]
+        Y = extract_patches(y_relu2, k=kh, strides=s)
+        return Y
 
     return get_Y_fn
 
@@ -442,9 +446,10 @@ class CIFARPJSVD(luigi.Task):
     epochs             = luigi.IntParameter(default=100)
     n_directions       = luigi.IntParameter(default=40)
     n_perturbations    = luigi.IntParameter(default=100)
-    perturbation_sizes = luigi.ListParameter(default=[0.01, 0.05, 0.1, 0.5])
+    perturbation_sizes = luigi.ListParameter(default=[0.005, 0.01, 0.05, 0.1])
     subset_size        = luigi.IntParameter(default=512)
     n_oversampling     = luigi.IntParameter(default=10)
+    random_directions  = luigi.BoolParameter(default=False)
     seed               = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
@@ -452,10 +457,11 @@ class CIFARPJSVD(luigi.Task):
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        suffix = "_random" if self.random_directions else ""
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
                 f'pjsvd_bnrefit_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_seed{self.seed}.json'))
+                f'_ps{ps}_e{self.epochs}_seed{self.seed}{suffix}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -482,13 +488,18 @@ class CIFARPJSVD(luigi.Task):
                 dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
 
         t0 = time.time()
-        print(f'  Finding {self.n_directions} directions via randomized SVD '
-              f'(oversampling={self.n_oversampling})...')
-        v_opts, sigmas = find_pjsvd_directions_randomized_svd(
-            model_fn_stem, W_stem,
-            n_directions=self.n_directions,
-            n_oversampling=self.n_oversampling,
-            use_full_span=True, seed=self.seed)
+        if self.random_directions:
+            print(f'  Generating {self.n_directions} random directions...')
+            from pnc import find_random_directions
+            v_opts, sigmas = find_random_directions(W_stem.size, self.n_directions, seed=self.seed)
+        else:
+            print(f'  Finding {self.n_directions} directions via randomized SVD '
+                  f'(oversampling={self.n_oversampling})...')
+            v_opts, sigmas = find_pjsvd_directions_randomized_svd(
+                model_fn_stem, W_stem,
+                n_directions=self.n_directions,
+                n_oversampling=self.n_oversampling,
+                use_full_span=True, seed=self.seed)
         v_opts.block_until_ready()
         print(f'  Direction finding: {time.time()-t0:.2f}s')
         
@@ -527,9 +538,9 @@ class CIFARMLPJSVDv(luigi.Task):
     epochs             = luigi.IntParameter(default=100)
     n_directions       = luigi.IntParameter(default=40)
     n_perturbations    = luigi.IntParameter(default=100)
-    perturbation_sizes = luigi.ListParameter(default=[0.005, 0.01, 0.05, 0.1])
     subset_size        = luigi.IntParameter(default=512)
     n_oversampling     = luigi.IntParameter(default=10)
+    random_directions  = luigi.BoolParameter(default=False)
     seed               = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
@@ -537,10 +548,11 @@ class CIFARMLPJSVDv(luigi.Task):
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        suffix = "_random" if self.random_directions else ""
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
                 f'ml_pjsvd_bnrefit_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_seed{self.seed}.json'))
+                f'_ps{ps}_e{self.epochs}_seed{self.seed}{suffix}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -578,12 +590,17 @@ class CIFARMLPJSVDv(luigi.Task):
             return h_sc
 
         t0 = time.time()
-        print(f'  Finding {self.n_directions} multi-layer directions via randomized SVD...')
-        v_opts, sigmas = find_pjsvd_directions_randomized_svd(
-            model_fn_flat, W_joint_flat,
-            n_directions=self.n_directions,
-            n_oversampling=self.n_oversampling,
-            use_full_span=True, seed=self.seed)
+        if self.random_directions:
+            print(f'  Generating {self.n_directions} random multi-layer directions...')
+            from pnc import find_random_directions
+            v_opts, sigmas = find_random_directions(W_joint_flat.size, self.n_directions, seed=self.seed)
+        else:
+            print(f'  Finding {self.n_directions} multi-layer directions via randomized SVD...')
+            v_opts, sigmas = find_pjsvd_directions_randomized_svd(
+                model_fn_flat, W_joint_flat,
+                n_directions=self.n_directions,
+                n_oversampling=self.n_oversampling,
+                use_full_span=True, seed=self.seed)
         v_opts.block_until_ready()
         print(f'  Direction finding: {time.time()-t0:.2f}s')
         
@@ -695,17 +712,20 @@ class CIFARPnC(luigi.Task):
     chunk_size         = luigi.IntParameter(default=1024)
     target_stage_idx   = luigi.IntParameter(default=3) # stage4 is index 3
     target_block_idx   = luigi.IntParameter(default=1) # block1 is index 1
+    random_directions  = luigi.BoolParameter(default=False)
     seed               = luigi.IntParameter(default=0)
+    lambda_reg         = luigi.FloatParameter(default=1e-3)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        suffix = "_random" if self.random_directions else ""
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
                 f'pnc_s{self.target_stage_idx}b{self.target_block_idx}_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}.json'))
+                f'_ps{ps}_lr{self.lambda_reg}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}{suffix}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -758,12 +778,17 @@ class CIFARPnC(luigi.Task):
         get_Y_fn = make_cifar_block_get_Y_fn(target_blk)
 
         t0 = time.time()
-        print(f'  Finding {self.n_directions} directions via Lanczos over chunks...')
-        from pnc import find_pnc_subspace_lanczos
-        v_opts, sigmas = find_pnc_subspace_lanczos(
-            get_Y_fn, w1_orig, pre_act_chunks,
-            K=self.n_directions, seed=self.seed
-        )
+        if self.random_directions:
+            print(f'  Generating {self.n_directions} random directions...')
+            from pnc import find_random_directions
+            v_opts, sigmas = find_random_directions(w1_orig.size, self.n_directions, seed=self.seed)
+        else:
+            print(f'  Finding {self.n_directions} directions via Lanczos over chunks...')
+            from pnc import find_pnc_subspace_lanczos
+            v_opts, sigmas = find_pnc_subspace_lanczos(
+                get_Y_fn, w1_orig, pre_act_chunks,
+                K=self.n_directions, seed=self.seed
+            )
         print(f'  Direction finding: {time.time()-t0:.2f}s')
         
         setup_time = time.time() - t_start
@@ -779,7 +804,8 @@ class CIFARPnC(luigi.Task):
                 base_model=model, v_opts=v_opts, sigmas=sigmas, z_coeffs=all_z,
                 perturbation_scale=p_size, get_Y_fn=get_Y_fn, w1_orig=w1_orig, w2_orig=w2_orig,
                 chunks=pre_act_chunks, T_orig_chunks=T_orig_chunks,
-                target_stage_idx=self.target_stage_idx, target_block_idx=self.target_block_idx
+                target_stage_idx=self.target_stage_idx, target_block_idx=self.target_block_idx,
+                lambda_reg=self.lambda_reg
             )
             print(f'  Precompute time: {time.time()-t1:.2f}s')
             m = _evaluate_cifar(f'PnC (scale={p_size})', ens, x_te, y_te, n_cls,
@@ -789,8 +815,6 @@ class CIFARPnC(luigi.Task):
             # ── Block-output shift diagnostics (calib & test) ──────────────
             # Calibration arrays already computed during _precompute_corrections.
             raw_calib, corr_calib = ens.calib_raw_arr, ens.calib_corr_arr
-            raw_test,  corr_test  = ens.compute_shift_diagnostics(
-                te_pre_act_chunks, te_T_orig_chunks, label="test")
 
             def _diag_stats(raw_arr, corr_arr, prefix):
                 r = {
@@ -803,8 +827,11 @@ class CIFARPnC(luigi.Task):
                 }
                 return r
 
-            m.update(_diag_stats(raw_calib, corr_calib, "diag_calib"))
-            m.update(_diag_stats(raw_test,  corr_test,  "diag_test"))
+            # Compute test diagnostics for this perturbation scale
+            raw_test, corr_test = ens.compute_shift_diagnostics(
+                te_pre_act_chunks, te_T_orig_chunks, label="test")
+            m.update(_diag_stats(raw_test, corr_test, "diag_test"))
+            
             all_metrics[str(p_size)] = m
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
@@ -826,6 +853,7 @@ class CIFARMultiBlockPnC(luigi.Task):
     subset_size = luigi.IntParameter(default=1024)
     chunk_size = luigi.IntParameter(default=64)
     lambda_reg = luigi.FloatParameter(default=1e-3)
+    random_directions = luigi.BoolParameter(default=False)
     seed = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
@@ -833,12 +861,13 @@ class CIFARMultiBlockPnC(luigi.Task):
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        suffix = "_random" if self.random_directions else ""
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
                 / f"pnc_allblocks_k{self.n_directions}_n{self.n_perturbations}"
-                f"_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}.json"
+                f"_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}{suffix}.json"
             )
         )
 
@@ -926,13 +955,21 @@ class CIFARMultiBlockPnC(luigi.Task):
 
             # 1. Run Lanczos (Calibration input is current h_calib_chunks)
             t0 = time.time()
-            v_opts, sigmas = find_pnc_subspace_lanczos(
-                get_Y_fn,
-                w1_orig,
-                h_calib_chunks,
-                K=self.n_directions,
-                seed=self.seed + 17 * s_idx + 31 * b_idx,
-            )
+            if self.random_directions:
+                from pnc import find_random_directions
+                v_opts, sigmas = find_random_directions(
+                    w1_orig.size,
+                    self.n_directions,
+                    seed=self.seed + 17 * s_idx + 31 * b_idx,
+                )
+            else:
+                v_opts, sigmas = find_pnc_subspace_lanczos(
+                    get_Y_fn,
+                    w1_orig,
+                    h_calib_chunks,
+                    K=self.n_directions,
+                    seed=self.seed + 17 * s_idx + 31 * b_idx,
+                )
             v_opts_list.append(v_opts)
             sigmas_list.append(sigmas)
 
@@ -944,12 +981,11 @@ class CIFARMultiBlockPnC(luigi.Task):
                 new_h_c_chunks.append(h_next)
                 T_c_chunks.append(t)
 
-            # 3. Solve Ridge for each member
+            # 3. Solve Ridge for each member (sequential to save VRAM)
             members_this_block = []
             kh, kw, C_in, C_out = w2_orig.shape
-            w2_flat_orig = w2_orig.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+            w2_flat_orig = w2_orig.reshape(-1, C_out)
             
-            # Helper for diagnostics
             def _coeffs_from_z(z_row, sigmas, p_scale):
                 safe_sigmas = sigmas + 1e-6
                 coeffs = z_row / safe_sigmas
@@ -963,8 +999,8 @@ class CIFARMultiBlockPnC(luigi.Task):
                 w1_pert = w1_orig + dp.reshape(w1_orig.shape)
                 
                 w2_pert, b2_pert = solve_chunked_conv2_correction(
-                    get_Y_fn, w1_pert, h_calib_chunks, T_c_chunks,
-                    w2_shape=tuple(w2_orig.shape), lambda_reg=self.lambda_reg
+                    get_Y_fn, w1_pert, w2_orig, h_calib_chunks, T_c_chunks,
+                    lambda_reg=self.lambda_reg
                 )
                 members_this_block.append((w1_pert, w2_pert, b2_pert))
 
@@ -973,7 +1009,7 @@ class CIFARMultiBlockPnC(luigi.Task):
             # 4. Compute Diagnostics and Advance h_test Chunks simultaneously
             raw_c_norms, corr_c_norms = [], []
             for w1_p, w2_p, b2_p in members_this_block:
-                w2_p_f = w2_p.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+                w2_p_f = w2_p.reshape(-1, C_out)
                 
                 raw_err_sq, corr_err_sq, n_tot = 0.0, 0.0, 0
                 for ch, to in zip(h_calib_chunks, T_c_chunks):
@@ -1012,7 +1048,7 @@ class CIFARMultiBlockPnC(luigi.Task):
                 
                 for i in range(n_mem):
                     w1_p, w2_p, b2_p = members_this_block[i]
-                    w2_p_f = w2_p.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+                    w2_p_f = w2_p.reshape(-1, C_out)
                     r_sq, c_sq = diag_test_step(h, w1_p, w2_p_f, b2_p, t_orig)
                     raw_te_err_sq_sum[i] += float(r_sq)
                     corr_te_err_sq_sum[i] += float(c_sq)

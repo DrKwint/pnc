@@ -838,8 +838,7 @@ class PnCEnsemble:
             w1_pert = self.w1_orig + p.reshape(self.w1_orig.shape)
             # solve_chunked_conv2_correction returns W2_new shaped (kh,kw,Cin,Cout)
             w2_pert, b2_pert = solve_chunked_conv2_correction(
-                self.get_Y_fn, w1_pert, self.chunks, self.T_orig_chunks,
-                w2_shape=tuple(self.w2_orig.shape),
+                self.get_Y_fn, w1_pert, self.w2_orig, self.chunks, self.T_orig_chunks,
                 lambda_reg=self.lambda_reg
             )
             self.members_w1.append(w1_pert)
@@ -872,13 +871,13 @@ class PnCEnsemble:
             corr_arr : (N,) RMS shift after  correction, one value per member.
         """
         kh, kw, C_in, C_out = self.w2_orig.shape
-        # Patch-ordered flat views: (C_in*kh*kw, C_out), matching get_Y_fn's patch layout.
-        w2_flat_orig = self.w2_orig.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+        # Patch-ordered flat views: matching (fh, fw, ic) patch layout from pnc.extract_patches.
+        w2_flat_orig = self.w2_orig.reshape(-1, C_out)
 
         raw_norms  = []
         corr_norms = []
         for w1_pert, (w2_pert, b2_pert) in zip(self.members_w1, self.members_w2):
-            w2_pert_flat = w2_pert.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+            w2_pert_flat = w2_pert.reshape(-1, C_out)
             total_samples   = 0
             raw_norm_sq_sum  = 0.0
             corr_norm_sq_sum = 0.0
@@ -933,22 +932,25 @@ class PnCEnsemble:
             for b_idx, blk in enumerate(stage):
                 if s_idx == self.target_stage_idx and b_idx == self.target_block_idx:
                     # Custom forward for the perturbed block.
-                    # get_Y_fn returns RAW (pre-BN2) Conv1 patches, so w2_pert
-                    # is applied directly to the raw Conv1 output — BN2 is skipped
-                    # because W2_new has absorbed it via ridge regression.
+                    # get_Y_fn returns post-BN2-ReLU Conv1 patches, so apply BN2/ReLU
+                    # before applying W2_new to match the regression setup.
                     out_bn1 = blk.bn1(h, use_running_average=True)
                     out_relu1 = jax.nn.relu(out_bn1)
                     
-                    # Perturbed Conv1 (raw output, no BN2/ReLU)
-                    strides = blk.conv1.strides
+                    # Perturbed Conv1
+                    strides = tuple(blk.conv1.strides)
                     y_raw = jax.lax.conv_general_dilated(
                         lhs=out_relu1, rhs=w1_pert.transpose(3, 2, 0, 1),
                         window_strides=strides, padding='SAME',
                         dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
                     
-                    # Perturbed Conv2 applied directly to raw Conv1 output
+                    # Apply BN2 and ReLU before perturbed Conv2
+                    y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                    y_relu2 = jax.nn.relu(y_bn2)
+                    
+                    # Perturbed Conv2 applied to post-BN2-ReLU Conv1 output
                     t = jax.lax.conv_general_dilated(
-                        lhs=y_raw, rhs=w2_pert.transpose(3, 2, 0, 1),
+                        lhs=y_relu2, rhs=w2_pert.transpose(3, 2, 0, 1),
                         window_strides=(1, 1), padding='SAME',
                         dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
                     t = t + b2_pert
@@ -1056,9 +1058,9 @@ class MultiBlockPnCEnsemble:
                 w2_pert, b2_pert = solve_chunked_conv2_correction(
                     spec["get_Y_fn"],
                     w1_pert,
+                    spec["w2_orig"],
                     spec["chunks"],
                     spec["T_orig_chunks"],
-                    w2_shape=tuple(spec["w2_orig"].shape),
                     lambda_reg=self.lambda_reg,
                 )
                 row.append((w1_pert, w2_pert, b2_pert))
@@ -1103,13 +1105,13 @@ class MultiBlockPnCEnsemble:
         w2_orig = spec["w2_orig"]
         get_Y_fn = spec["get_Y_fn"]
         kh, kw, C_in, C_out = w2_orig.shape
-        w2_flat_orig = w2_orig.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+        w2_flat_orig = w2_orig.reshape(-1, C_out)
 
         raw_norms: List[float] = []
         corr_norms: List[float] = []
         for member_weights in self.members:
             w1_pert, w2_pert, b2_pert = member_weights[block_index]
-            w2_pert_flat = w2_pert.transpose(2, 0, 1, 3).reshape(C_in * kh * kw, C_out)
+            w2_pert_flat = w2_pert.reshape(-1, C_out)
             raw_norm_sq_sum = 0.0
             corr_norm_sq_sum = 0.0
             total_samples = 0
@@ -1180,7 +1182,7 @@ class MultiBlockPnCEnsemble:
                 w1_pert, w2_pert, b2_pert = self.members[idx][bi]
                 out_bn1 = blk.bn1(h, use_running_average=True)
                 out_relu1 = jax.nn.relu(out_bn1)
-                strides = blk.conv1.strides
+                strides = tuple(blk.conv1.strides)
                 y_raw = jax.lax.conv_general_dilated(
                     lhs=out_relu1,
                     rhs=w1_pert.transpose(3, 2, 0, 1),
@@ -1188,8 +1190,11 @@ class MultiBlockPnCEnsemble:
                     padding="SAME",
                     dimension_numbers=("NHWC", "OIHW", "NHWC"),
                 )
+                # Apply BN2 and ReLU before perturbed Conv2
+                y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                y_relu2 = jax.nn.relu(y_bn2)
                 t = jax.lax.conv_general_dilated(
-                    lhs=y_raw,
+                    lhs=y_relu2,
                     rhs=w2_pert.transpose(3, 2, 0, 1),
                     window_strides=(1, 1),
                     padding="SAME",
