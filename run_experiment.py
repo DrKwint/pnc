@@ -43,16 +43,18 @@ def main() -> None:
                         help="Gym environment name, 'MNIST', 'uci-<dataset>', 'cifar10', 'cifar100'")
     parser.add_argument("--steps",             type=int,   default=10000,
                         help="Training steps / env interactions per policy")
-    parser.add_argument("--subset_size",       type=int,   default=4096,
+    parser.add_argument("--epochs",            type=int,   default=100,
+                        help="Training epochs for CIFAR and other supervised tasks")
+    parser.add_argument("--subset_size",       type=int,   default=1024,
                         help="Data subset size for PJSVD null-space search")
-    parser.add_argument("--n_directions",      type=int,   default=40,
+    parser.add_argument("--n_directions",      type=int,   default=16,
                         help="Number of singular directions (K)")
-    parser.add_argument("--n_perturbations",   type=int,   default=1000,
+    parser.add_argument("--n_perturbations",   type=int,   default=32,
                         help="Number of ensemble members to generate")
     parser.add_argument("--n_baseline",        type=int,   default=5,
                         help="Number of models for the deep ensemble baseline")
     parser.add_argument("--perturbation_sizes", nargs="+", type=float,
-                        default=[20.0, 40.0, 80.0, 160.0, 320.0, 640.0, 1280.0],
+                        default=[1.0, 5.0, 10.0, 50.0],
                         help="List of perturbation norms to sweep")
     parser.add_argument("--laplace_priors",    nargs="+",  type=float,
                         default=[1.0, 10.0, 100.0, 1000.0, 10000.0],
@@ -64,6 +66,13 @@ def main() -> None:
     parser.add_argument("--activation",        type=str,   default="relu",
                         choices=list(ACTIVATIONS),
                         help="Activation function for all models (default: relu)")
+    parser.add_argument("--pjsvd_family",      type=str,   default="low",
+                        choices=["low", "random"],
+                        help="Which PJSVD direction family to use for gym experiments")
+    parser.add_argument("--posthoc_calibrate", action="store_true",
+                        help="Fit post-hoc calibration on the validation split before evaluation")
+    parser.add_argument("--random_directions", action="store_true",
+                        help="Use random directions instead of learned directions where supported")
     parser.add_argument("--task",              type=str,   default=None,
                         help="Specific Luigi task class name to run (e.g., GymPJSVD)")
     args, unknown = parser.parse_known_args()
@@ -159,10 +168,13 @@ def main() -> None:
     elif env_lower in ("cifar10", "cifar100"):
         task = AllCIFARExperiments(
             dataset=env_lower,
+            epochs=args.epochs,
             n_perturbations=args.n_perturbations,
             n_directions=args.n_directions,
             perturbation_sizes=args.perturbation_sizes,
             seed=args.seed,
+            posthoc_calibrate=args.posthoc_calibrate,
+            random_directions=args.random_directions,
         )
     else:
         task = AllGymExperiments(
@@ -173,6 +185,7 @@ def main() -> None:
             n_baseline=args.n_baseline,
             perturbation_sizes=args.perturbation_sizes,
             laplace_priors=args.laplace_priors,
+            pjsvd_family=args.pjsvd_family,
             seed=args.seed, activation=args.activation,
         )
 

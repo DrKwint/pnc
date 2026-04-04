@@ -44,7 +44,6 @@ def _build_resnet_optimizer(
     if optimizer_name == "adamw":
         return optax.adamw(learning_rate=schedule, weight_decay=weight_decay)
     raise ValueError(f"Unknown optimizer_name: {optimizer_name}")
-
 def train_generic(
     model: nnx.Module,
     train_inputs: "Float[Array, 'batch *dims']",
@@ -59,7 +58,7 @@ def train_generic(
     patience: int = 10,
     eval_freq: int = 100,
     step_hook: Optional[StepHook] = None,
-    log_prefix: str = "Training"
+    log_prefix: str = "Training",
 ) -> nnx.Module:
     """Generic training loop with validation split, early stopping, and step hooks.
 
@@ -68,34 +67,47 @@ def train_generic(
     if val_loss_fn is None:
         val_loss_fn = loss_fn
 
-    print(f"{log_prefix} on {len(train_inputs)} samples, val {len(val_inputs)} samples...")
+    print(
+        f"{log_prefix} on {len(train_inputs)} samples, val {len(val_inputs)} samples..."
+    )
     optimizer = optax.adamw(lr)
     params = nnx.state(model, nnx.Param)
     opt_state = optimizer.init(params)
 
     @nnx.jit
-    def train_step(m: nnx.Module, opt_state: optax.OptState, x: "Float[Array, 'batch *dims']", y: Array) -> Tuple["Float[Array, '']", optax.OptState]:
+    def train_step(
+        m: nnx.Module,
+        opt_state: optax.OptState,
+        x: "Float[Array, 'batch *dims']",
+        y: Array,
+    ) -> Tuple["Float[Array, '']", optax.OptState]:
         def _compute_loss(mod: nnx.Module) -> "Float[Array, '']":
             return loss_fn(mod, x, y)
 
         grads = nnx.grad(_compute_loss)(m)
-        updates, new_opt = optimizer.update(nnx.state(grads, nnx.Param), opt_state, nnx.state(m, nnx.Param))
+        updates, new_opt = optimizer.update(
+            nnx.state(grads, nnx.Param), opt_state, nnx.state(m, nnx.Param)
+        )
         nnx.update(m, optax.apply_updates(nnx.state(m, nnx.Param), updates))
         return _compute_loss(m), new_opt
 
     @nnx.jit
-    def val_step(m: nnx.Module, x: "Float[Array, 'batch *dims']", y: Array) -> "Float[Array, '']":
+    def val_step(
+        m: nnx.Module, x: "Float[Array, 'batch *dims']", y: Array
+    ) -> "Float[Array, '']":
         return val_loss_fn(m, x, y)
 
     indices = np.arange(len(train_inputs))
-    best_val_loss = float('inf')
+    best_val_loss = float("inf")
     best_state = nnx.state(model)
     checks_without_improvement = 0
     train_loss = jnp.inf
 
     for i in range(steps):
         batch = np.random.choice(indices, batch_size)
-        train_loss_val, opt_state = train_step(model, opt_state, train_inputs[batch], train_targets[batch])
+        train_loss_val, opt_state = train_step(
+            model, opt_state, train_inputs[batch], train_targets[batch]
+        )
         train_loss = float(train_loss_val)
 
         if step_hook is not None:
@@ -105,7 +117,9 @@ def train_generic(
             val_loss = float(val_step(model, val_inputs, val_targets))
 
             if (i + 1) % max(1, steps // 8) == 0:
-                print(f"Step {i+1}: Train Loss {train_loss:.5f} | Val Loss {val_loss:.5f}")
+                print(
+                    f"Step {i + 1}: Train Loss {train_loss:.5f} | Val Loss {val_loss:.5f}"
+                )
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
@@ -121,7 +135,9 @@ def train_generic(
                 # In the original code, SWAG prevented stopping until swag_start.
                 # We can handle this by letting step_hook return a boolean "prevent_stop".
                 # For simplicity here, we assume standard behavior.
-                print(f"Early stopping at step {i+1}. Best Val Loss: {best_val_loss:.5f}")
+                print(
+                    f"Early stopping at step {i + 1}. Best Val Loss: {best_val_loss:.5f}"
+                )
                 break
 
     print(f"Final Train Loss: {train_loss:.5f} | Best Val Loss: {best_val_loss:.5f}")
@@ -131,20 +147,28 @@ def train_generic(
 
 # ======== Metrics Callables ========
 
+
 def mse_loss(m: nnx.Module, x: Float[Array, "batch ..."], y: Array) -> Float[Array, ""]:
     preds = m(x)
     return jnp.mean((preds - y) ** 2)
 
-def gaussian_nll_loss(m: nnx.Module, x: Float[Array, "batch ..."], y: Array) -> Float[Array, ""]:
+
+def gaussian_nll_loss(
+    m: nnx.Module, x: Float[Array, "batch ..."], y: Array
+) -> Float[Array, ""]:
     mean, var = m(x)
-    return jnp.mean(0.5 * (jnp.log(var) + (y - mean)**2 / var))
+    return jnp.mean(0.5 * (jnp.log(var) + (y - mean) ** 2 / var))
+
 
 def ce_loss(m: nnx.Module, x: Float[Array, "batch ..."], y: Array) -> Float[Array, ""]:
     logits = m(x)
-    return jnp.mean(optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=y))
+    return jnp.mean(
+        optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=y)
+    )
 
 
 # ======== Wrapper Functions ========
+
 
 def train_model(
     model: nnx.Module,
@@ -155,24 +179,34 @@ def train_model(
     steps: int = 2000,
     batch_size: int = 64,
     patience: int = 10,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> nnx.Module:
     """Trains a simple neural network transition model with early stopping."""
+
     # The original handled both tuples (mean, var) and single preds in train_model
     # but practically we can detect at runtime or just let the caller decide.
     # We will replicate the dynamic check for safety to avoid breaking code.
-    def dynamic_loss(m: nnx.Module, x: Float[Array, "batch ..."], y: Array) -> Float[Array, ""]:
+    def dynamic_loss(
+        m: nnx.Module, x: Float[Array, "batch ..."], y: Array
+    ) -> Float[Array, ""]:
         preds = m(x)
         if isinstance(preds, tuple) and len(preds) == 2:
             mean, var = preds
-            return jnp.mean(0.5 * (jnp.log(var) + (mean - y)**2 / var))
+            return jnp.mean(0.5 * (jnp.log(var) + (mean - y) ** 2 / var))
         return jnp.mean((preds - y) ** 2)
 
     return train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=dynamic_loss,
-        steps=steps, batch_size=batch_size,
-        patience=patience, eval_freq=eval_freq, log_prefix="Training"
+        steps=steps,
+        batch_size=batch_size,
+        patience=patience,
+        eval_freq=eval_freq,
+        log_prefix="Training",
     )
 
 
@@ -185,15 +219,23 @@ def train_probabilistic_model(
     steps: int = 2000,
     batch_size: int = 64,
     patience: int = 10,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> nnx.Module:
     """Trains a probabilistic regression model (outputs mean/var) using Gaussian NLL."""
     return train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=gaussian_nll_loss,
-        steps=steps, batch_size=batch_size,
-        patience=patience, eval_freq=eval_freq, log_prefix="Training Probabilistic Model"
+        steps=steps,
+        batch_size=batch_size,
+        patience=patience,
+        eval_freq=eval_freq,
+        log_prefix="Training Probabilistic Model",
     )
+
 
 def train_swag_model(
     model: nnx.Module,
@@ -205,15 +247,11 @@ def train_swag_model(
     batch_size: int = 64,
     swag_start: int = 1000,
     patience: int = 10,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> Tuple[nnx.Module, nnx.State, nnx.State]:
     """Trains a simple neural network transition model and collects Diagonal SWAG statistics with early stopping."""
     # We will declare our running state dynamically
-    swag_state = {
-        "swag_mean": None,
-        "swag_sq_mean": None,
-        "n_swag_steps": 0
-    }
+    swag_state = {"swag_mean": None, "swag_sq_mean": None, "n_swag_steps": 0}
 
     def swag_hook(step: int, m: nnx.Module, loss: float, best_val: float):
         if step >= swag_start:
@@ -222,7 +260,9 @@ def train_swag_model(
             if swag_state["swag_mean"] is None:
                 # Initialize on first call
                 swag_state["swag_mean"] = jax.tree.map(jnp.zeros_like, current_params)
-                swag_state["swag_sq_mean"] = jax.tree.map(jnp.zeros_like, current_params)
+                swag_state["swag_sq_mean"] = jax.tree.map(
+                    jnp.zeros_like, current_params
+                )
 
             n_swag_steps = swag_state.get("n_swag_steps", 0)
             assert isinstance(n_swag_steps, int)
@@ -231,27 +271,38 @@ def train_swag_model(
 
             swag_state["swag_mean"] = jax.tree.map(
                 lambda s_m, p: (s_m * n_swag_steps + p) / n,
-                swag_state["swag_mean"], current_params
+                swag_state["swag_mean"],
+                current_params,
             )
             swag_state["swag_sq_mean"] = jax.tree.map(
                 lambda sq_m, p: (sq_m * n_swag_steps + p**2) / n,
-                swag_state["swag_sq_mean"], current_params
+                swag_state["swag_sq_mean"],
+                current_params,
             )
             swag_state["n_swag_steps"] = int(n)
 
-    def dynamic_loss(m: nnx.Module, x: Float[Array, "batch ..."], y: Array) -> Float[Array, ""]:
+    def dynamic_loss(
+        m: nnx.Module, x: Float[Array, "batch ..."], y: Array
+    ) -> Float[Array, ""]:
         preds = m(x)
         if isinstance(preds, tuple) and len(preds) == 2:
             mean, var = preds
-            return jnp.mean(0.5 * (jnp.log(var) + (mean - y)**2 / var))
+            return jnp.mean(0.5 * (jnp.log(var) + (mean - y) ** 2 / var))
         return jnp.mean((preds - y) ** 2)
 
     trained_model = train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=dynamic_loss,
-        steps=steps, batch_size=batch_size,
-        patience=patience, eval_freq=eval_freq, step_hook=swag_hook,
-        log_prefix=f"Training (SWAG after {swag_start})"
+        steps=steps,
+        batch_size=batch_size,
+        patience=patience,
+        eval_freq=eval_freq,
+        step_hook=swag_hook,
+        log_prefix=f"Training (SWAG after {swag_start})",
     )
 
     n_swag_steps = swag_state["n_swag_steps"]
@@ -265,8 +316,7 @@ def train_swag_model(
     print(f"| SWAG steps collected: {n_swag_steps}")
 
     swag_var = jax.tree.map(
-        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8),
-        swag_sq_mean, swag_mean
+        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8), swag_sq_mean, swag_mean
     )
 
     return trained_model, swag_mean, swag_var
@@ -282,15 +332,24 @@ def train_classification_model(
     batch_size: int = 256,
     lr: float = 1e-3,
     patience: int = 15,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> nnx.Module:
     """Trains a classification model using cross entropy loss with early stopping."""
     return train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=ce_loss,
-        steps=steps, batch_size=batch_size, lr=lr,
-        patience=patience, eval_freq=eval_freq, log_prefix="Training Classification"
+        steps=steps,
+        batch_size=batch_size,
+        lr=lr,
+        patience=patience,
+        eval_freq=eval_freq,
+        log_prefix="Training Classification",
     )
+
 
 def train_swag_classification_model(
     model: nnx.Module,
@@ -303,15 +362,11 @@ def train_swag_classification_model(
     lr: float = 1e-3,
     swag_start: int = 3000,
     patience: int = 15,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> Tuple[nnx.Module, nnx.State, nnx.State]:
     """Trains a classification model and collects Diagonal SWAG statistics with early stopping."""
     # We will declare our running state dynamically
-    swag_state = {
-        "swag_mean": None,
-        "swag_sq_mean": None,
-        "n_swag_steps": 0
-    }
+    swag_state = {"swag_mean": None, "swag_sq_mean": None, "n_swag_steps": 0}
 
     def swag_hook(step: int, m: nnx.Module, loss: float, best_val: float):
         if step >= swag_start:
@@ -320,7 +375,9 @@ def train_swag_classification_model(
             if swag_state["swag_mean"] is None:
                 # Initialize on first call
                 swag_state["swag_mean"] = jax.tree.map(jnp.zeros_like, current_params)
-                swag_state["swag_sq_mean"] = jax.tree.map(jnp.zeros_like, current_params)
+                swag_state["swag_sq_mean"] = jax.tree.map(
+                    jnp.zeros_like, current_params
+                )
                 swag_state["n_swag_steps"] = 0
 
             n_swag_steps = swag_state.get("n_swag_steps", 0)
@@ -330,20 +387,30 @@ def train_swag_classification_model(
 
             swag_state["swag_mean"] = jax.tree.map(
                 lambda s_m, p: (s_m * n_swag_steps + p) / n,
-                swag_state["swag_mean"], current_params
+                swag_state["swag_mean"],
+                current_params,
             )
             swag_state["swag_sq_mean"] = jax.tree.map(
                 lambda sq_m, p: (sq_m * n_swag_steps + p**2) / n,
-                swag_state["swag_sq_mean"], current_params
+                swag_state["swag_sq_mean"],
+                current_params,
             )
             swag_state["n_swag_steps"] += 1
 
     trained_model = train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=ce_loss,
-        steps=steps, batch_size=batch_size, lr=lr,
-        patience=patience, eval_freq=eval_freq, step_hook=swag_hook,
-        log_prefix=f"Training Classification (SWAG after {swag_start})"
+        steps=steps,
+        batch_size=batch_size,
+        lr=lr,
+        patience=patience,
+        eval_freq=eval_freq,
+        step_hook=swag_hook,
+        log_prefix=f"Training Classification (SWAG after {swag_start})",
     )
 
     n_swag_steps = swag_state["n_swag_steps"]
@@ -357,11 +424,11 @@ def train_swag_classification_model(
     print(f"| SWAG steps collected: {n_swag_steps}")
 
     swag_var = jax.tree.map(
-        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8),
-        swag_sq_mean, swag_mean
+        lambda sq_m, m: jnp.maximum(sq_m - m**2, 1e-8), swag_sq_mean, swag_mean
     )
 
     return trained_model, swag_mean, swag_var
+
 
 def train_subspace_model(
     model: nnx.Module,
@@ -374,20 +441,18 @@ def train_subspace_model(
     swag_start: int = 1000,
     max_rank: int = 20,
     patience: int = 10,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> Tuple[nnx.Module, nnx.State, jax.Array]:
-    subspace_state = {
-        "swag_mean": None,
-        "n_swag_steps": 0,
-        "snapshots": []
-    }
+    subspace_state = {"swag_mean": None, "n_swag_steps": 0, "snapshots": []}
     snapshot_freq = max(1, (steps - swag_start) // max_rank)
 
     def subspace_hook(step: int, m: nnx.Module, loss: float, best_val: float):
         if step >= swag_start:
             current_params = nnx.state(m, nnx.Param)
             if subspace_state["swag_mean"] is None:
-                subspace_state["swag_mean"] = jax.tree.map(jnp.zeros_like, current_params)
+                subspace_state["swag_mean"] = jax.tree.map(
+                    jnp.zeros_like, current_params
+                )
 
             n_swag_steps = subspace_state.get("n_swag_steps", 0)
             assert isinstance(n_swag_steps, int)
@@ -396,7 +461,8 @@ def train_subspace_model(
 
             subspace_state["swag_mean"] = jax.tree.map(
                 lambda s_m, p: (s_m * n_swag_steps + p) / n,
-                subspace_state["swag_mean"], current_params
+                subspace_state["swag_mean"],
+                current_params,
             )
             subspace_state["n_swag_steps"] = n_swag_steps + 1
 
@@ -408,19 +474,28 @@ def train_subspace_model(
                     subspace_state["snapshots"] = snaps
 
     # Note: Use dynamic loss for transition model wrapper logic
-    def dynamic_loss(m: nnx.Module, x: "Float[Array, 'batch *dims']", y: Array) -> "Float[Array, '']":
+    def dynamic_loss(
+        m: nnx.Module, x: "Float[Array, 'batch *dims']", y: Array
+    ) -> "Float[Array, '']":
         preds = m(x)
         if isinstance(preds, tuple) and len(preds) == 2:
             mean, var = preds
-            return jnp.mean(0.5 * (jnp.log(var) + (mean - y)**2 / var))
+            return jnp.mean(0.5 * (jnp.log(var) + (mean - y) ** 2 / var))
         return jnp.mean((preds - y) ** 2)
 
     trained_model = train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=dynamic_loss,
-        steps=steps, batch_size=batch_size,
-        patience=patience, eval_freq=eval_freq, step_hook=subspace_hook,
-        log_prefix=f"Training Subspace (rank {max_rank}, SWAG after {swag_start})"
+        steps=steps,
+        batch_size=batch_size,
+        patience=patience,
+        eval_freq=eval_freq,
+        step_hook=subspace_hook,
+        log_prefix=f"Training Subspace (rank {max_rank}, SWAG after {swag_start})",
     )
 
     n_swag_steps = subspace_state.get("n_swag_steps", 0)
@@ -439,13 +514,16 @@ def train_subspace_model(
 
     swag_mean_flat, _ = jax.flatten_util.ravel_pytree(swag_mean)
     if len(snapshots) > 0:
-        A = jnp.stack([s - swag_mean_flat for s in snapshots], axis=1) # (D, C)
+        A = jnp.stack([s - swag_mean_flat for s in snapshots], axis=1)  # (D, C)
         U, S, _ = jnp.linalg.svd(A, full_matrices=False)
-        pca_components = U[:, :max_rank] * (S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1)))
+        pca_components = U[:, :max_rank] * (
+            S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1))
+        )
     else:
         pca_components = jnp.zeros((swag_mean_flat.shape[0], max_rank))
 
     return trained_model, swag_mean, pca_components
+
 
 def train_subspace_classification_model(
     model: nnx.Module,
@@ -459,20 +537,18 @@ def train_subspace_classification_model(
     swag_start: int = 3000,
     max_rank: int = 20,
     patience: int = 15,
-    eval_freq: int = 100
+    eval_freq: int = 100,
 ) -> Tuple[nnx.Module, nnx.State, jax.Array]:
-    subspace_state = {
-        "swag_mean": None,
-        "n_swag_steps": 0,
-        "snapshots": []
-    }
+    subspace_state = {"swag_mean": None, "n_swag_steps": 0, "snapshots": []}
     snapshot_freq = max(1, (steps - swag_start) // max_rank)
 
     def subspace_hook(step: int, m: nnx.Module, loss: float, best_val: float):
         if step >= swag_start:
             current_params = nnx.state(m, nnx.Param)
             if subspace_state["swag_mean"] is None:
-                subspace_state["swag_mean"] = jax.tree.map(jnp.zeros_like, current_params)
+                subspace_state["swag_mean"] = jax.tree.map(
+                    jnp.zeros_like, current_params
+                )
 
             n_swag_steps = subspace_state.get("n_swag_steps", 0)
             assert isinstance(n_swag_steps, int)
@@ -481,7 +557,8 @@ def train_subspace_classification_model(
 
             subspace_state["swag_mean"] = jax.tree.map(
                 lambda s_m, p: (s_m * n_swag_steps + p) / n,
-                subspace_state["swag_mean"], current_params
+                subspace_state["swag_mean"],
+                current_params,
             )
             subspace_state["n_swag_steps"] = n_swag_steps + 1
 
@@ -493,11 +570,19 @@ def train_subspace_classification_model(
                     subspace_state["snapshots"] = snaps
 
     trained_model = train_generic(
-        model, train_inputs, train_targets, val_inputs, val_targets,
+        model,
+        train_inputs,
+        train_targets,
+        val_inputs,
+        val_targets,
         loss_fn=ce_loss,
-        steps=steps, batch_size=batch_size, lr=lr,
-        patience=patience, eval_freq=eval_freq, step_hook=subspace_hook,
-        log_prefix=f"Training Classification Subspace (rank {max_rank}, SWAG after {swag_start})"
+        steps=steps,
+        batch_size=batch_size,
+        lr=lr,
+        patience=patience,
+        eval_freq=eval_freq,
+        step_hook=subspace_hook,
+        log_prefix=f"Training Classification Subspace (rank {max_rank}, SWAG after {swag_start})",
     )
 
     n_swag_steps = subspace_state["n_swag_steps"]
@@ -512,7 +597,9 @@ def train_subspace_classification_model(
     if len(snapshots) > 0:
         A = jnp.stack([s - swag_mean_flat for s in snapshots], axis=1)
         U, S, _ = jnp.linalg.svd(A, full_matrices=False)
-        pca_components = U[:, :max_rank] * (S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1)))
+        pca_components = U[:, :max_rank] * (
+            S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1))
+        )
     else:
         pca_components = jnp.zeros((swag_mean_flat.shape[0], max_rank))
 
@@ -522,7 +609,6 @@ def train_subspace_classification_model(
 # ---------------------------------------------------------------------------
 # CIFAR ResNet training helpers (2D conv, BatchNorm)
 # ---------------------------------------------------------------------------
-
 
 
 class NumpyDataSource(grain.RandomAccessDataSource):
@@ -547,12 +633,14 @@ class RandomFlipCrop(grain.MapTransform):
         x = element["image"]
         # In grain we operate on single unbatched elements.
         H, W, C = x.shape
-        x_pad = np.pad(x, ((self.pad, self.pad), (self.pad, self.pad), (0, 0)), mode='reflect')
+        x_pad = np.pad(
+            x, ((self.pad, self.pad), (self.pad, self.pad), (0, 0)), mode="reflect"
+        )
 
         top = self.rng.randint(0, 2 * self.pad + 1)
         left = self.rng.randint(0, 2 * self.pad + 1)
 
-        x_aug = x_pad[top:top+H, left:left+W, :]
+        x_aug = x_pad[top : top + H, left : left + W, :]
 
         if self.rng.rand() > 0.5:
             x_aug = x_aug[:, ::-1, :]
@@ -602,7 +690,6 @@ def _build_resnet_schedule(
             decay_steps=total_steps,
             end_value=lr * 1e-3,
         )
-
     return optax.cosine_decay_schedule(
         init_value=lr,
         decay_steps=total_steps,
@@ -764,7 +851,7 @@ def train_resnet_model(
     )
     data_iterator = iter(dataloader)
 
-    best_val = float('inf')
+    best_val = float("inf")
     best_state = nnx.state(model)
     pat = 0
 
@@ -801,17 +888,19 @@ def train_resnet_model(
         acc = _epoch_resnet_acc(model, x_val, y_val, batch_size)
         # elapsed = time.time() - t_start  # removed unused variable
         ep_time = time.time() - t_ep
-        eta     = ep_time * (epochs - epoch - 1)
-        print(f"\r  Epoch {epoch+1:3d}/{epochs} | "
-              f"train={ep_loss:.4f} | val={vl:.4f} | acc={acc:.3%} | "
-              f"{ep_time:.0f}s/ep | ETA {eta/60:.1f}min")
+        eta = ep_time * (epochs - epoch - 1)
+        print(
+            f"\r  Epoch {epoch + 1:3d}/{epochs} | "
+            f"train={ep_loss:.4f} | val={vl:.4f} | acc={acc:.3%} | "
+            f"{ep_time:.0f}s/ep | ETA {eta / 60:.1f}min"
+        )
 
         if vl < best_val:
             best_val, best_state, pat = vl, nnx.state(model), 0
         else:
             pat += 1
             if pat >= patience:
-                print(f"  Early stop at epoch {epoch+1}. Best val: {best_val:.4f}")
+                print(f"  Early stop at epoch {epoch + 1}. Best val: {best_val:.4f}")
                 break
 
     nnx.update(model, best_state)

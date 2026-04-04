@@ -3,7 +3,10 @@ import jax.numpy as jnp
 import optax
 from typing import Tuple, Callable
 
-def get_affine_residuals(outputs_batch: jax.Array, original_outputs_batch: jax.Array) -> jax.Array:
+
+def get_affine_residuals(
+    outputs_batch: jax.Array, original_outputs_batch: jax.Array
+) -> jax.Array:
     """
     Projects the perturbed outputs onto the orthogonal complement of the subspace
     spanned by the Bias (1) and the Original Signal (y).
@@ -11,12 +14,19 @@ def get_affine_residuals(outputs_batch: jax.Array, original_outputs_batch: jax.A
     This effectively measures the 'Unfixable Error' that cannot be removed by
     an affine transformation of the next layer.
     """
+    outputs_batch = outputs_batch.reshape(outputs_batch.shape[0], -1)
+    original_outputs_batch = original_outputs_batch.reshape(
+        original_outputs_batch.shape[0], -1
+    )
+
     # A. Bias Correction (Project onto vector of 1s)
     mean_correction = jnp.mean(outputs_batch, axis=0, keepdims=True)
     centered = outputs_batch - mean_correction
 
     # B. Scale Correction (Project onto original signal y)
-    y_centered = original_outputs_batch - jnp.mean(original_outputs_batch, axis=0, keepdims=True)
+    y_centered = original_outputs_batch - jnp.mean(
+        original_outputs_batch, axis=0, keepdims=True
+    )
 
     # Gram-Schmidt Projection: v_orth = v - proj_u(v)
     dot_prod = jnp.sum(centered * y_centered, axis=0)
@@ -28,11 +38,18 @@ def get_affine_residuals(outputs_batch: jax.Array, original_outputs_batch: jax.A
     return centered - scale_correction
 
 
-def get_full_span_affine_residuals(outputs_batch: jax.Array, original_outputs_batch: jax.Array) -> jax.Array:
+def get_full_span_affine_residuals(
+    outputs_batch: jax.Array, original_outputs_batch: jax.Array
+) -> jax.Array:
     """
     Project the perturbed outputs onto the orthogonal complement of the
     full Affine Correction Subspace spanned by [Original Signal (Y), 1].
     """
+    outputs_batch = outputs_batch.reshape(outputs_batch.shape[0], -1)
+    original_outputs_batch = original_outputs_batch.reshape(
+        original_outputs_batch.shape[0], -1
+    )
+
     # Augment Y with a column of 1s representing the bias
     # Y is shape (B, D)
     B = original_outputs_batch.shape[0]
@@ -57,6 +74,7 @@ def get_full_span_affine_residuals(outputs_batch: jax.Array, original_outputs_ba
 # ==============================================================================
 # 2. The Solver (Projected Jacobian SVD)
 # ==============================================================================
+
 
 @jax.jit(static_argnums=(0,))
 def find_optimal_perturbation(
@@ -97,7 +115,7 @@ def find_optimal_perturbation(
         v_weight = v_norm.reshape(target_param.shape)
         _, jvp_out = jax.jvp(model_fn_wrt_layer, (target_param,), (v_weight,))
         residuals = get_affine_residuals(jvp_out, original_outputs)
-        return jnp.sum(residuals ** 2)
+        return jnp.sum(residuals**2)
 
     def project_orthogonal(v):
         if not use_orth:
@@ -105,7 +123,9 @@ def find_optimal_perturbation(
         # mask shape (K_max, 1) so invalid rows contribute 0 to the projection sum
         mask = direction_mask.astype(v.dtype)[:, None]  # (K_max, 1)
         projections = jnp.dot(orthogonal_directions, v)  # (K_max,)
-        subtraction = jnp.sum((projections[:, None] * orthogonal_directions) * mask, axis=0)  # (D,)
+        subtraction = jnp.sum(
+            (projections[:, None] * orthogonal_directions) * mask, axis=0
+        )  # (D,)
         return v - subtraction
 
     optimizer = optax.adam(0.05)
@@ -160,14 +180,16 @@ def find_optimal_perturbation_full(
         v_weight = v_norm.reshape(target_param.shape)
         _, jvp_out = jax.jvp(model_fn_wrt_layer, (target_param,), (v_weight,))
         residuals = get_full_span_affine_residuals(jvp_out, original_outputs)
-        return jnp.sum(residuals ** 2)
+        return jnp.sum(residuals**2)
 
     def project_orthogonal(v):
         if not use_orth:
             return v
         mask = direction_mask.astype(v.dtype)[:, None]
         projections = jnp.dot(orthogonal_directions, v)
-        subtraction = jnp.sum((projections[:, None] * orthogonal_directions) * mask, axis=0)
+        subtraction = jnp.sum(
+            (projections[:, None] * orthogonal_directions) * mask, axis=0
+        )
         return v - subtraction
 
     optimizer = optax.adam(0.05)
@@ -202,6 +224,7 @@ def find_optimal_perturbation_full(
 # ==============================================================================
 # 3. The Corrector (Affine Adaptation)
 # ==============================================================================
+
 
 def apply_correction(
     next_layer_params: Tuple[jax.Array, jax.Array],
@@ -260,18 +283,20 @@ def find_optimal_perturbation_multi_layer(
         v_weights = []
         idx = 0
         for shape, size in zip(param_shapes, param_sizes):
-            v_weights.append(v_norm[idx:idx + size].reshape(shape))
+            v_weights.append(v_norm[idx : idx + size].reshape(shape))
             idx += size
         _, jvp_out = jax.jvp(model_fn_wrt_layers, (target_params_list,), (v_weights,))
         residuals = get_affine_residuals(jvp_out, original_outputs)
-        return jnp.sum(residuals ** 2)
+        return jnp.sum(residuals**2)
 
     def project_orthogonal(v):
         if not use_orth:
             return v
         mask = direction_mask.astype(v.dtype)[:, None]  # (K_max, 1)
         projections = jnp.dot(orthogonal_directions, v)  # (K_max,)
-        subtraction = jnp.sum((projections[:, None] * orthogonal_directions) * mask, axis=0)
+        subtraction = jnp.sum(
+            (projections[:, None] * orthogonal_directions) * mask, axis=0
+        )
         return v - subtraction
 
     optimizer = optax.adam(0.05)
@@ -304,7 +329,7 @@ def find_optimal_perturbation_multi_layer(
     final_v_weights = []
     idx = 0
     for shape, size in zip(param_shapes, param_sizes):
-        final_v_weights.append(final_v[idx:idx + size].reshape(shape))
+        final_v_weights.append(final_v[idx : idx + size].reshape(shape))
         idx += size
 
     return final_v_weights, sigma
@@ -337,18 +362,20 @@ def find_optimal_perturbation_multi_layer_full(
         v_weights = []
         idx = 0
         for shape, size in zip(param_shapes, param_sizes):
-            v_weights.append(v_norm[idx:idx + size].reshape(shape))
+            v_weights.append(v_norm[idx : idx + size].reshape(shape))
             idx += size
         _, jvp_out = jax.jvp(model_fn_wrt_layers, (target_params_list,), (v_weights,))
         residuals = get_full_span_affine_residuals(jvp_out, original_outputs)
-        return jnp.sum(residuals ** 2)
+        return jnp.sum(residuals**2)
 
     def project_orthogonal(v):
         if not use_orth:
             return v
         mask = direction_mask.astype(v.dtype)[:, None]
         projections = jnp.dot(orthogonal_directions, v)
-        subtraction = jnp.sum((projections[:, None] * orthogonal_directions) * mask, axis=0)
+        subtraction = jnp.sum(
+            (projections[:, None] * orthogonal_directions) * mask, axis=0
+        )
         return v - subtraction
 
     optimizer = optax.adam(0.05)
@@ -381,7 +408,7 @@ def find_optimal_perturbation_multi_layer_full(
     final_v_weights = []
     idx = 0
     for shape, size in zip(param_shapes, param_sizes):
-        final_v_weights.append(final_v[idx:idx + size].reshape(shape))
+        final_v_weights.append(final_v[idx : idx + size].reshape(shape))
         idx += size
 
     return final_v_weights, sigma
@@ -390,6 +417,7 @@ def find_optimal_perturbation_multi_layer_full(
 # ==============================================================================
 # 4. Randomized SVD — fast batch direction finder for large conv kernels
 # ==============================================================================
+
 
 def find_pjsvd_directions_randomized_svd(
     model_fn: Callable[[jax.Array], jax.Array],
@@ -435,7 +463,9 @@ def find_pjsvd_directions_randomized_svd(
     p = n_oversampling
     Kp = K + p
 
-    residual_fn = get_full_span_affine_residuals if use_full_span else get_affine_residuals
+    residual_fn = (
+        get_full_span_affine_residuals if use_full_span else get_affine_residuals
+    )
     original_outputs = model_fn(target_param)
 
     rng = jax.random.PRNGKey(seed)
@@ -448,8 +478,8 @@ def find_pjsvd_directions_randomized_svd(
     for j in range(Kp):
         v_j = Omega[:, j].reshape(target_param.shape)
         _, jvp_out = jax.jvp(model_fn, (target_param,), (v_j,))
-        res = residual_fn(jvp_out, original_outputs)          # (N, D_out)
-        Y_cols.append(res.reshape(-1))                         # (N*D_out,)
+        res = residual_fn(jvp_out, original_outputs)  # (N, D_out)
+        Y_cols.append(res.reshape(-1))  # (N*D_out,)
 
     Y = jnp.stack(Y_cols, axis=1)  # (N*D_out, K+p)
 
@@ -485,7 +515,7 @@ def find_pjsvd_directions_randomized_svd(
     # Map back to D-dim space: directions = Omega @ Vh^T (cols of Omega @ Vh^T are directions)
     # VhB is (K+p, K+p); each row is a right sv in sketch space.
     # Original-space directions: Omega @ VhB[i] for each i — columns of (D, K+p)
-    V_orig = Omega @ VhB.T   # (D, K+p)
+    V_orig = Omega @ VhB.T  # (D, K+p)
 
     # Normalise
     V_orig = V_orig / (jnp.linalg.norm(V_orig, axis=0, keepdims=True) + 1e-12)
@@ -499,10 +529,8 @@ def find_pjsvd_directions_randomized_svd(
     # For our ensemble, we actually want to *explore* diverse directions, so we
     # keep all K+p and return the top K (highest energy) — these have the largest
     # perturbation variance. Users can choose ordering.
-    indices = jnp.argsort(SB)[::-1][:K]   # top-K by energy (descending)
-    v_opts  = V_orig[:, indices].T          # (K, D)
-    sigmas  = SB[indices]
+    indices = jnp.argsort(SB)[::-1][:K]  # top-K by energy (descending)
+    v_opts = V_orig[:, indices].T  # (K, D)
+    sigmas = SB[indices]
 
     return v_opts, sigmas
-
-
