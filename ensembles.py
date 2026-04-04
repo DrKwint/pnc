@@ -2,7 +2,8 @@ import jax
 import jax.numpy as jnp
 import jax.flatten_util
 from flax import nnx
-from typing import List, Tuple, Any, Callable
+from dataclasses import dataclass
+from typing import List, Tuple, Any, Callable, Optional
 import numpy as np
 import math
 
@@ -504,30 +505,85 @@ class MCDropoutEnsemble:
 
 
 class SWAGEnsemble:
-    def __init__(self, model: TransitionModel, swag_mean: nnx.State, swag_var: nnx.State, n_models: int):
-        self.model = nnx.clone(model)
+    """Diagonal-SWAG ensemble with optional BatchNorm-stat refresh per sampled member."""
+
+    def __init__(
+        self,
+        model: Any,
+        swag_mean: nnx.State,
+        swag_var: nnx.State,
+        n_models: int,
+        *,
+        bn_refresh_inputs: Optional[np.ndarray] = None,
+        bn_refresh_batch_size: int = 128,
+        use_bn_refresh: bool = True,
+        seed: int = 0,
+    ):
+        self.base_model = nnx.clone(model)
         self.swag_mean = swag_mean
         self.swag_var = swag_var
         self.n_models = n_models
+        self.bn_refresh_inputs = None if bn_refresh_inputs is None else np.asarray(bn_refresh_inputs)
+        self.bn_refresh_batch_size = max(1, int(bn_refresh_batch_size))
+        self.use_bn_refresh = bool(use_bn_refresh and self.bn_refresh_inputs is not None)
+        self.rng = np.random.RandomState(seed)
 
-    def _sample_model(self) -> TransitionModel:
-        sample_params = jax.tree.map(
-            # SWAG paper uses 0.5 * Sigma_diag for sampling
-            lambda m, v: m + jnp.sqrt(0.5 * v) * np.random.normal(size=m.shape),
-            self.swag_mean, self.swag_var
-        )
-        nnx.update(self.model, sample_params)
-        return self.model
+    def _sample_params(self) -> nnx.State:
+        def _sample_leaf(mean, var):
+            noise = self.rng.normal(size=mean.shape).astype(np.asarray(mean).dtype)
+            # Diagonal SWAG keeps only the empirical diagonal covariance. Following the
+            # original SWAG sampling rule, we scale the diagonal term by 0.5 here.
+            return mean + jnp.sqrt(0.5 * var) * jnp.asarray(noise)
+
+        return jax.tree.map(_sample_leaf, self.swag_mean, self.swag_var)
+
+    def _resolve_path(self, root: Any, path: tuple[Any, ...]) -> Any:
+        node = root
+        for key in path:
+            if isinstance(key, int):
+                node = node[key]
+            else:
+                node = getattr(node, key)
+        return node
+
+    def _reset_batch_norm_stats(self, model: Any) -> None:
+        for path, variable in nnx.to_flat_state(nnx.state(model, nnx.BatchStat)):
+            parent = self._resolve_path(model, path[:-1])
+            leaf_name = path[-1]
+            target = getattr(parent, leaf_name)
+            current = variable.get_value()
+            if leaf_name == "mean":
+                nnx.update(target, jnp.zeros_like(current))
+            elif leaf_name == "var":
+                nnx.update(target, jnp.ones_like(current))
+
+    def _refresh_batch_norm_stats(self, model: Any) -> None:
+        if not self.use_bn_refresh or self.bn_refresh_inputs is None or len(self.bn_refresh_inputs) == 0:
+            return
+
+        self._reset_batch_norm_stats(model)
+        for start in range(0, len(self.bn_refresh_inputs), self.bn_refresh_batch_size):
+            xb = jnp.array(self.bn_refresh_inputs[start:start + self.bn_refresh_batch_size])
+            logits = model(xb, use_running_average=False)
+            if hasattr(logits, "block_until_ready"):
+                logits.block_until_ready()
+
+    def _sample_model(self) -> Any:
+        sampled_model = nnx.clone(self.base_model)
+        nnx.update(sampled_model, self._sample_params())
+        self._refresh_batch_norm_stats(sampled_model)
+        return sampled_model
 
     def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
         ys = []
-        for i in range(self.n_models):
+        for _ in range(self.n_models):
             sampled_m = self._sample_model()
-            ys.append(_sample_probabilistic(sampled_m(x), i))
+            ys.append(sampled_m(x, use_running_average=True))
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
-        return _sample_probabilistic(self._sample_model()(x), idx)
+        del idx
+        return self._sample_model()(x, use_running_average=True)
 
 
 class LaplaceEnsemble:
@@ -977,6 +1033,260 @@ class PnCEnsemble:
         return self._forward_member(x, idx)
 
 
+@dataclass
+class MultiBlockMemberWeights:
+    w1: jax.Array
+    w2: jax.Array
+    b2: jax.Array
+
+
+class MultiBlockPnCEnsemble:
+    """
+    Perturb-and-Correct on multiple residual blocks.
+
+    Directions are cached per block, but the actual perturbed `w1` kernels and
+    ridge-solved `w2`/`b2` corrections are recomputed for every
+    `perturbation_scale`. That is the key semantic guarantee: two different
+    scales produce genuinely different solved members.
+    """
+
+    def __init__(
+        self,
+        base_model: Any,
+        block_specs: List[dict],
+        z_coeffs: np.ndarray,
+        perturbation_scale: float,
+        lambda_reg: float = 1e-3,
+        sigma_sq_weights: bool = False,
+        members: Optional[List[List[Any]]] = None,
+        raw_calib_arr: Optional[np.ndarray] = None,
+        corr_calib_arr: Optional[np.ndarray] = None,
+        progress_desc: str = "Multi-block PnC: ridge solves",
+    ):
+        self.base_model = base_model
+        self.block_specs = block_specs
+        self.z_coeffs = np.asarray(z_coeffs, dtype=np.float64)
+        self.perturbation_scale = float(perturbation_scale)
+        self.lambda_reg = lambda_reg
+        self.sigma_sq_weights = sigma_sq_weights
+
+        if members is not None:
+            self.members = self._normalize_members(members)
+            self.calib_raw_arr = raw_calib_arr
+            self.calib_corr_arr = corr_calib_arr
+            return
+
+        n_mem, n_blk, _ = self.z_coeffs.shape
+        assert n_blk == len(block_specs), "z_coeffs middle dim must match len(block_specs)"
+        assert all(int(self.z_coeffs.shape[2]) == int(np.asarray(spec["v_opts"]).shape[0]) for spec in block_specs)
+
+        self.members = []
+
+        try:
+            from tqdm import tqdm
+        except ImportError:
+            class tqdm:  # type: ignore[no-redef]
+                def __init__(self, *args, **kwargs):
+                    pass
+                def update(self, n: int = 1):
+                    return None
+                def close(self):
+                    return None
+
+        pbar = tqdm(total=n_mem * n_blk, desc=progress_desc, unit="solve")
+        for i in range(n_mem):
+            row = []
+            for b, spec in enumerate(block_specs):
+                z_row = self.z_coeffs[i, b]
+                sigmas = np.asarray(spec["sigmas"])
+                v_opts = np.asarray(spec["v_opts"])
+                w1_orig = spec["w1_orig"]
+                coeffs = self._coeffs_from_z(z_row, sigmas)
+                dp = coeffs @ v_opts
+                w1_pert = w1_orig + dp.reshape(w1_orig.shape)
+                w2_pert, b2_pert = solve_chunked_conv2_correction(
+                    spec["get_Y_fn"],
+                    w1_pert,
+                    spec["chunks"],
+                    spec["T_orig_chunks"],
+                    w2_shape=tuple(spec["w2_orig"].shape),
+                    lambda_reg=self.lambda_reg,
+                )
+                row.append(MultiBlockMemberWeights(w1=w1_pert, w2=w2_pert, b2=b2_pert))
+                pbar.update(1)
+            self.members.append(row)
+        pbar.close()
+
+        raw_stack = []
+        corr_stack = []
+        for b, spec in enumerate(block_specs):
+            raw_arr, corr_arr = self._shift_diagnostics_one_block(
+                b,
+                spec["chunks"],
+                spec["T_orig_chunks"],
+                label=f"calib block {b}",
+            )
+            raw_stack.append(raw_arr)
+            corr_stack.append(corr_arr)
+
+        self.calib_raw_arr = np.mean(np.stack(raw_stack, axis=0), axis=0)
+        self.calib_corr_arr = np.mean(np.stack(corr_stack, axis=0), axis=0)
+        print(
+            f"[MultiBlock PnC | calib aggregated over {n_blk} blocks] "
+            f"perturbation_scale={self.perturbation_scale} | raw {self.calib_raw_arr.mean():.4f} "
+            f"| corr {self.calib_corr_arr.mean():.4f}"
+        )
+
+    def _normalize_members(self, members: List[List[Any]]) -> List[List[MultiBlockMemberWeights]]:
+        normalized = []
+        for row in members:
+            norm_row = []
+            for item in row:
+                if isinstance(item, MultiBlockMemberWeights):
+                    norm_row.append(item)
+                else:
+                    w1, w2, b2 = item
+                    norm_row.append(MultiBlockMemberWeights(w1=w1, w2=w2, b2=b2))
+            normalized.append(norm_row)
+        return normalized
+
+    def _coeffs_from_z(self, z_row: np.ndarray, sigmas: np.ndarray) -> np.ndarray:
+        safe_sigmas = sigmas + 1e-6
+        if self.sigma_sq_weights:
+            coeffs = z_row / (safe_sigmas ** 2)
+        else:
+            coeffs = z_row / safe_sigmas
+        norm = np.linalg.norm(coeffs) + 1e-12
+        return (coeffs / norm) * self.perturbation_scale
+
+    def _shift_diagnostics_one_block(
+        self,
+        block_index: int,
+        chunks: List[jax.Array],
+        T_orig_chunks: List[jax.Array],
+        label: str = "calib",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        spec = self.block_specs[block_index]
+        kh, kw, c_in, c_out = spec["w2_orig"].shape
+        w2_flat_orig = spec["w2_orig"].transpose(2, 0, 1, 3).reshape(c_in * kh * kw, c_out)
+
+        raw_norms = []
+        corr_norms = []
+        for member_weights in self.members:
+            weights = member_weights[block_index]
+            w2_pert_flat = weights.w2.transpose(2, 0, 1, 3).reshape(c_in * kh * kw, c_out)
+            total_samples = 0
+            raw_norm_sq_sum = 0.0
+            corr_norm_sq_sum = 0.0
+
+            for chunk, T_orig_chunk in zip(chunks, T_orig_chunks):
+                n = chunk.shape[0]
+                _, h_t, w_t, c_t = T_orig_chunk.shape
+                Y_pert = spec["get_Y_fn"](weights.w1, chunk)
+
+                T_raw_flat = Y_pert @ w2_flat_orig
+                T_raw_spatial = T_raw_flat.reshape(n, h_t, w_t, c_t)
+                diff_raw = (T_raw_spatial - T_orig_chunk).reshape(n, -1)
+                raw_norm_sq_sum += float(jnp.sum(jnp.sum(diff_raw ** 2, axis=-1)))
+
+                T_corr_flat = Y_pert @ w2_pert_flat + weights.b2
+                T_corr_spatial = T_corr_flat.reshape(n, h_t, w_t, c_t)
+                diff_corr = (T_corr_spatial - T_orig_chunk).reshape(n, -1)
+                corr_norm_sq_sum += float(jnp.sum(jnp.sum(diff_corr ** 2, axis=-1)))
+
+                total_samples += n
+
+            raw_norms.append(float(np.sqrt(raw_norm_sq_sum / total_samples)))
+            corr_norms.append(float(np.sqrt(corr_norm_sq_sum / total_samples)))
+
+        return np.array(raw_norms), np.array(corr_norms)
+
+    def compute_shift_diagnostics(
+        self,
+        block_chunks: List[List[jax.Array]],
+        block_T_orig: List[List[jax.Array]],
+        label: str = "test",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        raw_stack = []
+        corr_stack = []
+        for b in range(len(self.block_specs)):
+            raw_arr, corr_arr = self._shift_diagnostics_one_block(
+                b,
+                block_chunks[b],
+                block_T_orig[b],
+                label=f"{label} block {b}",
+            )
+            raw_stack.append(raw_arr)
+            corr_stack.append(corr_arr)
+
+        raw_arr = np.mean(np.stack(raw_stack, axis=0), axis=0)
+        corr_arr = np.mean(np.stack(corr_stack, axis=0), axis=0)
+        print(
+            f"[MultiBlock PnC diagnostic | {label}] perturbation_scale={self.perturbation_scale} "
+            f"| raw mean {raw_arr.mean():.4f} | corr mean {corr_arr.mean():.4f}"
+        )
+        return raw_arr, corr_arr
+
+    def _forward_member(self, x: jax.Array, idx: int) -> jax.Array:
+        h = self.base_model.stem(x)
+        stages = [
+            self.base_model.stage1,
+            self.base_model.stage2,
+            self.base_model.stage3,
+            self.base_model.stage4,
+        ]
+        member_lookup = {
+            (spec["stage_idx"], spec["block_idx"]): self.members[idx][b]
+            for b, spec in enumerate(self.block_specs)
+        }
+
+        for s_idx, stage in enumerate(stages):
+            for b_idx, blk in enumerate(stage):
+                weights = member_lookup.get((s_idx, b_idx))
+                if weights is None:
+                    h = blk(h, use_running_average=True)
+                    continue
+
+                out_bn1 = blk.bn1(h, use_running_average=True)
+                out_relu1 = jax.nn.relu(out_bn1)
+                y_raw = jax.lax.conv_general_dilated(
+                    lhs=out_relu1,
+                    rhs=weights.w1.transpose(3, 2, 0, 1),
+                    window_strides=tuple(blk.conv1.strides),
+                    padding="SAME",
+                    dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                )
+                y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                y_relu2 = jax.nn.relu(y_bn2)
+                t = jax.lax.conv_general_dilated(
+                    lhs=y_relu2,
+                    rhs=weights.w2.transpose(3, 2, 0, 1),
+                    window_strides=(1, 1),
+                    padding="SAME",
+                    dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                )
+                t = t + weights.b2
+
+                identity = h
+                if blk.downsample is not None:
+                    identity = blk.downsample(out_relu1)
+                h = t + identity
+
+        h = self.base_model.final_bn(h, use_running_average=True)
+        h = jax.nn.relu(h)
+        h = jnp.mean(h, axis=(1, 2))
+        return self.base_model.fc(h)
+
+    def predict(self, x: jax.Array) -> jax.Array:
+        ys = []
+        for i in range(len(self.z_coeffs)):
+            ys.append(self._forward_member(x, i))
+        return jnp.stack(ys, axis=0)
+
+    def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
+        return self._forward_member(x, idx)
+
+
 # ==============================================================================
 # Last-Layer Laplace Approximation (LLLA) Ensemble
 # ==============================================================================
@@ -1042,4 +1352,3 @@ class LLLAEnsemble:
         """Returns (batch, n_classes) prediction for a single ensemble member."""
         m = self._sample_model(idx)
         return m(x, use_running_average=True)
-

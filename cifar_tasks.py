@@ -1,4 +1,4 @@
-"""Luigi tasks for CIFAR-10/100 classification experiments (ResNet-50, BatchNorm Refit PJSVD)."""
+"""Luigi tasks for CIFAR-10/100 baselines and PnC experiments on PreAct ResNet-18."""
 import time
 import json
 import pickle
@@ -15,15 +15,19 @@ from flax import nnx
 import numpy as np
 
 from util import seed_everything, _evaluate_cifar, _ps_str, _split_data
-from pjsvd import find_pjsvd_directions_randomized_svd
 from models import PreActResNet18, MCDropoutPreActResNet18
 from data import load_cifar10, load_cifar100
-from training import train_resnet_model
-from ensembles import SWAGEnsemble, PJSVDEnsemble, PnCEnsemble, LLLAEnsemble
+from training import train_resnet_model, train_resnet_swag
+from ensembles import (
+    SWAGEnsemble,
+    PnCEnsemble,
+    MultiBlockPnCEnsemble,
+    LLLAEnsemble,
+)
 
 
 def _load_cifar_dataset(dataset: str):
-    """Load cifar10 or cifar100 using native data loading; return (x_train, y_train, x_test, y_test, n_classes)."""
+    """Load CIFAR-10 or CIFAR-100 and return `(x_train, y_train, x_test, y_test, n_classes)`."""
     if dataset.lower() == 'cifar10':
         x_tr, y_tr, x_te, y_te = load_cifar10()
         n_cls = 10
@@ -36,64 +40,139 @@ def _load_cifar_dataset(dataset: str):
     return x_tr, y_tr, x_te, y_te, n_cls
 
 
-def _extract_orbax_values(d, path=""):
-    if isinstance(d, dict) and 'value' in d:
-        return d['value']
-    if isinstance(d, dict):
-        return {k: _extract_orbax_values(v, f"{path}.{k}" if path else k) for k, v in d.items()}
-    return d
+def preact_resnet18_block_indices() -> list[tuple[int, int]]:
+    return [(stage_idx, block_idx) for stage_idx in range(4) for block_idx in range(2)]
 
 
-def _dict_to_state(d, path=""):
-    from flax.nnx.statelib import State
+def make_cifar_block_get_Y_fn(target_blk):
+    """Return conv2-design features for a perturbed block's conv1 weights."""
+    def get_Y_fn(w1, h_in):
+        out_bn1 = target_blk.bn1(h_in, use_running_average=True)
+        out_relu1 = jax.nn.relu(out_bn1)
+        y_raw = jax.lax.conv_general_dilated(
+            lhs=out_relu1,
+            rhs=w1.transpose(3, 2, 0, 1),
+            window_strides=tuple(target_blk.conv1.strides),
+            padding="SAME",
+            dimension_numbers=("NHWC", "OIHW", "NHWC"),
+        )
+        y_bn2 = target_blk.bn2(y_raw, use_running_average=True)
+        y_relu2 = jax.nn.relu(y_bn2)
+        from pnc import extract_patches
+        return extract_patches(y_relu2, k=3, strides=1)
 
-    if isinstance(d, dict):
-        # stage1/stage2/stage3 are nnx.List-like and represented as State with integer keys
-        if path in ['stage1', 'stage2', 'stage3']:
-            state_dict = {}
-            for k, v in d.items():
-                if k.isdigit():
-                    state_dict[int(k)] = _dict_to_state(v, f"{path}.{k}")
-                else:
-                    raise ValueError(f"Unexpected non-numeric key '{k}' in {path} state")
-            return State(state_dict)
-
-        state_dict = {k: _dict_to_state(v, f"{path}.{k}" if path else k) for k, v in d.items()}
-        return State(state_dict)
-
-    return d
-
-
+    return get_Y_fn
 
 
+def _fmt_recipe_float(value: float) -> str:
+    return f"{value:g}".replace("-", "m").replace(".", "p")
+
+
+def _cifar_recipe_suffix(task) -> str:
+    aug = "fc"
+    if getattr(task, "cutout_size", 0) > 0:
+        aug += f"co{int(task.cutout_size)}"
+    else:
+        aug += "co0"
+
+    nesterov = "n1" if getattr(task, "nesterov", True) else "n0"
+    return (
+        f"_opt{task.optimizer}"
+        f"_lr{task.lr:.0e}"
+        f"_wd{task.weight_decay:.0e}"
+        f"_bs{task.batch_size}"
+        f"_wu{task.warmup_epochs}"
+        f"_mom{_fmt_recipe_float(task.momentum)}"
+        f"_{nesterov}"
+        f"_aug{aug}"
+        f"_ls{_fmt_recipe_float(task.label_smoothing)}"
+    )
+
+
+def _cifar_task_kwargs(task) -> dict:
+    return {
+        "batch_size": task.batch_size,
+        "lr": task.lr,
+        "weight_decay": task.weight_decay,
+        "optimizer": task.optimizer,
+        "momentum": task.momentum,
+        "nesterov": task.nesterov,
+        "warmup_epochs": task.warmup_epochs,
+        "cutout_size": task.cutout_size,
+        "label_smoothing": task.label_smoothing,
+    }
+
+
+def _cifar_trainer_kwargs(task) -> dict:
+    return {
+        "batch_size": task.batch_size,
+        "lr": task.lr,
+        "weight_decay": task.weight_decay,
+        "optimizer_name": task.optimizer,
+        "momentum": task.momentum,
+        "nesterov": task.nesterov,
+        "warmup_epochs": task.warmup_epochs,
+        "cutout_size": task.cutout_size,
+        "label_smoothing": task.label_smoothing,
+    }
+
+
+def _cifar_swag_suffix(task, *, include_bn_refresh: bool) -> str:
+    suffix = f"_sws{task.swag_start_epoch}_swf{task.swag_collect_freq}"
+    if include_bn_refresh:
+        suffix += f"_bnr{int(task.swag_use_bn_refresh)}_bns{task.bn_refresh_subset_size}"
+    return suffix
+
+
+class CIFARRecipeMixin:
+    batch_size = luigi.IntParameter(default=128)
+    lr = luigi.FloatParameter(default=0.1)
+    weight_decay = luigi.FloatParameter(default=5e-4)
+    optimizer = luigi.Parameter(default="sgd")
+    momentum = luigi.FloatParameter(default=0.9)
+    nesterov = luigi.BoolParameter(default=True)
+    warmup_epochs = luigi.IntParameter(default=5)
+    cutout_size = luigi.IntParameter(default=8)
+    label_smoothing = luigi.FloatParameter(default=0.0)
+
+    def train_recipe_suffix(self) -> str:
+        return _cifar_recipe_suffix(self)
+
+    def task_recipe_kwargs(self) -> dict:
+        return _cifar_task_kwargs(self)
+
+    def trainer_recipe_kwargs(self) -> dict:
+        return _cifar_trainer_kwargs(self)
 
 
 
 
-class CIFARStandardEnsemble(luigi.Task):
-    """Train N independent ResNet-50s and evaluate as a deep ensemble."""
+
+
+
+
+class CIFARStandardEnsemble(CIFARRecipeMixin, luigi.Task):
+    """Evaluate a deep ensemble of independently trained PreAct ResNet-18 models."""
     dataset      = luigi.Parameter(default='cifar10')
-    epochs       = luigi.IntParameter(default=100)
+    epochs       = luigi.IntParameter(default=200)
     n_models     = luigi.IntParameter(default=5)
-    batch_size   = luigi.IntParameter(default=128)
-    lr           = luigi.FloatParameter(default=1e-3)
-    weight_decay = luigi.FloatParameter(default=1e-4)
     seed         = luigi.IntParameter(default=0)
 
     def requires(self) -> list[luigi.Task]:
         return [CIFARTrainPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed + i
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed + i,
+            **self.task_recipe_kwargs(),
         ) for i in range(self.n_models)]
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'standard_ensemble_n{self.n_models}_e{self.epochs}_seed{self.seed}.json'))
+                f'baseline_standard_ensemble_n{self.n_models}_e{self.epochs}{recipe}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        _, _, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
 
         print(f'\n=== CIFAR Standard Ensemble (n={self.n_models}) ===')
         t0 = time.time()
@@ -128,20 +207,18 @@ class CIFARStandardEnsemble(luigi.Task):
             json.dump(metrics, f, indent=2)
 
 
-class CIFARTrainMCDropoutPreActResNet18(luigi.Task):
-    """Train and checkpoint an MCDropoutPreActResNet18."""
+class CIFARTrainMCDropoutPreActResNet18(CIFARRecipeMixin, luigi.Task):
+    """Train and checkpoint an MC Dropout PreAct ResNet-18."""
     dataset         = luigi.Parameter(default='cifar10')
-    epochs          = luigi.IntParameter(default=100)
+    epochs          = luigi.IntParameter(default=200)
     dropout_rate    = luigi.FloatParameter(default=0.1)
-    batch_size      = luigi.IntParameter(default=128)
-    lr              = luigi.FloatParameter(default=1e-3)
-    weight_decay    = luigi.FloatParameter(default=1e-4)
     seed            = luigi.IntParameter(default=0)
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'preact_resnet18_mcdropout_dr{self.dropout_rate}_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.pkl'))
+                f'preact_resnet18_mcdropout_train_dr{self.dropout_rate}_e{self.epochs}{recipe}_seed{self.seed}.pkl'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -149,12 +226,11 @@ class CIFARTrainMCDropoutPreActResNet18(luigi.Task):
         x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
         x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
-        print(f'\n=== CIFAR Train MC Dropout Model ({self.dataset}, dr={self.dropout_rate}, epochs={self.epochs}) ===')
+        print(f'\n=== CIFAR Train MC Dropout PreAct ResNet-18 ({self.dataset}, dr={self.dropout_rate}, epochs={self.epochs}) ===')
         t0 = time.time()
         model = MCDropoutPreActResNet18(n_classes=n_cls, dropout_rate=self.dropout_rate, rngs=nnx.Rngs(self.seed))
         model = train_resnet_model(model, x_tr, y_tr, x_va, y_va, epochs=self.epochs,
-                                   batch_size=self.batch_size, lr=self.lr,
-                                   weight_decay=self.weight_decay, patience=self.epochs)
+                                   patience=self.epochs, **self.trainer_recipe_kwargs())
         
         # Ensure model is ready
         for p in jax.tree_util.tree_leaves(nnx.state(model)):
@@ -166,37 +242,34 @@ class CIFARTrainMCDropoutPreActResNet18(luigi.Task):
         state = nnx.state(model)
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, 'wb') as f:
-            pickle.dump({'state': state}, f)
+            pickle.dump({'state': state, 'train_recipe': self.task_recipe_kwargs()}, f)
         print(f'Checkpoint saved to {self.output().path}')
 
 
-class CIFARPreActMCDropout(luigi.Task):
-    """Load MCDropoutPreActResNet18 and sample N times for uncertainty."""
+class CIFARPreActMCDropout(CIFARRecipeMixin, luigi.Task):
+    """Evaluate MC Dropout uncertainty from a trained PreAct ResNet-18 checkpoint."""
     dataset         = luigi.Parameter(default='cifar10')
-    epochs          = luigi.IntParameter(default=100)
+    epochs          = luigi.IntParameter(default=200)
     n_perturbations = luigi.IntParameter(default=50)
     dropout_rate    = luigi.FloatParameter(default=0.1)
-    batch_size      = luigi.IntParameter(default=128)
-    lr              = luigi.FloatParameter(default=1e-3)
-    weight_decay    = luigi.FloatParameter(default=1e-4)
     seed            = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainMCDropoutPreActResNet18(
             dataset=self.dataset, epochs=self.epochs, dropout_rate=self.dropout_rate,
-            batch_size=self.batch_size, lr=self.lr, weight_decay=self.weight_decay,
-            seed=self.seed
+            seed=self.seed, **self.task_recipe_kwargs()
         )
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'mc_dropout_n{self.n_perturbations}_dr{self.dropout_rate}'
-                f'_e{self.epochs}_seed{self.seed}.json'))
+                f'baseline_mc_dropout_n{self.n_perturbations}_dr{self.dropout_rate}'
+                f'_e{self.epochs}{recipe}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        _, _, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
 
         print(f'\n=== CIFAR MC Dropout (n={self.n_perturbations}, dr={self.dropout_rate}) ===')
         t0 = time.time()
@@ -227,19 +300,20 @@ class CIFARPreActMCDropout(luigi.Task):
             json.dump(metrics, f, indent=2)
 
 
-class CIFARTrainSWAGPreActResNet18(luigi.Task):
-    """Train PreActResNet-18 with SWAG and save statistics."""
+class CIFARTrainSWAGPreActResNet18(CIFARRecipeMixin, luigi.Task):
+    """Train a PreAct ResNet-18 checkpoint and collect diagonal-SWAG statistics."""
     dataset         = luigi.Parameter(default='cifar10')
-    epochs          = luigi.IntParameter(default=100)
-    batch_size      = luigi.IntParameter(default=128)
-    lr              = luigi.FloatParameter(default=1e-3)
-    weight_decay    = luigi.FloatParameter(default=1e-4)
+    epochs          = luigi.IntParameter(default=200)
+    swag_start_epoch = luigi.IntParameter(default=160)
+    swag_collect_freq = luigi.IntParameter(default=1)
     seed            = luigi.IntParameter(default=0)
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
+        swag = _cifar_swag_suffix(self, include_bn_refresh=False)
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'preact_resnet18_swag_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}_seed{self.seed}.pkl'))
+                f'preact_resnet18_swag_train_e{self.epochs}{recipe}{swag}_seed{self.seed}.pkl'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -247,29 +321,24 @@ class CIFARTrainSWAGPreActResNet18(luigi.Task):
         x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
         x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
-        print(f'\n=== CIFAR Train SWAG Model ({self.dataset}, epochs={self.epochs}) ===')
+        print(
+            f'\n=== CIFAR Train Diagonal SWAG PreAct ResNet-18 '
+            f'({self.dataset}, epochs={self.epochs}, swag_start={self.swag_start_epoch}, '
+            f'freq={self.swag_collect_freq}) ==='
+        )
         t0 = time.time()
         model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
-        warmup_ep = max(1, self.epochs * 2 // 3)
-        model = train_resnet_model(model, x_tr, y_tr, x_va, y_va, epochs=warmup_ep,
-                                   batch_size=self.batch_size, lr=self.lr,
-                                   weight_decay=self.weight_decay, patience=warmup_ep)
-
-        params       = nnx.state(model, nnx.Param)
-        swag_mean    = jax.tree.map(lambda p: jnp.zeros_like(p), params)
-        swag_sq_mean = jax.tree.map(lambda p: jnp.zeros_like(p), params)
-        n_swag = 0
-        for _ in range(self.epochs - warmup_ep):
-            model = train_resnet_model(model, x_tr, y_tr, x_va, y_va, epochs=1,
-                                       batch_size=self.batch_size, lr=self.lr * 0.01,
-                                       weight_decay=self.weight_decay,
-                                       warmup_epochs=0, patience=1)
-            cur = nnx.state(model, nnx.Param)
-            n   = float(n_swag + 1)
-            swag_mean    = jax.tree.map(lambda m, p: (m * n_swag + p) / n, swag_mean, cur)
-            swag_sq_mean = jax.tree.map(lambda m, p: (m * n_swag + p**2) / n, swag_sq_mean, cur)
-            n_swag += 1
-        swag_var = jax.tree.map(lambda sq, m: jnp.maximum(sq - m**2, 1e-8), swag_sq_mean, swag_mean)
+        model, swag_mean, swag_var, swag_metadata = train_resnet_swag(
+            model,
+            x_tr,
+            y_tr,
+            x_va,
+            y_va,
+            epochs=self.epochs,
+            swag_start_epoch=self.swag_start_epoch,
+            swag_collect_freq=self.swag_collect_freq,
+            **self.trainer_recipe_kwargs(),
+        )
         
         # Ensure stats are ready
         jax.block_until_ready(swag_mean)
@@ -280,36 +349,56 @@ class CIFARTrainSWAGPreActResNet18(luigi.Task):
         state = nnx.state(model)
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, 'wb') as f:
-            pickle.dump({'state': state, 'swag_mean': swag_mean, 'swag_var': swag_var}, f)
+            pickle.dump(
+                {
+                    'state': state,
+                    'swag_mean': swag_mean,
+                    'swag_var': swag_var,
+                    'swag_metadata': swag_metadata,
+                    'train_recipe': self.task_recipe_kwargs(),
+                },
+                f,
+            )
         print(f'Checkpoint saved to {self.output().path}')
 
 
-class CIFARPreActSWAG(luigi.Task):
-    """Load SWAG stats and sample N models for uncertainty."""
+class CIFARPreActSWAG(CIFARRecipeMixin, luigi.Task):
+    """Evaluate diagonal-SWAG uncertainty from a trained PreAct ResNet-18 checkpoint."""
     dataset         = luigi.Parameter(default='cifar10')
-    epochs          = luigi.IntParameter(default=100)
+    epochs          = luigi.IntParameter(default=200)
     n_perturbations = luigi.IntParameter(default=50)
-    batch_size      = luigi.IntParameter(default=128)
-    lr              = luigi.FloatParameter(default=1e-3)
-    weight_decay    = luigi.FloatParameter(default=1e-4)
+    swag_start_epoch = luigi.IntParameter(default=160)
+    swag_collect_freq = luigi.IntParameter(default=1)
+    swag_use_bn_refresh = luigi.BoolParameter(default=True)
+    bn_refresh_subset_size = luigi.IntParameter(default=2048)
     seed            = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainSWAGPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed
+            dataset=self.dataset,
+            epochs=self.epochs,
+            swag_start_epoch=self.swag_start_epoch,
+            swag_collect_freq=self.swag_collect_freq,
+            seed=self.seed,
+            **self.task_recipe_kwargs()
         )
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
+        swag = _cifar_swag_suffix(self, include_bn_refresh=True)
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'swag_n{self.n_perturbations}_e{self.epochs}_seed{self.seed}.json'))
+                f'baseline_swag_n{self.n_perturbations}_e{self.epochs}{recipe}{swag}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
-        print(f'\n=== CIFAR SWAG (n={self.n_perturbations}) ===')
+        print(
+            f'\n=== CIFAR Diagonal SWAG (n={self.n_perturbations}, '
+            f'bn_refresh={self.swag_use_bn_refresh}, bn_subset={self.bn_refresh_subset_size}) ==='
+        )
         t0 = time.time()
         model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
 
@@ -318,19 +407,34 @@ class CIFARPreActSWAG(luigi.Task):
         nnx.update(model, ckpt['state'])
         swag_mean = ckpt['swag_mean']
         swag_var = ckpt['swag_var']
+        swag_metadata = ckpt.get('swag_metadata', {})
         print(f'Model load time: {time.time()-t0:.2f}s')
 
-        ens = SWAGEnsemble(model, swag_mean, swag_var, self.n_perturbations)
-        def _patched_predict(x):
-            ys = []
-            for _ in range(ens.n_models):
-                sm = ens._sample_model()
-                ys.append(sm(x, use_running_average=True))
-            return jnp.stack(ys, axis=0)
-        ens.predict = _patched_predict
+        if self.swag_use_bn_refresh:
+            subset_size = min(self.bn_refresh_subset_size, len(x_tr))
+            subset_rng = np.random.RandomState(self.seed)
+            subset_idx = subset_rng.choice(len(x_tr), size=subset_size, replace=False)
+            bn_refresh_inputs = x_tr[subset_idx]
+        else:
+            bn_refresh_inputs = None
+
+        ens = SWAGEnsemble(
+            model,
+            swag_mean,
+            swag_var,
+            self.n_perturbations,
+            bn_refresh_inputs=bn_refresh_inputs,
+            bn_refresh_batch_size=min(self.batch_size, max(1, self.bn_refresh_subset_size)),
+            use_bn_refresh=self.swag_use_bn_refresh,
+            seed=self.seed,
+        )
 
         metrics = _evaluate_cifar('SWAG', ens, x_te, y_te, n_cls)
         metrics["train_time"] = time.time() - t0
+        metrics["swag_metadata"] = swag_metadata
+        metrics["swag_use_bn_refresh"] = bool(self.swag_use_bn_refresh)
+        metrics["bn_refresh_subset_size"] = int(0 if bn_refresh_inputs is None else len(bn_refresh_inputs))
+        metrics["val_size"] = int(len(x_va))
         
         # Ensure model is ready
         for p in jax.tree_util.tree_leaves(nnx.state(model)):
@@ -341,205 +445,17 @@ class CIFARPreActSWAG(luigi.Task):
             json.dump(metrics, f, indent=2)
 
 
-class CIFARPJSVD(luigi.Task):
-    """Single-layer BatchNorm Refit PJSVD on ResNet-50 stem conv."""
-    dataset            = luigi.Parameter(default='cifar10')
-    epochs             = luigi.IntParameter(default=100)
-    n_directions       = luigi.IntParameter(default=40)
-    n_perturbations    = luigi.IntParameter(default=100)
-    perturbation_sizes = luigi.ListParameter(default=[0.01, 0.05, 0.1, 0.5])
-    subset_size        = luigi.IntParameter(default=512)
-    n_oversampling     = luigi.IntParameter(default=10)
-    seed               = luigi.IntParameter(default=0)
-
-    def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
-
-    def output(self) -> luigi.LocalTarget:
-        ps = _ps_str(self.perturbation_sizes)
-        return luigi.LocalTarget(
-            str(Path('results') / self.dataset /
-                f'pjsvd_bnrefit_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_seed{self.seed}.json'))
-
-    def run(self) -> None:
-        seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
-
-        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
-        with open(self.input().path, 'rb') as f:
-            ckpt = pickle.load(f)
-        nnx.update(model, ckpt['state'])
-
-        print(f'\n=== CIFAR PJSVD BN Refit (K={self.n_directions}, n={self.n_perturbations}) ===')
-        t_start = time.time()
-        actual_sub = min(len(x_tr), self.subset_size)
-        rng   = np.random.RandomState(self.seed)
-        idx   = rng.choice(len(x_tr), actual_sub, replace=False)
-        X_sub = x_tr[idx]
-
-        W_stem = model.stem.kernel.value  # (3, 3, 3, 64)
-
-        def model_fn_stem(w):
-            return jax.lax.conv_general_dilated(
-                lhs=X_sub, rhs=w.transpose(3, 2, 0, 1),
-                window_strides=(1, 1), padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-
-        t0 = time.time()
-        print(f'  Finding {self.n_directions} directions via randomized SVD '
-              f'(oversampling={self.n_oversampling})...')
-        v_opts, sigmas = find_pjsvd_directions_randomized_svd(
-            model_fn_stem, W_stem,
-            n_directions=self.n_directions,
-            n_oversampling=self.n_oversampling,
-            use_full_span=True, seed=self.seed)
-        v_opts.block_until_ready()
-        print(f'  Direction finding: {time.time()-t0:.2f}s')
-        
-        setup_time = time.time() - t_start
-
-        rng_z = np.random.RandomState(self.seed)
-        all_z = rng_z.normal(0, 1, size=(self.n_perturbations, self.n_directions))
-        all_metrics = {}
-
-        for p_size in self.perturbation_sizes:
-            print(f'  Building ensemble (p_scale={p_size}) ...')
-            t1 = time.time()
-            raw_orig = model.stem(X_sub)
-            z_orig   = model.stage1[0].bn1(raw_orig, use_running_average=True)
-            ens = PJSVDEnsemble(
-                base_model=model, v_opts=v_opts, sigmas=sigmas, z_coeffs=all_z,
-                perturbation_scale=p_size, X_sub=X_sub,
-                layers=["l1"], correction_mode="bn_refit",
-                layer_params={"l1": {"W": W_stem}},
-                correction_params={"targets": [z_orig]}
-            )
-            print(f'  Precompute time: {time.time()-t1:.2f}s')
-            m = _evaluate_cifar(f'PJSVD BN Refit (scale={p_size})', ens, x_te, y_te, n_cls,
-                                sidecar_path=self.output().path.replace('.json', f'_ps{p_size}.npz'))
-            m["train_time"] = setup_time
-            all_metrics[str(p_size)] = m
-
-        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.output().path, 'w') as f:
-            json.dump(all_metrics, f, indent=2)
-
-
-class CIFARMLPJSVDv(luigi.Task):
-    """Multi-layer BatchNorm Refit PJSVD: stem + stage1-block0-conv1."""
-    dataset            = luigi.Parameter(default='cifar10')
-    epochs             = luigi.IntParameter(default=100)
-    n_directions       = luigi.IntParameter(default=40)
-    n_perturbations    = luigi.IntParameter(default=100)
-    perturbation_sizes = luigi.ListParameter(default=[0.005, 0.01, 0.05, 0.1])
-    subset_size        = luigi.IntParameter(default=512)
-    n_oversampling     = luigi.IntParameter(default=10)
-    seed               = luigi.IntParameter(default=0)
-
-    def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
-
-    def output(self) -> luigi.LocalTarget:
-        ps = _ps_str(self.perturbation_sizes)
-        return luigi.LocalTarget(
-            str(Path('results') / self.dataset /
-                f'ml_pjsvd_bnrefit_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_seed{self.seed}.json'))
-
-    def run(self) -> None:
-        seed_everything(self.seed)
-        x_tr, y_tr, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
-
-        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
-        with open(self.input().path, 'rb') as f:
-            ckpt = pickle.load(f)
-        nnx.update(model, ckpt['state'])
-
-        print(f'\n=== CIFAR ML-PJSVD BN Refit (K={self.n_directions}, n={self.n_perturbations}) ===')
-        t_start = time.time()
-        actual_sub = min(len(x_tr), self.subset_size)
-        rng   = np.random.RandomState(self.seed)
-        idx   = rng.choice(len(x_tr), actual_sub, replace=False)
-        X_sub = x_tr[idx]
-
-        W_stem = model.stem.kernel.value           # (3,3,3,64)
-        W_s1c1 = model.stage1[0].conv1.kernel.value  # (1,1,64,64)
-        W_joint_flat = jnp.concatenate([W_stem.reshape(-1), W_s1c1.reshape(-1)])
-
-        def model_fn_flat(w_flat):
-            w_st = w_flat[:W_stem.size].reshape(W_stem.shape)
-            w_sc = w_flat[W_stem.size:].reshape(W_s1c1.shape)
-            h_st = jax.lax.conv_general_dilated(
-                lhs=X_sub, rhs=w_st.transpose(3, 2, 0, 1),
-                window_strides=(1, 1), padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            h_st_bn  = model.stage1[0].bn1(h_st, use_running_average=True)
-            h_st_act = jax.nn.relu(h_st_bn)
-            h_sc = jax.lax.conv_general_dilated(
-                lhs=h_st_act, rhs=w_sc.transpose(3, 2, 0, 1),
-                window_strides=(1, 1), padding='SAME',
-                dimension_numbers=('NHWC', 'OIHW', 'NHWC'))
-            return h_sc
-
-        t0 = time.time()
-        print(f'  Finding {self.n_directions} multi-layer directions via randomized SVD...')
-        v_opts, sigmas = find_pjsvd_directions_randomized_svd(
-            model_fn_flat, W_joint_flat,
-            n_directions=self.n_directions,
-            n_oversampling=self.n_oversampling,
-            use_full_span=True, seed=self.seed)
-        v_opts.block_until_ready()
-        print(f'  Direction finding: {time.time()-t0:.2f}s')
-        
-        setup_time = time.time() - t_start
-
-        rng_z = np.random.RandomState(self.seed)
-        all_z = rng_z.normal(0, 1, size=(self.n_perturbations, self.n_directions))
-        all_metrics = {}
-
-        for p_size in self.perturbation_sizes:
-            print(f'  Building ML ensemble (p_scale={p_size}) ...')
-            t1 = time.time()
-            raw_stem_orig = model.stem.conv(X_sub)
-            z_stem_orig   = model.stem.bn(raw_stem_orig, use_running_average=True)
-            h_st_orig     = jax.nn.relu(z_stem_orig)
-            blk0 = model.stage1[0]
-            raw_s1c1_orig = blk0.conv1.conv(h_st_orig)
-            z_s1c1_orig   = blk0.conv1.bn(raw_s1c1_orig, use_running_average=True)
-
-            ens = PJSVDEnsemble(
-                base_model=model, v_opts=v_opts, sigmas=sigmas, z_coeffs=all_z,
-                perturbation_scale=p_size, X_sub=X_sub,
-                layers=["l1", "l2"], correction_mode="bn_refit",
-                layer_params={"l1": {"W": W_stem}, "l2": {"W": W_s1c1}},
-                correction_params={"targets": [z_stem_orig, z_s1c1_orig]}
-            )
-            print(f'  Precompute time: {time.time()-t1:.2f}s')
-            m = _evaluate_cifar(f'ML-PJSVD BN Refit (scale={p_size})', ens, x_te, y_te, n_cls,
-                                sidecar_path=self.output().path.replace('.json', f'_ps{p_size}.npz'))
-            m["train_time"] = setup_time
-            all_metrics[str(p_size)] = m
-
-        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.output().path, 'w') as f:
-            json.dump(all_metrics, f, indent=2)
-
-
-class CIFARTrainPreActResNet18(luigi.Task):
-    """Train and checkpoint a PreAct ResNet-18 on CIFAR-10."""
+class CIFARTrainPreActResNet18(CIFARRecipeMixin, luigi.Task):
+    """Train and checkpoint the base PreAct ResNet-18 learner for CIFAR."""
     dataset      = luigi.Parameter(default='cifar10')
-    epochs       = luigi.IntParameter(default=100)
-    batch_size   = luigi.IntParameter(default=128)
-    lr           = luigi.FloatParameter(default=1e-3)
-    weight_decay = luigi.FloatParameter(default=1e-4)
+    epochs       = luigi.IntParameter(default=200)
     seed         = luigi.IntParameter(default=0)
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'preact_resnet18_e{self.epochs}_lr{self.lr:.0e}_wd{self.weight_decay:.0e}'
-                f'_seed{self.seed}.pkl'))
+                f'preact_resnet18_train_e{self.epochs}{recipe}_seed{self.seed}.pkl'))
 
     def run(self) -> None:
         
@@ -561,10 +477,18 @@ class CIFARTrainPreActResNet18(luigi.Task):
         model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
         model = train_resnet_model(
             model, x_tr, y_tr, x_va, y_va,
-            epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay,
-            warmup_epochs=min(5, max(0, self.epochs - 1)),
-            patience=self.epochs)
+            epochs=self.epochs,
+            patience=self.epochs,
+            batch_size=self.batch_size,
+            lr=self.lr,
+            weight_decay=self.weight_decay,
+            optimizer_name=self.optimizer,
+            momentum=self.momentum,
+            nesterov=self.nesterov,
+            warmup_epochs=min(self.warmup_epochs, max(0, self.epochs - 1)),
+            cutout_size=self.cutout_size,
+            label_smoothing=self.label_smoothing,
+        )
         
         for p in jax.tree_util.tree_leaves(nnx.state(model)):
             if hasattr(p, 'block_until_ready'):
@@ -583,16 +507,16 @@ class CIFARTrainPreActResNet18(luigi.Task):
         state = nnx.state(model)
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, 'wb') as f:
-            pickle.dump({'state': state, 'metrics': metrics}, f)
+            pickle.dump({'state': state, 'metrics': metrics, 'train_recipe': self.task_recipe_kwargs()}, f)
         print(f'Checkpoint saved to {self.output().path}')
 
 
 
 
-class CIFARPnC(luigi.Task):
-    """Perturb-and-Correct on a specified ResNet-18 block using chunked operators."""
+class CIFARPnC(CIFARRecipeMixin, luigi.Task):
+    """Evaluate single-block perturb-and-correct on a chosen PreAct ResNet-18 block."""
     dataset            = luigi.Parameter(default='cifar10')
-    epochs             = luigi.IntParameter(default=100)
+    epochs             = luigi.IntParameter(default=200)
     n_directions       = luigi.IntParameter(default=10)
     n_perturbations    = luigi.IntParameter(default=50)
     perturbation_sizes = luigi.ListParameter(default=[10.0, 50.0, 100.0, 200.0])
@@ -603,29 +527,28 @@ class CIFARPnC(luigi.Task):
     seed               = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
-        return CIFARTrainPreActResNet18(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed, **self.task_recipe_kwargs()
+        )
 
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
+        recipe = self.train_recipe_suffix()
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'pnc_s{self.target_stage_idx}b{self.target_block_idx}_k{self.n_directions}_n{self.n_perturbations}'
-                f'_ps{ps}_e{self.epochs}_subsetsize{self.subset_size}_seed{self.seed}.json'))
+                f'pnc_single_block_s{self.target_stage_idx}b{self.target_block_idx}_k{self.n_directions}_n{self.n_perturbations}'
+                f'_ps{ps}_e{self.epochs}{recipe}_subsetsize{self.subset_size}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
         if self.dataset.lower() == 'cifar10':
-            from data import load_cifar10
             x_train_full, y_train_full, x_te, y_te = load_cifar10()
             n_cls = 10
         elif self.dataset.lower() == 'cifar100':
-            from data import load_cifar100
             x_train_full, y_train_full, x_te, y_te = load_cifar100()
             n_cls = 100
         else:
             raise ValueError(f"Unknown dataset: {self.dataset}")
-            
-        from util import _split_data
         x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
 
         model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
@@ -633,7 +556,10 @@ class CIFARPnC(luigi.Task):
             ckpt = pickle.load(f)
         nnx.update(model, ckpt['state'])
 
-        print(f'\\n=== CIFAR PnC Stage {self.target_stage_idx} Block {self.target_block_idx} (K={self.n_directions}, n={self.n_perturbations}) ===')
+        print(
+            f'\\n=== CIFAR Single-block PnC Stage {self.target_stage_idx} '
+            f'Block {self.target_block_idx} (K={self.n_directions}, n={self.n_perturbations}) ==='
+        )
         t_start = time.time()
         
         actual_sub = min(len(x_tr), self.subset_size)
@@ -753,28 +679,235 @@ class CIFARPnC(luigi.Task):
             json.dump(all_metrics, f, indent=2)
 
 
-class CIFARLLLA(luigi.Task):
-    """Last-Layer Laplace Approximation for PreAct ResNet-18."""
+class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
+    """Evaluate multi-block perturb-and-correct across all PreAct ResNet-18 residual blocks."""
+
+    dataset = luigi.Parameter(default="cifar10")
+    epochs = luigi.IntParameter(default=200)
+    n_directions = luigi.IntParameter(default=10)
+    n_perturbations = luigi.IntParameter(default=50)
+    perturbation_sizes = luigi.ListParameter(default=[10.0, 50.0, 100.0, 200.0])
+    subset_size = luigi.IntParameter(default=1024)
+    chunk_size = luigi.IntParameter(default=128)
+    lambda_reg = luigi.FloatParameter(default=1e-3)
+    sigma_sq_weights = luigi.BoolParameter(default=False)
+    seed = luigi.IntParameter(default=0)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed, **self.task_recipe_kwargs()
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        ps = _ps_str(self.perturbation_sizes)
+        recipe = self.train_recipe_suffix()
+        return luigi.LocalTarget(
+            str(
+                Path("results")
+                / self.dataset
+                / (
+                    f"pnc_multi_block_k{self.n_directions}_n{self.n_perturbations}"
+                    f"_ps{ps}_lr{self.lambda_reg}_e{self.epochs}{recipe}"
+                    f"_subsetsize{self.subset_size}_chunksize{self.chunk_size}_seed{self.seed}.json"
+                )
+            )
+        )
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        if self.dataset.lower() == "cifar10":
+            x_train_full, y_train_full, x_te, y_te = load_cifar10()
+            n_cls = 10
+        elif self.dataset.lower() == "cifar100":
+            x_train_full, y_train_full, x_te, y_te = load_cifar100()
+            n_cls = 100
+        else:
+            raise ValueError(f"Unknown dataset: {self.dataset}")
+
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
+
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, "rb") as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt["state"])
+
+        print(
+            f"\n=== CIFAR Multi-block PnC ({len(preact_resnet18_block_indices())} blocks, "
+            f"K={self.n_directions}, n={self.n_perturbations}) ==="
+        )
+        t_start = time.time()
+
+        actual_sub = min(len(x_tr), self.subset_size)
+        rng = np.random.RandomState(self.seed)
+        idx = rng.choice(len(x_tr), actual_sub, replace=False)
+        X_sub = x_tr[idx]
+
+        stages = [model.stage1, model.stage2, model.stage3, model.stage4]
+        block_indices = preact_resnet18_block_indices()
+        from pnc import find_pnc_subspace_lanczos
+
+        @jax.jit
+        def run_stem_jit(x):
+            return model.stem(x)
+
+        def _stem_chunks(X_data):
+            n_chunks = int(np.ceil(len(X_data) / self.chunk_size))
+            return [run_stem_jit(X_data[i * self.chunk_size:(i + 1) * self.chunk_size]) for i in range(n_chunks)]
+
+        def _block_forward_chunks(blk, in_chunks, w1, w2):
+            block_inputs = []
+            block_targets = []
+            next_chunks = []
+            for h in in_chunks:
+                block_inputs.append(h)
+                out_bn1 = blk.bn1(h, use_running_average=True)
+                out_relu1 = jax.nn.relu(out_bn1)
+                y_raw = jax.lax.conv_general_dilated(
+                    lhs=out_relu1,
+                    rhs=w1.transpose(3, 2, 0, 1),
+                    window_strides=tuple(blk.conv1.strides),
+                    padding="SAME",
+                    dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                )
+                y_bn2 = blk.bn2(y_raw, use_running_average=True)
+                y_relu2 = jax.nn.relu(y_bn2)
+                t_chunk = jax.lax.conv_general_dilated(
+                    lhs=y_relu2,
+                    rhs=w2.transpose(3, 2, 0, 1),
+                    window_strides=(1, 1),
+                    padding="SAME",
+                    dimension_numbers=("NHWC", "OIHW", "NHWC"),
+                )
+                block_targets.append(t_chunk)
+                identity = h
+                if blk.downsample is not None:
+                    identity = blk.downsample(out_relu1)
+                next_chunks.append(t_chunk + identity)
+            return block_inputs, block_targets, next_chunks
+
+        h_calib_chunks = _stem_chunks(X_sub)
+        h_test_chunks = _stem_chunks(x_te)
+
+        block_specs = []
+        test_chunks_by_block = []
+        test_targets_by_block = []
+
+        for block_flat_idx, (stage_idx, block_idx) in enumerate(block_indices):
+            target_blk = stages[stage_idx][block_idx]
+            w1_orig = target_blk.conv1.kernel.value
+            w2_orig = target_blk.conv2.kernel.value
+            get_Y_fn = make_cifar_block_get_Y_fn(target_blk)
+
+            calib_chunks, calib_targets, h_calib_chunks = _block_forward_chunks(
+                target_blk, h_calib_chunks, w1_orig, w2_orig
+            )
+            test_chunks, test_targets, h_test_chunks = _block_forward_chunks(
+                target_blk, h_test_chunks, w1_orig, w2_orig
+            )
+
+            print(f"  Finding directions for block {block_flat_idx} (stage={stage_idx}, block={block_idx})...")
+            v_opts, sigmas = find_pnc_subspace_lanczos(
+                get_Y_fn,
+                w1_orig,
+                calib_chunks,
+                K=self.n_directions,
+                seed=self.seed + block_flat_idx,
+            )
+
+            block_specs.append(
+                {
+                    "stage_idx": stage_idx,
+                    "block_idx": block_idx,
+                    "w1_orig": w1_orig,
+                    "w2_orig": w2_orig,
+                    "v_opts": v_opts,
+                    "sigmas": sigmas,
+                    "chunks": calib_chunks,
+                    "T_orig_chunks": calib_targets,
+                    "get_Y_fn": get_Y_fn,
+                }
+            )
+            test_chunks_by_block.append(test_chunks)
+            test_targets_by_block.append(test_targets)
+            jax.clear_caches()
+
+        setup_time = time.time() - t_start
+
+        rng_z = np.random.RandomState(self.seed + 999)
+        all_z = rng_z.normal(
+            0,
+            1,
+            size=(self.n_perturbations, len(block_indices), self.n_directions),
+        )
+        all_metrics = {}
+
+        for p_size in self.perturbation_sizes:
+            print(f"  Building multi-block PnC ensemble (p_scale={p_size}) ...")
+            t1 = time.time()
+            ens = MultiBlockPnCEnsemble(
+                base_model=model,
+                block_specs=block_specs,
+                z_coeffs=all_z,
+                perturbation_scale=float(p_size),
+                lambda_reg=self.lambda_reg,
+                sigma_sq_weights=self.sigma_sq_weights,
+            )
+            print(f"  Precompute time: {time.time() - t1:.2f}s")
+
+            m = _evaluate_cifar(
+                f"Multi-block PnC (scale={p_size})",
+                ens,
+                x_te,
+                y_te,
+                n_cls,
+                sidecar_path=self.output().path.replace(".json", f"_ps{p_size}.npz"),
+            )
+            m["train_time"] = setup_time
+
+            raw_calib, corr_calib = ens.calib_raw_arr, ens.calib_corr_arr
+            raw_test, corr_test = ens.compute_shift_diagnostics(
+                test_chunks_by_block, test_targets_by_block, label="test"
+            )
+
+            def _diag_stats(raw_arr, corr_arr, prefix):
+                return {
+                    f"{prefix}_raw_shift_mean": float(raw_arr.mean()),
+                    f"{prefix}_raw_shift_std": float(raw_arr.std()),
+                    f"{prefix}_corr_shift_mean": float(corr_arr.mean()),
+                    f"{prefix}_corr_shift_std": float(corr_arr.std()),
+                    f"{prefix}_reduction_pct": float(
+                        (1.0 - corr_arr.mean() / (raw_arr.mean() + 1e-12)) * 100
+                    ),
+                }
+
+            m.update(_diag_stats(raw_calib, corr_calib, "diag_calib"))
+            m.update(_diag_stats(raw_test, corr_test, "diag_test"))
+            all_metrics[str(p_size)] = m
+
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, "w") as f:
+            json.dump(all_metrics, f, indent=2)
+
+
+class CIFARLLLA(CIFARRecipeMixin, luigi.Task):
+    """Evaluate last-layer Laplace uncertainty for a trained PreAct ResNet-18."""
     dataset          = luigi.Parameter(default='cifar10')
-    epochs           = luigi.IntParameter(default=100)
+    epochs           = luigi.IntParameter(default=200)
     n_perturbations  = luigi.IntParameter(default=50)
-    batch_size       = luigi.IntParameter(default=128)
-    lr               = luigi.FloatParameter(default=1e-3)
-    weight_decay     = luigi.FloatParameter(default=1e-4)
     prior_precision  = luigi.FloatParameter(default=1.0)
     seed             = luigi.IntParameter(default=0)
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
-            dataset=self.dataset, epochs=self.epochs, batch_size=self.batch_size,
-            lr=self.lr, weight_decay=self.weight_decay, seed=self.seed
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed, **self.task_recipe_kwargs()
         )
 
     def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
         return luigi.LocalTarget(
             str(Path('results') / self.dataset /
-                f'llla_n{self.n_perturbations}_prec{self.prior_precision}'
-                f'_e{self.epochs}_seed{self.seed}.json'))
+                f'baseline_llla_n{self.n_perturbations}_prec{self.prior_precision}'
+                f'_e{self.epochs}{recipe}_seed{self.seed}.json'))
 
     def run(self) -> None:
         seed_everything(self.seed)
@@ -842,10 +975,10 @@ class CIFARLLLA(luigi.Task):
             json.dump(metrics, f, indent=2)
 
 
-class AllCIFARExperiments(luigi.WrapperTask):
-    """Umbrella task: runs all CIFAR experiments for a given dataset."""
+class AllCIFARExperiments(CIFARRecipeMixin, luigi.WrapperTask):
+    """Current CIFAR workflow: train the base learner, run baselines, then run single- and multi-block PnC."""
     dataset            = luigi.Parameter(default='cifar10')
-    epochs             = luigi.IntParameter(default=100)
+    epochs             = luigi.IntParameter(default=200)
     n_perturbations    = luigi.IntParameter(default=100)
     n_models           = luigi.IntParameter(default=5)
     n_directions       = luigi.IntParameter(default=40)
@@ -853,21 +986,23 @@ class AllCIFARExperiments(luigi.WrapperTask):
     seed               = luigi.IntParameter(default=0)
 
     def requires(self) -> list[luigi.Task]:
-        shared = dict(dataset=self.dataset, epochs=self.epochs, seed=self.seed)
-        ml_ps  = [ps / 5 for ps in self.perturbation_sizes]
+        shared = dict(dataset=self.dataset, epochs=self.epochs, seed=self.seed, **self.task_recipe_kwargs())
         return [
             CIFARTrainPreActResNet18(**shared),
             CIFARStandardEnsemble(n_models=self.n_models, **shared),
             CIFARPreActMCDropout(n_perturbations=self.n_perturbations, **shared),
             CIFARPreActSWAG(n_perturbations=self.n_perturbations, **shared),
-            CIFARPJSVD(n_directions=self.n_directions,
-                       n_perturbations=self.n_perturbations,
-                       perturbation_sizes=self.perturbation_sizes, **shared),
-            CIFARMLPJSVDv(n_directions=self.n_directions,
-                           n_perturbations=self.n_perturbations,
-                           perturbation_sizes=ml_ps, **shared),
-            CIFARPnC(n_directions=self.n_directions,
-                           n_perturbations=self.n_perturbations,
-                           perturbation_sizes=self.perturbation_sizes, **shared),
+            CIFARPnC(
+                n_directions=self.n_directions,
+                n_perturbations=self.n_perturbations,
+                perturbation_sizes=self.perturbation_sizes,
+                **shared,
+            ),
+            CIFARMultiBlockPnC(
+                n_directions=self.n_directions,
+                n_perturbations=self.n_perturbations,
+                perturbation_sizes=self.perturbation_sizes,
+                **shared,
+            ),
             CIFARLLLA(n_perturbations=self.n_perturbations, **shared),
         ]

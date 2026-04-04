@@ -16,6 +16,35 @@ from jaxtyping import Array, Float
 LossFn = Callable[[nnx.Module, Float[Array, "batch ..."], Array], Float[Array, ""]]
 StepHook = Callable[[int, nnx.Module, float, float], None]
 
+
+def _resnet_steps_per_epoch(n_examples: int, batch_size: int) -> int:
+    return max(1, int(np.ceil(n_examples / batch_size)))
+
+
+def _iter_resnet_epoch_batches(data_iterator, steps_ep: int):
+    for _ in range(steps_ep):
+        try:
+            yield next(data_iterator)
+        except StopIteration:
+            return
+
+
+def _build_resnet_optimizer(
+    optimizer_name: str,
+    schedule,
+    weight_decay: float,
+    momentum: float,
+    nesterov: bool,
+):
+    if optimizer_name == "sgd":
+        return optax.chain(
+            optax.add_decayed_weights(weight_decay),
+            optax.sgd(learning_rate=schedule, momentum=momentum, nesterov=nesterov),
+        )
+    if optimizer_name == "adamw":
+        return optax.adamw(learning_rate=schedule, weight_decay=weight_decay)
+    raise ValueError(f"Unknown optimizer_name: {optimizer_name}")
+
 def train_generic(
     model: nnx.Module,
     train_inputs: "Float[Array, 'batch *dims']",
@@ -491,7 +520,7 @@ def train_subspace_classification_model(
 
 
 # ---------------------------------------------------------------------------
-# ResNet-50 training (CIFAR images, 2D conv, BatchNorm)
+# CIFAR ResNet training helpers (2D conv, BatchNorm)
 # ---------------------------------------------------------------------------
 
 
@@ -532,89 +561,64 @@ class RandomFlipCrop(grain.MapTransform):
         return element
 
 
-def train_resnet_model(
-    model: nnx.Module,
-    x_train: np.ndarray,
-    y_train: np.ndarray,
-    x_val: np.ndarray,
-    y_val: np.ndarray,
-    epochs: int = 100,
-    batch_size: int = 128,
-    lr: float = 0.001,
-    weight_decay: float = 1e-4,
-    patience: int = 15,
-    warmup_epochs: int = 5,
-    seed: int = 99,
-) -> nnx.Module:
-    """
-    Trains a ResNet-50 (or MCDropoutResNet50) on CIFAR images.
+class RandomCutout(grain.MapTransform):
+    def __init__(self, size: int = 8, seed: int = 42):
+        self.size = size
+        self.rng = np.random.RandomState(seed)
 
-    Features:
-      - Cosine LR decay with linear warmup via optax.warmup_cosine_decay_schedule
-      - AdamW optimizer
-      - Grain DataLoader for batched data augmentation and streaming
-      - Epoch-level early stopping on val cross-entropy
-      - BatchNorm use_running_average=False during training, True at evaluation
+    def map(self, element):
+        if self.size <= 0:
+            return element
 
-    Returns: trained model (best val-loss weights restored).
-    """
-    n_tr      = len(x_train)
-    steps_ep  = max(1, n_tr // batch_size)
-    total_steps = epochs * steps_ep
+        x = np.array(element["image"], copy=True)
+        H, W, _ = x.shape
+        cutout_h = min(self.size, H)
+        cutout_w = min(self.size, W)
 
+        top = self.rng.randint(0, H - cutout_h + 1)
+        left = self.rng.randint(0, W - cutout_w + 1)
+        x[top:top + cutout_h, left:left + cutout_w, :] = 0.0
+
+        element["image"] = x
+        return element
+
+
+def _build_resnet_schedule(
+    *,
+    lr: float,
+    epochs: int,
+    steps_ep: int,
+    warmup_epochs: int,
+):
+    total_steps = max(1, epochs * steps_ep)
     warmup_epochs = min(warmup_epochs, epochs)
     warmup_steps = warmup_epochs * steps_ep
+
     if warmup_steps > 0:
-        schedule = optax.warmup_cosine_decay_schedule(
-            init_value=0.0, peak_value=lr,
+        return optax.warmup_cosine_decay_schedule(
+            init_value=0.0,
+            peak_value=lr,
             warmup_steps=warmup_steps,
-            decay_steps=total_steps, end_value=lr * 1e-3)
-    else:
-        schedule = optax.cosine_decay_schedule(
-            init_value=lr,
-            decay_steps=total_steps, alpha=1e-3)
-    optimizer = optax.adamw(learning_rate=schedule, weight_decay=weight_decay)
-    opt_state = optimizer.init(nnx.state(model, nnx.Param))
+            decay_steps=total_steps,
+            end_value=lr * 1e-3,
+        )
 
-    @nnx.jit
-    def train_step(model, opt_state, x_batch, y_batch):
-        def loss_fn(m):
-            logits = m(x_batch, use_running_average=False)
-            return jnp.mean(
-                optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=y_batch))
-        grads = nnx.grad(loss_fn)(model)
-        updates, new_opt = optimizer.update(
-            nnx.state(grads, nnx.Param), opt_state, nnx.state(model, nnx.Param))
-        nnx.update(model, optax.apply_updates(nnx.state(model, nnx.Param), updates))
-        return loss_fn(model), new_opt
+    return optax.cosine_decay_schedule(
+        init_value=lr,
+        decay_steps=total_steps,
+        alpha=1e-3,
+    )
 
-    @nnx.jit
-    def val_loss_fn(model, x_b, y_b):
-        logits = model(x_b, use_running_average=True)
-        return jnp.mean(
-            optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=y_b))
 
-    def _epoch_val():
-        losses, ns = [], []
-        for s in range(0, len(x_val), batch_size):
-            # x_val is numpy array here, so slice then convert
-            xb = jnp.array(x_val[s:s+batch_size])
-            yb = jnp.array(y_val[s:s+batch_size])
-            losses.append(float(val_loss_fn(model, xb, yb)) * len(xb))
-            ns.append(len(xb))
-        return sum(losses) / sum(ns)
-
-    def _epoch_acc():
-        correct = total = 0
-        for s in range(0, len(x_val), batch_size):
-            xb  = jnp.array(x_val[s:s+batch_size])
-            yb  = jnp.array(y_val[s:s+batch_size])
-            preds = jnp.argmax(model(xb, use_running_average=True), axis=-1)
-            correct += int(jnp.sum(preds == yb))
-            total   += len(yb)
-        return float(correct) / total
-
-    # Setup Grain DataLoader
+def _make_resnet_dataloader(
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    *,
+    batch_size: int,
+    epochs: int,
+    cutout_size: int,
+    seed: int,
+):
     source = NumpyDataSource(x_train, y_train)
     sampler = grain.IndexSampler(
         num_records=len(source),
@@ -623,46 +627,178 @@ def train_resnet_model(
         shuffle=True,
         seed=seed,
     )
-    dataloader = grain.DataLoader(
+    operations = [RandomFlipCrop(pad=4, seed=seed)]
+    if cutout_size > 0:
+        operations.append(RandomCutout(size=cutout_size, seed=seed + 1))
+    operations.append(grain.Batch(batch_size=batch_size, drop_remainder=False))
+
+    return grain.DataLoader(
         data_source=source,
         sampler=sampler,
-        operations=[
-            RandomFlipCrop(pad=4, seed=seed),
-            grain.Batch(batch_size=batch_size, drop_remainder=False)
-        ],
-        worker_count=0, # Disable parallel preprocessing to avoid JAX fork segfaults
+        operations=operations,
+        worker_count=0,  # Avoid JAX fork issues in this environment.
     )
 
+
+def _make_resnet_classifier_train_step(
+    *,
+    optimizer,
+    label_smoothing: float,
+):
+    @nnx.jit
+    def train_step(model, opt_state, x_batch, y_batch):
+        def loss_fn(m):
+            logits = m(x_batch, use_running_average=False)
+            if label_smoothing > 0.0:
+                labels = jax.nn.one_hot(y_batch, logits.shape[-1])
+                labels = optax.smooth_labels(labels, alpha=label_smoothing)
+                return jnp.mean(optax.softmax_cross_entropy(logits=logits, labels=labels))
+            return jnp.mean(
+                optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=y_batch)
+            )
+
+        grads = nnx.grad(loss_fn)(model)
+        updates, new_opt = optimizer.update(
+            nnx.state(grads, nnx.Param),
+            opt_state,
+            nnx.state(model, nnx.Param),
+        )
+        nnx.update(model, optax.apply_updates(nnx.state(model, nnx.Param), updates))
+        return loss_fn(model), new_opt
+
+    return train_step
+
+
+def _make_resnet_val_loss_fn():
+    @nnx.jit
+    def val_loss_fn(model, x_b, y_b):
+        logits = model(x_b, use_running_average=True)
+        return jnp.mean(
+            optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=y_b)
+        )
+
+    return val_loss_fn
+
+
+def _epoch_resnet_val_loss(model, x_val, y_val, batch_size: int, val_loss_fn) -> float:
+    losses, ns = [], []
+    for s in range(0, len(x_val), batch_size):
+        xb = jnp.array(x_val[s:s + batch_size])
+        yb = jnp.array(y_val[s:s + batch_size])
+        losses.append(float(val_loss_fn(model, xb, yb)) * len(xb))
+        ns.append(len(xb))
+    return sum(losses) / sum(ns)
+
+
+def _epoch_resnet_acc(model, x_val, y_val, batch_size: int) -> float:
+    correct = total = 0
+    for s in range(0, len(x_val), batch_size):
+        xb = jnp.array(x_val[s:s + batch_size])
+        yb = jnp.array(y_val[s:s + batch_size])
+        preds = jnp.argmax(model(xb, use_running_average=True), axis=-1)
+        correct += int(jnp.sum(preds == yb))
+        total += len(yb)
+    return float(correct) / total
+
+
+def train_resnet_model(
+    model: nnx.Module,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_val: np.ndarray,
+    y_val: np.ndarray,
+    epochs: int = 100,
+    batch_size: int = 128,
+    lr: float = 0.1,
+    weight_decay: float = 5e-4,
+    optimizer_name: str = "sgd",
+    momentum: float = 0.9,
+    nesterov: bool = True,
+    patience: int = 15,
+    warmup_epochs: int = 5,
+    cutout_size: int = 8,
+    label_smoothing: float = 0.0,
+    seed: int = 99,
+) -> nnx.Module:
+    """
+    Train a CIFAR image classifier with the shared ResNet recipe.
+
+    Features:
+      - Cosine LR decay with linear warmup via optax.warmup_cosine_decay_schedule
+      - Configurable optimizer (`sgd` or `adamw`)
+      - Grain DataLoader for batched data augmentation and streaming
+      - Epoch-level early stopping on val cross-entropy
+      - BatchNorm use_running_average=False during training, True at evaluation
+
+    Returns: trained model (best val-loss weights restored).
+    """
+    n_tr      = len(x_train)
+    steps_ep  = _resnet_steps_per_epoch(n_tr, batch_size)
+    schedule = _build_resnet_schedule(
+        lr=lr,
+        epochs=epochs,
+        steps_ep=steps_ep,
+        warmup_epochs=warmup_epochs,
+    )
+    optimizer = _build_resnet_optimizer(
+        optimizer_name=optimizer_name,
+        schedule=schedule,
+        weight_decay=weight_decay,
+        momentum=momentum,
+        nesterov=nesterov,
+    )
+    opt_state = optimizer.init(nnx.state(model, nnx.Param))
+    train_step = _make_resnet_classifier_train_step(
+        optimizer=optimizer,
+        label_smoothing=label_smoothing,
+    )
+    val_loss_fn = _make_resnet_val_loss_fn()
+
+    dataloader = _make_resnet_dataloader(
+        x_train,
+        y_train,
+        batch_size=batch_size,
+        epochs=epochs,
+        cutout_size=cutout_size,
+        seed=seed,
+    )
     data_iterator = iter(dataloader)
 
     best_val = float('inf')
     best_state = nnx.state(model)
     pat = 0
 
-    print(f"Training ResNet-50: {n_tr} train / {len(x_val)} val | "
-          f"epochs={epochs}, bs={batch_size}, lr={lr:g}")
+    aug_desc = "flipcrop"
+    if cutout_size > 0:
+        aug_desc += f"+cutout{cutout_size}"
+    print(
+        f"Training CIFAR classifier: {n_tr} train / {len(x_val)} val | "
+        f"epochs={epochs}, bs={batch_size}, lr={lr:g}, opt={optimizer_name}, "
+        f"wd={weight_decay:g}, warmup={warmup_epochs}, aug={aug_desc}, "
+        f"label_smoothing={label_smoothing:g}"
+    )
 
     for epoch in range(epochs):
         t_ep = time.time()
         ep_loss = 0.0
+        processed_steps = 0
 
-        for step in range(steps_ep):
-            try:
-                batch = next(data_iterator)
-                xaug = jnp.array(batch["image"])
-                yb   = jnp.array(batch["label"])
+        for processed_steps, batch in enumerate(_iter_resnet_epoch_batches(data_iterator, steps_ep), start=1):
+            xaug = jnp.array(batch["image"])
+            yb   = jnp.array(batch["label"])
 
-                loss, opt_state = train_step(model, opt_state, xaug, yb)
-                ep_loss += float(loss)
-                print(f"\r  Epoch {epoch+1:3d}/{epochs}  step {step+1}/{steps_ep}"
-                      f"  loss={ep_loss/(step+1):.4f}", end='', flush=True)
-            except StopIteration:
-                break
+            loss, opt_state = train_step(model, opt_state, xaug, yb)
+            ep_loss += float(loss)
+            print(f"\r  Epoch {epoch+1:3d}/{epochs}  step {processed_steps}/{steps_ep}"
+                  f"  loss={ep_loss/processed_steps:.4f}", end='', flush=True)
 
-        ep_loss /= steps_ep
+        if processed_steps == 0:
+            break
 
-        vl  = _epoch_val()
-        acc = _epoch_acc()
+        ep_loss /= processed_steps
+
+        vl = _epoch_resnet_val_loss(model, x_val, y_val, batch_size, val_loss_fn)
+        acc = _epoch_resnet_acc(model, x_val, y_val, batch_size)
         # elapsed = time.time() - t_start  # removed unused variable
         ep_time = time.time() - t_ep
         eta     = ep_time * (epochs - epoch - 1)
@@ -681,3 +817,174 @@ def train_resnet_model(
     nnx.update(model, best_state)
     print(f"Done. Best val loss: {best_val:.4f}")
     return model
+
+
+def train_resnet_swag(
+    model: nnx.Module,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_val: np.ndarray,
+    y_val: np.ndarray,
+    *,
+    epochs: int = 200,
+    batch_size: int = 128,
+    lr: float = 0.1,
+    weight_decay: float = 5e-4,
+    optimizer_name: str = "sgd",
+    momentum: float = 0.9,
+    nesterov: bool = True,
+    warmup_epochs: int = 5,
+    cutout_size: int = 8,
+    label_smoothing: float = 0.0,
+    swag_start_epoch: int = 160,
+    swag_collect_freq: int = 1,
+    seed: int = 99,
+) -> tuple[nnx.Module, nnx.State, nnx.State, dict[str, object]]:
+    """
+    Train a CIFAR classifier along one continuous trajectory and collect diagonal-SWAG stats.
+
+    This intentionally disables early stopping: diagonal SWAG needs a meaningful post-burn-in
+    trajectory, and stopping on validation loss can eliminate the collection phase entirely.
+    """
+    if epochs < 1:
+        raise ValueError("epochs must be >= 1")
+    if swag_collect_freq < 1:
+        raise ValueError("swag_collect_freq must be >= 1")
+    if swag_start_epoch < 1 or swag_start_epoch > epochs:
+        raise ValueError("swag_start_epoch must be in [1, epochs]")
+
+    n_tr = len(x_train)
+    steps_ep = _resnet_steps_per_epoch(n_tr, batch_size)
+    schedule = _build_resnet_schedule(
+        lr=lr,
+        epochs=epochs,
+        steps_ep=steps_ep,
+        warmup_epochs=warmup_epochs,
+    )
+    optimizer = _build_resnet_optimizer(
+        optimizer_name=optimizer_name,
+        schedule=schedule,
+        weight_decay=weight_decay,
+        momentum=momentum,
+        nesterov=nesterov,
+    )
+    opt_state = optimizer.init(nnx.state(model, nnx.Param))
+    train_step = _make_resnet_classifier_train_step(
+        optimizer=optimizer,
+        label_smoothing=label_smoothing,
+    )
+    val_loss_fn = _make_resnet_val_loss_fn()
+    dataloader = _make_resnet_dataloader(
+        x_train,
+        y_train,
+        batch_size=batch_size,
+        epochs=epochs,
+        cutout_size=cutout_size,
+        seed=seed,
+    )
+    data_iterator = iter(dataloader)
+
+    aug_desc = "flipcrop"
+    if cutout_size > 0:
+        aug_desc += f"+cutout{cutout_size}"
+    print(
+        f"Training diagonal SWAG: {n_tr} train / {len(x_val)} val | "
+        f"epochs={epochs}, bs={batch_size}, lr={lr:g}, opt={optimizer_name}, "
+        f"wd={weight_decay:g}, warmup={warmup_epochs}, aug={aug_desc}, "
+        f"label_smoothing={label_smoothing:g}, swag_start={swag_start_epoch}, "
+        f"swag_freq={swag_collect_freq}"
+    )
+
+    swag_mean = None
+    swag_sq_mean = None
+    snapshot_epochs: list[int] = []
+    best_val = float("inf")
+    best_epoch = 0
+
+    for epoch in range(epochs):
+        t_ep = time.time()
+        ep_loss = 0.0
+        processed_steps = 0
+
+        for processed_steps, batch in enumerate(_iter_resnet_epoch_batches(data_iterator, steps_ep), start=1):
+            xaug = jnp.array(batch["image"])
+            yb = jnp.array(batch["label"])
+            loss, opt_state = train_step(model, opt_state, xaug, yb)
+            ep_loss += float(loss)
+            print(
+                f"\r  Epoch {epoch + 1:3d}/{epochs}  step {processed_steps}/{steps_ep}"
+                f"  loss={ep_loss / processed_steps:.4f}",
+                end="",
+                flush=True,
+            )
+
+        if processed_steps == 0:
+            break
+
+        ep_loss /= processed_steps
+        vl = _epoch_resnet_val_loss(model, x_val, y_val, batch_size, val_loss_fn)
+        acc = _epoch_resnet_acc(model, x_val, y_val, batch_size)
+        if vl < best_val:
+            best_val = vl
+            best_epoch = epoch + 1
+
+        should_collect = (
+            (epoch + 1) >= swag_start_epoch
+            and ((epoch + 1 - swag_start_epoch) % swag_collect_freq == 0)
+        )
+        if should_collect:
+            current_params = nnx.state(model, nnx.Param)
+            if swag_mean is None:
+                swag_mean = jax.tree.map(jnp.zeros_like, current_params)
+                swag_sq_mean = jax.tree.map(jnp.zeros_like, current_params)
+            n_snapshots = len(snapshot_epochs)
+            denom = float(n_snapshots + 1)
+            swag_mean = jax.tree.map(
+                lambda running, param: (running * n_snapshots + param) / denom,
+                swag_mean,
+                current_params,
+            )
+            swag_sq_mean = jax.tree.map(
+                lambda running, param: (running * n_snapshots + param**2) / denom,
+                swag_sq_mean,
+                current_params,
+            )
+            snapshot_epochs.append(epoch + 1)
+
+        ep_time = time.time() - t_ep
+        eta = ep_time * (epochs - epoch - 1)
+        collect_desc = f" | swag_snapshots={len(snapshot_epochs)}"
+        if should_collect:
+            collect_desc += " (collected)"
+        print(
+            f"\r  Epoch {epoch + 1:3d}/{epochs} | "
+            f"train={ep_loss:.4f} | val={vl:.4f} | acc={acc:.3%} | "
+            f"{ep_time:.0f}s/ep | ETA {eta / 60:.1f}min{collect_desc}"
+        )
+
+    if swag_mean is None or swag_sq_mean is None or not snapshot_epochs:
+        raise ValueError(
+            "No SWAG snapshots were collected. Increase epochs or lower swag_start_epoch."
+        )
+
+    swag_var = jax.tree.map(
+        lambda sq_mean, mean: jnp.maximum(sq_mean - mean**2, 1e-8),
+        swag_sq_mean,
+        swag_mean,
+    )
+    metadata = {
+        "variant": "diagonal_swag",
+        "swag_start_epoch": int(swag_start_epoch),
+        "swag_collect_freq": int(swag_collect_freq),
+        "snapshot_epochs": snapshot_epochs,
+        "n_snapshots_collected": len(snapshot_epochs),
+        "best_val_loss": float(best_val),
+        "best_val_epoch": int(best_epoch),
+        "final_epoch": int(epoch + 1),
+    }
+
+    print(
+        f"Done. Collected {len(snapshot_epochs)} diagonal-SWAG snapshots "
+        f"(best val {best_val:.4f} at epoch {best_epoch})."
+    )
+    return model, swag_mean, swag_var, metadata
