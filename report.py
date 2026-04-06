@@ -290,10 +290,31 @@ def _load_env_results(env_dir: Path) -> dict:
 # Rendering helpers
 # ---------------------------------------------------------------------------
 
-W = 17  # column width for text layout
+W = 17  # metric column width for text layout
 
 
-def _render_header(metrics_cfg, fmt):
+def _text_method_width(groups: dict) -> int:
+    """Compute a section-specific method-column width that fits long labels."""
+    labels = ["Method"]
+    for can, group in groups.items():
+        base = _friendly_name(can) or can
+        if "_flat" in group:
+            labels.append(base)
+        else:
+            labels.append(f"── {base} ──")
+            for config_val, agg in group.items():
+                n_seeds = max(len(v) for v in agg.values()) if agg else 0
+                suffix = (
+                    f" (n={n_seeds} seed{'s' if n_seeds != 1 else ''})"
+                    if n_seeds > 1
+                    else ""
+                )
+                labels.append(_config_label(can, config_val).strip() + suffix)
+    longest = max(len(label) for label in labels) if labels else 44
+    return max(44, min(longest + 2, 120))
+
+
+def _render_header(metrics_cfg, fmt, method_width: int):
     if fmt == "md":
         return (
             "| Method | "
@@ -313,13 +334,13 @@ def _render_header(metrics_cfg, fmt):
                 row.append(p[i] if i < len(p) else "")
             
             if i == 0:
-                header_lines.append(f"  {'Method':<44}" + "".join(f"{item:>{W}}" for item in row))
+                header_lines.append(f"  {'Method':<{method_width}}" + "".join(f"{item:>{W}}" for item in row))
             else:
-                header_lines.append(f"  {'':<44}" + "".join(f"{item:>{W}}" for item in row))
+                header_lines.append(f"  {'':<{method_width}}" + "".join(f"{item:>{W}}" for item in row))
         return "\n".join(header_lines)
 
 
-def _render_row(label, metrics_cfg, agg_dict, fmt):
+def _render_row(label, metrics_cfg, agg_dict, fmt, method_width: int):
     """Render one row, computing mean ± std from the list of seed values."""
     cells = []
     for k, _ in metrics_cfg:
@@ -332,11 +353,11 @@ def _render_row(label, metrics_cfg, agg_dict, fmt):
         return f"| {label} | {vals_str} |"
     else:
         vals_str = "".join(_fmt_cell(mu, sd, W) for mu, sd in cells)
-        return f"  {label:<44}{vals_str}"
+        return f"  {label:<{method_width}}{vals_str}"
 
 
-def _sep(metrics_cfg):
-    return "-" * (46 + W * len(metrics_cfg))
+def _sep(metrics_cfg, method_width: int):
+    return "-" * (2 + method_width + W * len(metrics_cfg))
 
 
 # ---------------------------------------------------------------------------
@@ -350,16 +371,17 @@ def _build_section(title: str, env_dir: Path, metrics_cfg: list, fmt: str) -> st
         return f"  (no results in {env_dir})\n"
 
     lines = []
-    sep = _sep(metrics_cfg)
+    method_width = _text_method_width(groups)
+    sep = _sep(metrics_cfg, method_width)
 
     if fmt == "md":
         lines.append(f"\n## {title}\n")
-        lines.append(_render_header(metrics_cfg, fmt))
+        lines.append(_render_header(metrics_cfg, fmt, method_width))
     else:
         lines.append(f"\n{'=' * len(sep)}")
         lines.append(f"  {title}")
         lines.append(sep)
-        lines.append(_render_header(metrics_cfg, fmt))
+        lines.append(_render_header(metrics_cfg, fmt, method_width))
         lines.append(sep)
 
     # Sort: flat-only methods first, then nested (multi-config)
@@ -368,7 +390,7 @@ def _build_section(title: str, env_dir: Path, metrics_cfg: list, fmt: str) -> st
 
     for can, group in flat_items:
         label = _friendly_name(can) or can
-        lines.append(_render_row(label, metrics_cfg, group["_flat"], fmt))
+        lines.append(_render_row(label, metrics_cfg, group["_flat"], fmt, method_width))
 
     if nested_items and fmt != "md":
         lines.append("")
@@ -385,7 +407,7 @@ def _build_section(title: str, env_dir: Path, metrics_cfg: list, fmt: str) -> st
                 else ""
             )
             label = _config_label(can, config_val).strip() + suffix
-            lines.append(_render_row(label, metrics_cfg, agg, fmt))
+            lines.append(_render_row(label, metrics_cfg, agg, fmt, method_width))
         if fmt != "md":
             lines.append("")
 

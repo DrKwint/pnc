@@ -927,12 +927,17 @@ def train_resnet_swag(
     label_smoothing: float = 0.0,
     swag_start_epoch: int = 160,
     swag_collect_freq: int = 1,
+    swag_max_rank: int = 20,
     seed: int = 99,
-) -> tuple[nnx.Module, nnx.State, nnx.State, dict[str, object]]:
+) -> tuple[nnx.Module, nnx.State, nnx.State, jax.Array, dict[str, object]]:
     """
-    Train a CIFAR classifier along one continuous trajectory and collect diagonal-SWAG stats.
+    Train a CIFAR classifier along one continuous trajectory and collect full SWAG stats.
 
-    This intentionally disables early stopping: diagonal SWAG needs a meaningful post-burn-in
+    The returned covariance factors follow the usual low-rank-plus-diagonal SWAG
+    approximation: an empirical diagonal variance plus a capped matrix of centered
+    trajectory snapshots for the low-rank term.
+
+    This intentionally disables early stopping: full SWAG needs a meaningful post-burn-in
     trajectory, and stopping on validation loss can eliminate the collection phase entirely.
     """
     if epochs < 1:
@@ -941,6 +946,8 @@ def train_resnet_swag(
         raise ValueError("swag_collect_freq must be >= 1")
     if swag_start_epoch < 1 or swag_start_epoch > epochs:
         raise ValueError("swag_start_epoch must be in [1, epochs]")
+    if swag_max_rank < 0:
+        raise ValueError("swag_max_rank must be >= 0")
 
     n_tr = len(x_train)
     steps_ep = _resnet_steps_per_epoch(n_tr, batch_size)
@@ -977,16 +984,17 @@ def train_resnet_swag(
     if cutout_size > 0:
         aug_desc += f"+cutout{cutout_size}"
     print(
-        f"Training diagonal SWAG: {n_tr} train / {len(x_val)} val | "
+        f"Training full SWAG: {n_tr} train / {len(x_val)} val | "
         f"epochs={epochs}, bs={batch_size}, lr={lr:g}, opt={optimizer_name}, "
         f"wd={weight_decay:g}, warmup={warmup_epochs}, aug={aug_desc}, "
         f"label_smoothing={label_smoothing:g}, swag_start={swag_start_epoch}, "
-        f"swag_freq={swag_collect_freq}"
+        f"swag_freq={swag_collect_freq}, swag_max_rank={swag_max_rank}"
     )
 
     swag_mean = None
     swag_sq_mean = None
     snapshot_epochs: list[int] = []
+    retained_snapshots: list[np.ndarray] = []
     best_val = float("inf")
     best_epoch = 0
 
@@ -1039,6 +1047,11 @@ def train_resnet_swag(
                 current_params,
             )
             snapshot_epochs.append(epoch + 1)
+            if swag_max_rank > 0:
+                flat_params, _ = jax.flatten_util.ravel_pytree(current_params)
+                retained_snapshots.append(np.array(flat_params))
+                if len(retained_snapshots) > swag_max_rank:
+                    retained_snapshots.pop(0)
 
         ep_time = time.time() - t_ep
         eta = ep_time * (epochs - epoch - 1)
@@ -1061,19 +1074,33 @@ def train_resnet_swag(
         swag_sq_mean,
         swag_mean,
     )
+    swag_mean_flat, _ = jax.flatten_util.ravel_pytree(swag_mean)
+    if len(retained_snapshots) >= 2:
+        snapshot_matrix = jnp.asarray(
+            np.stack(retained_snapshots, axis=1),
+            dtype=swag_mean_flat.dtype,
+        )
+        # Standard SWAG keeps a low-rank matrix whose columns are centered trajectory
+        # snapshots, then samples with D @ z scaled by 1 / sqrt(K - 1).
+        swag_cov_mat_sqrt = snapshot_matrix - swag_mean_flat[:, None]
+    else:
+        swag_cov_mat_sqrt = jnp.zeros((swag_mean_flat.shape[0], 0), dtype=swag_mean_flat.dtype)
     metadata = {
-        "variant": "diagonal_swag",
+        "variant": "full_swag",
         "swag_start_epoch": int(swag_start_epoch),
         "swag_collect_freq": int(swag_collect_freq),
+        "swag_max_rank": int(swag_max_rank),
         "snapshot_epochs": snapshot_epochs,
         "n_snapshots_collected": len(snapshot_epochs),
+        "n_snapshots_retained": int(len(retained_snapshots)),
+        "low_rank_rank": int(swag_cov_mat_sqrt.shape[1]),
         "best_val_loss": float(best_val),
         "best_val_epoch": int(best_epoch),
         "final_epoch": int(epoch + 1),
     }
 
     print(
-        f"Done. Collected {len(snapshot_epochs)} diagonal-SWAG snapshots "
+        f"Done. Collected {len(snapshot_epochs)} SWAG snapshots "
         f"(best val {best_val:.4f} at epoch {best_epoch})."
     )
-    return model, swag_mean, swag_var, metadata
+    return model, swag_mean, swag_var, swag_cov_mat_sqrt, metadata

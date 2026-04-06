@@ -489,3 +489,214 @@ def load_cifar100(
 
     print(f"CIFAR-100 loaded: train={x_train.shape}, test={x_test.shape}")
     return x_train, y_train.astype(np.int32), x_test, y_test.astype(np.int32)
+
+
+OPENOOD_CIFAR_BENCHMARKS = {
+    "cifar10": {
+        "near_ood": {
+            "cifar100": ("cifar100", "CIFAR-100"),
+            "tiny_imagenet": ("tiny_imagenet", "Tiny ImageNet-200"),
+        },
+        "far_ood": {
+            "mnist": ("mnist", "MNIST"),
+            "svhn": ("svhn", "SVHN"),
+            "textures": ("textures", "Textures"),
+            "places365": ("places365", "Places365"),
+        },
+    },
+    "cifar100": {
+        "near_ood": {
+            "cifar10": ("cifar10", "CIFAR-10"),
+            "tiny_imagenet": ("tiny_imagenet", "Tiny ImageNet-200"),
+        },
+        "far_ood": {
+            "mnist": ("mnist", "MNIST"),
+            "svhn": ("svhn", "SVHN"),
+            "textures": ("textures", "Textures"),
+            "places365": ("places365", "Places365"),
+        },
+    },
+}
+
+_OPENOOD_ALIAS_GROUPS = {
+    "cifar10": ["cifar10", "cifar-10", "CIFAR10", "CIFAR-10"],
+    "cifar100": ["cifar100", "cifar-100", "CIFAR100", "CIFAR-100"],
+    "tiny_imagenet": ["tiny_imagenet", "tiny-imagenet", "tinyimagenet", "TinyImageNet", "tin"],
+    "mnist": ["mnist", "MNIST"],
+    "svhn": ["svhn", "SVHN"],
+    "textures": ["textures", "texture", "Textures", "Texture"],
+    "places365": ["places365", "places", "Places365", "Places"],
+}
+
+
+def _openood_npz_array(obj, keys: tuple[str, ...]) -> np.ndarray | None:
+    for key in keys:
+        if key in obj:
+            return np.asarray(obj[key])
+    return None
+
+
+def _openood_load_npz(path: str, normalize: bool, max_examples: int | None) -> tuple[np.ndarray, np.ndarray]:
+    with np.load(path, allow_pickle=True) as data:
+        images = _openood_npz_array(data, ("images", "x", "inputs"))
+        labels = _openood_npz_array(data, ("labels", "y", "targets"))
+    if images is None:
+        raise ValueError(f"OpenOOD NPZ at {path} must contain images/x/inputs")
+    if labels is None:
+        labels = np.full((len(images),), -1, dtype=np.int32)
+    images = np.asarray(images, dtype=np.float32)
+    if images.ndim == 3:
+        images = np.repeat(images[..., None], 3, axis=-1)
+    if images.ndim != 4:
+        raise ValueError(f"Expected image batch with 4 dims at {path}, got {images.shape}")
+    if images.shape[1:3] != (32, 32):
+        raise ValueError(f"Expected 32x32 OpenOOD images at {path}, got {images.shape[1:3]}")
+    if images.shape[-1] == 1:
+        images = np.repeat(images, 3, axis=-1)
+    if max_examples is not None:
+        images = images[:max_examples]
+        labels = labels[:max_examples]
+    if normalize:
+        images = _cifar_normalize(images)
+    return images.astype(np.float32), np.asarray(labels, dtype=np.int32)
+
+
+def _openood_load_from_imglist(
+    imglist_path: str,
+    root_dir: str,
+    normalize: bool,
+    max_examples: int | None,
+) -> tuple[np.ndarray, np.ndarray]:
+    from PIL import Image
+
+    images = []
+    labels = []
+    with open(imglist_path, "r") as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            parts = stripped.split()
+            rel_path = parts[0]
+            label = int(parts[1]) if len(parts) > 1 else -1
+            candidate_paths = [
+                os.path.join(root_dir, rel_path),
+                os.path.join(root_dir, "images_classic", rel_path),
+            ]
+            img_path = None
+            for candidate in candidate_paths:
+                if os.path.exists(candidate):
+                    img_path = candidate
+                    break
+            if img_path is None:
+                raise FileNotFoundError(f"Could not resolve OpenOOD image {rel_path} from {imglist_path}")
+
+            with Image.open(img_path) as img:
+                img = img.convert("RGB")
+                if img.size != (32, 32):
+                    img = img.resize((32, 32), Image.BILINEAR)
+                images.append(np.asarray(img, dtype=np.float32))
+            labels.append(label)
+            if max_examples is not None and len(images) >= max_examples:
+                break
+
+    if not images:
+        raise ValueError(f"No OpenOOD images found via imglist {imglist_path}")
+    x = np.stack(images, axis=0)
+    y = np.asarray(labels, dtype=np.int32)
+    if normalize:
+        x = _cifar_normalize(x)
+    return x.astype(np.float32), y
+
+
+def _openood_find_dataset_source(
+    root_dir: str,
+    id_dataset: str,
+    family: str,
+    dataset_key: str,
+) -> tuple[str, str]:
+    aliases = _OPENOOD_ALIAS_GROUPS[dataset_key]
+    npz_candidates = []
+    imglist_candidates = []
+    for alias in aliases:
+        npz_candidates.extend(
+            [
+                os.path.join(root_dir, id_dataset, family, f"{alias}.npz"),
+                os.path.join(root_dir, id_dataset, family, alias, "test.npz"),
+                os.path.join(root_dir, f"{id_dataset}_{family}_{alias}.npz"),
+            ]
+        )
+        imglist_candidates.extend(
+            [
+                os.path.join(root_dir, "benchmark_imglist", id_dataset, f"test_{alias}.txt"),
+                os.path.join(root_dir, "benchmark_imglist", id_dataset, family, f"{alias}.txt"),
+            ]
+        )
+
+    for path in npz_candidates:
+        if os.path.isfile(path):
+            return "npz", path
+    for path in imglist_candidates:
+        if os.path.isfile(path):
+            return "imglist", path
+    raise FileNotFoundError(
+        f"Could not find OpenOOD source for {id_dataset}/{family}/{dataset_key} under {root_dir}"
+    )
+
+
+def load_openood_cifar_benchmark(
+    id_dataset: str,
+    root_dir: str = "openood_data",
+    normalize: bool = True,
+    max_examples_per_dataset: int | None = None,
+) -> dict[str, object]:
+    """Load OpenOOD v1.5 CIFAR benchmark splits without exposing any OOD validation split."""
+    id_key = id_dataset.lower()
+    if id_key not in OPENOOD_CIFAR_BENCHMARKS:
+        raise ValueError(f"Unsupported OpenOOD CIFAR ID dataset: {id_dataset}")
+
+    if id_key == "cifar10":
+        x_train, y_train, x_test, y_test = load_cifar10(normalize=normalize)
+    else:
+        x_train, y_train, x_test, y_test = load_cifar100(normalize=normalize)
+
+    if max_examples_per_dataset is not None:
+        x_test = x_test[:max_examples_per_dataset]
+        y_test = y_test[:max_examples_per_dataset]
+
+    benchmark = {
+        "id_dataset": id_key,
+        "id_train": {"name": id_key, "inputs": x_train, "targets": y_train},
+        "id_test": {"name": id_key, "inputs": x_test, "targets": y_test},
+        "near_ood": {},
+        "far_ood": {},
+        "metadata": {
+            "benchmark_name": "openood_v1_5",
+            "root_dir": root_dir,
+            "id_dataset": id_key,
+            "normalize": bool(normalize),
+            "max_examples_per_dataset": None if max_examples_per_dataset is None else int(max_examples_per_dataset),
+            "uses_ood_validation": False,
+            "uses_ood_model_selection": False,
+        },
+    }
+
+    for family in ("near_ood", "far_ood"):
+        for dataset_key, (_, display_name) in OPENOOD_CIFAR_BENCHMARKS[id_key][family].items():
+            source_type, source_path = _openood_find_dataset_source(root_dir, id_key, family, dataset_key)
+            if source_type == "npz":
+                inputs, targets = _openood_load_npz(source_path, normalize=normalize, max_examples=max_examples_per_dataset)
+            else:
+                inputs, targets = _openood_load_from_imglist(
+                    source_path,
+                    root_dir,
+                    normalize=normalize,
+                    max_examples=max_examples_per_dataset,
+                )
+            benchmark[family][dataset_key] = {
+                "name": display_name,
+                "inputs": inputs,
+                "targets": targets,
+            }
+
+    return benchmark

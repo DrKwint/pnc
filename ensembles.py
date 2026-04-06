@@ -505,7 +505,11 @@ class MCDropoutEnsemble:
 
 
 class SWAGEnsemble:
-    """Diagonal-SWAG ensemble with optional BatchNorm-stat refresh per sampled member."""
+    """Full SWAG ensemble with low-rank-plus-diagonal sampling and BN refresh.
+
+    Legacy callers can omit `swag_cov_mat_sqrt`, in which case sampling falls back to
+    the diagonal term only.
+    """
 
     def __init__(
         self,
@@ -513,6 +517,7 @@ class SWAGEnsemble:
         swag_mean: nnx.State,
         swag_var: nnx.State,
         n_models: int,
+        swag_cov_mat_sqrt: Optional[jax.Array] = None,
         *,
         bn_refresh_inputs: Optional[np.ndarray] = None,
         bn_refresh_batch_size: int = 128,
@@ -522,20 +527,39 @@ class SWAGEnsemble:
         self.base_model = nnx.clone(model)
         self.swag_mean = swag_mean
         self.swag_var = swag_var
+        self.swag_cov_mat_sqrt = None
         self.n_models = n_models
         self.bn_refresh_inputs = None if bn_refresh_inputs is None else np.asarray(bn_refresh_inputs)
         self.bn_refresh_batch_size = max(1, int(bn_refresh_batch_size))
         self.use_bn_refresh = bool(use_bn_refresh and self.bn_refresh_inputs is not None)
         self.rng = np.random.RandomState(seed)
+        self.swag_mean_flat, self.unflatten_fn = jax.flatten_util.ravel_pytree(swag_mean)
+        self.swag_var_flat, _ = jax.flatten_util.ravel_pytree(swag_var)
+        if swag_cov_mat_sqrt is None:
+            self.swag_cov_mat_sqrt = jnp.zeros((self.swag_mean_flat.shape[0], 0), dtype=self.swag_mean_flat.dtype)
+        else:
+            self.swag_cov_mat_sqrt = jnp.asarray(swag_cov_mat_sqrt, dtype=self.swag_mean_flat.dtype)
+        if self.swag_cov_mat_sqrt.ndim != 2:
+            raise ValueError("swag_cov_mat_sqrt must have shape (n_params, rank)")
+        if self.swag_cov_mat_sqrt.shape[0] != self.swag_mean_flat.shape[0]:
+            raise ValueError("swag_cov_mat_sqrt first dimension must match flattened parameters")
 
     def _sample_params(self) -> nnx.State:
-        def _sample_leaf(mean, var):
-            noise = self.rng.normal(size=mean.shape).astype(np.asarray(mean).dtype)
-            # Diagonal SWAG keeps only the empirical diagonal covariance. Following the
-            # original SWAG sampling rule, we scale the diagonal term by 0.5 here.
-            return mean + jnp.sqrt(0.5 * var) * jnp.asarray(noise)
+        flat_dtype = np.asarray(self.swag_mean_flat).dtype
+        diag_noise = self.rng.normal(size=self.swag_mean_flat.shape).astype(flat_dtype)
+        sampled_flat = self.swag_mean_flat + jnp.sqrt(0.5 * self.swag_var_flat) * jnp.asarray(diag_noise)
 
-        return jax.tree.map(_sample_leaf, self.swag_mean, self.swag_var)
+        low_rank_rank = self.swag_cov_mat_sqrt.shape[1]
+        if low_rank_rank >= 2:
+            low_rank_noise = self.rng.normal(size=(low_rank_rank,)).astype(flat_dtype)
+            # Standard SWAG samples from a covariance made of a diagonal term plus a
+            # low-rank empirical covariance D D^T / (K - 1), with each term scaled by 1/2.
+            sampled_flat = sampled_flat + (
+                jnp.sqrt(0.5 / float(low_rank_rank - 1))
+                * (self.swag_cov_mat_sqrt @ jnp.asarray(low_rank_noise))
+            )
+
+        return self.unflatten_fn(sampled_flat)
 
     def _resolve_path(self, root: Any, path: tuple[Any, ...]) -> Any:
         node = root

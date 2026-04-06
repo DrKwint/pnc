@@ -397,6 +397,65 @@ def _split_data(
         return inputs, targets, inputs, targets
 
 
+def _make_cifar_protocol_splits(
+    train_inputs: Any,
+    train_targets: Any,
+    test_inputs: Any,
+    test_targets: Any,
+    *,
+    val_model_select_split: float = 0.1,
+    train_bn_refresh_split: float = 0.1,
+    seed: int = 99,
+) -> dict[str, Any]:
+    """Build deterministic paper-style CIFAR splits with disjoint train/val/test roles."""
+    if not 0.0 <= val_model_select_split < 1.0:
+        raise ValueError("val_model_select_split must be in [0, 1)")
+    if not 0.0 <= train_bn_refresh_split < 1.0:
+        raise ValueError("train_bn_refresh_split must be in [0, 1)")
+
+    n_total = len(train_inputs)
+    if n_total < 2:
+        raise ValueError("Need at least 2 training examples for protocol splits")
+
+    rng = np.random.RandomState(seed)
+    perm = rng.permutation(n_total)
+
+    n_val = int(np.floor(n_total * val_model_select_split))
+    if val_model_select_split > 0.0:
+        n_val = max(1, n_val)
+    n_val = min(n_val, n_total - 1)
+
+    remaining_after_val = n_total - n_val
+    n_bn = int(np.floor(remaining_after_val * train_bn_refresh_split))
+    if train_bn_refresh_split > 0.0 and remaining_after_val >= 2:
+        n_bn = max(1, n_bn)
+    n_bn = min(n_bn, max(0, remaining_after_val - 1))
+
+    val_idx = perm[:n_val]
+    bn_idx = perm[n_val:n_val + n_bn]
+    fit_idx = perm[n_val + n_bn:]
+    if len(fit_idx) == 0:
+        raise ValueError("Protocol split left no examples for train_fit")
+
+    metadata = {
+        "seed": int(seed),
+        "val_model_select_split": float(val_model_select_split),
+        "train_bn_refresh_split": float(train_bn_refresh_split),
+        "n_train_total": int(n_total),
+        "n_train_fit": int(len(fit_idx)),
+        "n_train_bn_refresh": int(len(bn_idx)),
+        "n_val_model_select": int(len(val_idx)),
+        "n_test_report": int(len(test_inputs)),
+    }
+    return {
+        "train_fit": (train_inputs[fit_idx], train_targets[fit_idx]),
+        "train_bn_refresh": (train_inputs[bn_idx], train_targets[bn_idx]),
+        "val_model_select": (train_inputs[val_idx], train_targets[val_idx]),
+        "test_report": (test_inputs, test_targets),
+        "metadata": metadata,
+    }
+
+
 def _ps_str(sizes) -> str:
     """Compact string for a list of perturbation sizes used in filenames."""
     return "-".join(str(s) for s in sizes)
@@ -451,53 +510,32 @@ def _find_pjsvd_directions(
     return jnp.array(v_opts_buf), np.array(sigmas)
 
 
-def _evaluate_cifar(
+def _evaluate_cifar_logits(
     ensemble_name: str,
-    ensemble: Any,
-    x_test: Float[np.ndarray, "batch ..."],
-    y_test: Array,
+    logits: jax.Array,
+    y_true: Array,
+    *,
     n_classes: int = 10,
-    batch_size: int = 256,
+    temperature: float = 1.0,
+    eval_time: float = 0.0,
     sidecar_path: str | None = None,
-    calibration_data: tuple[np.ndarray, Array] | None = None,
-    posthoc_calibrate: bool = False,
 ) -> dict[str, float]:
-    """
-    Evaluate a classification ensemble on CIFAR images.
-
-    Runs inference in mini-batches to avoid OOM on large ResNet-50 ensembles.
-    Returns the same metrics dict as _evaluate_mnist for easy reporting.
-    """
+    """Evaluate CIFAR classification metrics from frozen ensemble logits."""
     print(f"\n--- Results: {ensemble_name} ---")
-
-    # Warm-up
-    _ = ensemble.predict(x_test[:1])
-
-    temperature = 1.0
-    if posthoc_calibrate and calibration_data is not None:
-        cal_inputs, cal_targets = calibration_data
-        cal_logits = _predict_cifar_logits(ensemble, cal_inputs, batch_size=batch_size)
-        _block_until_ready_tree(cal_logits)
-        temperature = _fit_posthoc_temperature(cal_logits, cal_targets)
-        print(f"[posthoc] Learned temperature on validation split: {temperature:.6f}")
-
-    t0 = time.time()
-    logits = _predict_cifar_logits(ensemble, x_test, batch_size=batch_size)
     preds = jax.nn.softmax(logits / temperature, axis=-1)  # (S, N, C)
     preds.block_until_ready()
-    eval_time = time.time() - t0
-
     mean = jnp.mean(preds, axis=0)  # (N, C)
-    pred_class = jnp.argmax(mean, axis=-1)  # (N,)
-    correct = (pred_class == y_test).astype(jnp.float32)  # (N,)
+    pred_class = jnp.argmax(mean, axis=-1)
+    correct = (pred_class == y_true).astype(jnp.float32)
     confidence = jnp.max(mean, axis=-1)  # (N,)
 
     acc = float(jnp.mean(correct))
-    y_oh = jax.nn.one_hot(y_test, n_classes)
+    y_oh = jax.nn.one_hot(y_true, n_classes)
     brier = float(jnp.mean(jnp.sum((mean - y_oh) ** 2, axis=-1)))
     ent_ps = np.array(-jnp.sum(mean * jnp.log(mean + 1e-8), axis=-1))  # (N,)
     ent = float(np.mean(ent_ps))
-    nll = float(-jnp.mean(jnp.log(mean[jnp.arange(len(y_test)), y_test])))
+    idx = jnp.arange(len(y_true))
+    nll = float(-jnp.mean(jnp.log(mean[idx, y_true] + 1e-8)))
 
     # ECE (reliability diagram)
     n_bins = 15
@@ -527,5 +565,51 @@ def _evaluate_cifar(
         "nll": nll,
         "ece": ece,
         "eval_time": eval_time,
-        "posthoc_temperature": temperature,
+        "temperature": float(temperature),
     }
+
+
+def _evaluate_cifar(
+    ensemble_name: str,
+    ensemble: Any,
+    x_test: Float[np.ndarray, "batch ..."],
+    y_test: Array,
+    n_classes: int = 10,
+    batch_size: int = 256,
+    sidecar_path: str | None = None,
+    calibration_data: tuple[np.ndarray, Array] | None = None,
+    posthoc_calibrate: bool = False,
+) -> dict[str, float]:
+    """
+    Evaluate a classification ensemble on CIFAR images.
+
+    Runs inference in mini-batches to avoid OOM on large ResNet-50 ensembles.
+    Returns the same metrics dict as _evaluate_mnist for easy reporting.
+    """
+    # Warm-up
+    _ = ensemble.predict(x_test[:1])
+
+    temperature = 1.0
+    if posthoc_calibrate and calibration_data is not None:
+        cal_inputs, cal_targets = calibration_data
+        cal_logits = _predict_cifar_logits(ensemble, cal_inputs, batch_size=batch_size)
+        _block_until_ready_tree(cal_logits)
+        temperature = _fit_posthoc_temperature(cal_logits, cal_targets)
+        print(f"[posthoc] Learned temperature on validation split: {temperature:.6f}")
+
+    t0 = time.time()
+    logits = _predict_cifar_logits(ensemble, x_test, batch_size=batch_size)
+    _block_until_ready_tree(logits)
+    eval_time = time.time() - t0
+
+    metrics = _evaluate_cifar_logits(
+        ensemble_name,
+        logits,
+        y_test,
+        n_classes=n_classes,
+        temperature=temperature,
+        eval_time=eval_time,
+        sidecar_path=sidecar_path,
+    )
+    metrics["posthoc_temperature"] = metrics.pop("temperature")
+    return metrics
