@@ -64,6 +64,24 @@ def _posthoc_suffix(enabled: bool) -> str:
     return "_vcal" if enabled else ""
 
 
+def _sample_member_latents(
+    rng: np.random.RandomState,
+    n_perturbations: int,
+    n_directions: int,
+    antithetic_pairing: bool = False,
+) -> np.ndarray:
+    if not antithetic_pairing:
+        return rng.normal(0, 1, size=(n_perturbations, n_directions))
+
+    n_pairs = n_perturbations // 2
+    base = rng.normal(0, 1, size=(n_pairs, n_directions))
+    paired = np.concatenate([base, -base], axis=0)
+    if n_perturbations % 2 == 1:
+        extra = rng.normal(0, 1, size=(1, n_directions))
+        paired = np.concatenate([paired, extra], axis=0)
+    return paired
+
+
 def _get_next_layer_params(model, layer_idx: int) -> tuple[jax.Array, jax.Array]:
     """Return the original next-layer affine map after the given hidden layer."""
     if hasattr(model, "layers"):
@@ -487,6 +505,12 @@ class GymPJSVD(luigi.Task):
     )
     layer_scope = luigi.ChoiceParameter(default="first", choices=["first", "multi"])
     pjsvd_family = luigi.ChoiceParameter(default="low", choices=["low", "random"])
+    antithetic_pairing = luigi.BoolParameter(default=False)
+    member_radius_distribution = luigi.ChoiceParameter(
+        default="fixed", choices=["fixed", "lognormal", "two_point"]
+    )
+    member_radius_std = luigi.FloatParameter(default=0.0)
+    member_radius_values = luigi.ListParameter(default=[])
     safe_subspace_backend = luigi.ChoiceParameter(
         default="activation_covariance",
         choices=["activation_covariance", "projected_residual"],
@@ -508,11 +532,21 @@ class GymPJSVD(luigi.Task):
         l2_str = "" if self.compute_l2 else "_nol2"
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
         prob_str = "_prob" if self.probabilistic_base_model else ""
+        anti_str = "_anti" if self.antithetic_pairing else ""
+        if self.member_radius_distribution == "fixed":
+            radius_str = ""
+        else:
+            radius_str = (
+                f"_mr-{self.member_radius_distribution}"
+                f"_mrs{self.member_radius_std:g}"
+            )
+            if len(self.member_radius_values) > 0:
+                radius_str += f"_mrv{_ps_str(self.member_radius_values)}"
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}_act-{self.activation}_seed{self.seed}.json"
+                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}{anti_str}{radius_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
@@ -718,7 +752,12 @@ class GymPJSVD(luigi.Task):
         )  # Total setup time (base train + direction search)
 
         rng = np.random.RandomState(self.seed)
-        all_z = rng.normal(0, 1, size=(self.n_perturbations, self.n_directions))
+        all_z = _sample_member_latents(
+            rng,
+            self.n_perturbations,
+            self.n_directions,
+            antithetic_pairing=self.antithetic_pairing,
+        )
 
         all_metrics = {}
         base_npz = self.output().path.replace(".json", "")
@@ -732,6 +771,10 @@ class GymPJSVD(luigi.Task):
                 X_sub=X_sub,
                 layers=perturbed_layers,
                 correction_mode=self.correction_mode,
+                member_radius_distribution=self.member_radius_distribution,
+                member_radius_std=self.member_radius_std,
+                member_radius_values=self.member_radius_values,
+                member_radius_seed=self.seed,
                 activation=act_fn,
                 layer_params=layer_params,
                 correction_params=correction_params,
@@ -746,6 +789,14 @@ class GymPJSVD(luigi.Task):
                 posthoc_calibrate=self.posthoc_calibrate,
             )
             m["train_time"] = setup_time  # Consistent, non-cumulative setup time
+            m["antithetic_pairing"] = bool(self.antithetic_pairing)
+            m["antithetic_has_unpaired_sample"] = bool(self.antithetic_pairing and (self.n_perturbations % 2 == 1))
+            member_radii = np.asarray(ens.member_radii)
+            m["member_radius_distribution"] = self.member_radius_distribution
+            m["member_radius_mean"] = float(member_radii.mean())
+            m["member_radius_std"] = float(member_radii.std())
+            m["member_radius_min"] = float(member_radii.min())
+            m["member_radius_max"] = float(member_radii.max())
 
             if self.compute_l2 or self.compute_geometry:
                 # Optional intermediate-state analysis for perturbation behavior.
@@ -961,6 +1012,12 @@ class AllGymExperiments(luigi.WrapperTask):
     seed = luigi.IntParameter(default=0)
     activation = luigi.Parameter(default="relu")
     pjsvd_family = luigi.ChoiceParameter(default="low", choices=["low", "random"])
+    antithetic_pairing = luigi.BoolParameter(default=False)
+    member_radius_distribution = luigi.ChoiceParameter(
+        default="fixed", choices=["fixed", "lognormal", "two_point"]
+    )
+    member_radius_std = luigi.FloatParameter(default=0.0)
+    member_radius_values = luigi.ListParameter(default=[])
     posthoc_calibrate = luigi.BoolParameter(default=False)
     probabilistic_pjsvd = luigi.BoolParameter(default=False)
 
@@ -995,11 +1052,15 @@ class AllGymExperiments(luigi.WrapperTask):
                     n_perturbations=self.n_perturbations,
                     perturbation_sizes=ps,
                     pjsvd_family=pjsvd_family,
+                    antithetic_pairing=self.antithetic_pairing,
                     layer_scope="multi",
                     correction_mode="least_squares",
                     use_full_span=True,
                     safe_subspace_backend="projected_residual",
                     probabilistic_base_model=self.probabilistic_pjsvd,
+                    member_radius_distribution=self.member_radius_distribution,
+                    member_radius_std=self.member_radius_std,
+                    member_radius_values=self.member_radius_values,
                     **shared,
                 )
             )
@@ -1022,6 +1083,12 @@ class AllGymExperimentsMultiSeed(luigi.WrapperTask):
     seeds = luigi.ListParameter(default=[0, 10, 200])
     activation = luigi.Parameter(default="relu")
     pjsvd_family = luigi.ChoiceParameter(default="low", choices=["low", "random"])
+    antithetic_pairing = luigi.BoolParameter(default=False)
+    member_radius_distribution = luigi.ChoiceParameter(
+        default="fixed", choices=["fixed", "lognormal", "two_point"]
+    )
+    member_radius_std = luigi.FloatParameter(default=0.0)
+    member_radius_values = luigi.ListParameter(default=[])
     posthoc_calibrate = luigi.BoolParameter(default=False)
     probabilistic_pjsvd = luigi.BoolParameter(default=False)
 
@@ -1040,6 +1107,10 @@ class AllGymExperimentsMultiSeed(luigi.WrapperTask):
                     seed=seed,
                     activation=self.activation,
                     pjsvd_family=self.pjsvd_family,
+                    antithetic_pairing=self.antithetic_pairing,
+                    member_radius_distribution=self.member_radius_distribution,
+                    member_radius_std=self.member_radius_std,
+                    member_radius_values=self.member_radius_values,
                     posthoc_calibrate=self.posthoc_calibrate,
                     probabilistic_pjsvd=self.probabilistic_pjsvd,
                 )

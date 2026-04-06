@@ -14,6 +14,77 @@ _BATCH_ANY = "batch ..."
 _ENS_BATCH_ANY = "ens batch ..."
 
 
+def _parse_member_radius_values(values: Optional[Any]) -> Optional[np.ndarray]:
+    if values is None:
+        return None
+    arr = np.asarray(values, dtype=np.float64)
+    if arr.size == 0:
+        return None
+    return arr.reshape(-1)
+
+
+def _sample_member_radius_multipliers(
+    n_members: int,
+    distribution: str = "fixed",
+    *,
+    std: float = 0.0,
+    values: Optional[Any] = None,
+    seed: int = 0,
+) -> np.ndarray:
+    distribution = str(distribution).lower()
+    if n_members <= 0:
+        return np.zeros((0,), dtype=np.float64)
+
+    if distribution == "fixed":
+        return np.ones((n_members,), dtype=np.float64)
+
+    rng = np.random.RandomState(seed)
+    if distribution == "lognormal":
+        sigma = float(std)
+        if sigma <= 0.0:
+            return np.ones((n_members,), dtype=np.float64)
+        mu = -0.5 * sigma * sigma
+        multipliers = rng.lognormal(mean=mu, sigma=sigma, size=n_members)
+    elif distribution == "two_point":
+        parsed_values = _parse_member_radius_values(values)
+        if parsed_values is not None:
+            if parsed_values.size != 2:
+                raise ValueError("member_radius_values must contain exactly two positive values for two_point")
+            multipliers = rng.choice(parsed_values, size=n_members, replace=True)
+        else:
+            delta = float(std)
+            if delta <= 0.0:
+                return np.ones((n_members,), dtype=np.float64)
+            if delta >= 1.0:
+                raise ValueError("member_radius_std must be < 1.0 for two_point when member_radius_values is not provided")
+            multipliers = rng.choice(np.array([1.0 - delta, 1.0 + delta], dtype=np.float64), size=n_members, replace=True)
+    else:
+        raise ValueError(f"Unsupported member_radius_distribution: {distribution}")
+
+    if np.any(multipliers <= 0.0):
+        raise ValueError("All member radius multipliers must be positive")
+
+    return multipliers / np.mean(multipliers)
+
+
+def _scale_coefficients_with_member_radii(
+    z_coeffs: np.ndarray,
+    sigmas: np.ndarray,
+    perturbation_scale: float,
+    sigma_sq_weights: bool,
+    member_radius_multipliers: np.ndarray,
+) -> np.ndarray:
+    safe_sigmas = np.asarray(sigmas, dtype=np.float64) + 1e-6
+    z_coeffs = np.asarray(z_coeffs, dtype=np.float64)
+    if sigma_sq_weights:
+        coeffs_all = z_coeffs / (safe_sigmas ** 2)
+    else:
+        coeffs_all = z_coeffs / safe_sigmas
+    norms = np.linalg.norm(coeffs_all, axis=1, keepdims=True) + 1e-12
+    target_radii = float(perturbation_scale) * np.asarray(member_radius_multipliers, dtype=np.float64).reshape(-1, 1)
+    return (coeffs_all / norms) * target_radii
+
+
 def evaluate_tail_from_preact(
     base_model: Any,
     preact: Float[Array, _BATCH_ANY],
@@ -86,6 +157,10 @@ class PJSVDEnsemble:
         layers: List[str] = ["l1"],  # Layer names following our convention
         correction_mode: str = "affine",  # "affine", "least_squares", or "bn_refit"
         sigma_sq_weights: bool = False,
+        member_radius_distribution: str = "fixed",
+        member_radius_std: float = 0.0,
+        member_radius_values: Optional[Any] = None,
+        member_radius_seed: int = 0,
         activation: Any = None,
         # Original parameters for the layers being perturbed
         layer_params: dict = None,
@@ -102,8 +177,20 @@ class PJSVDEnsemble:
         self.layers = layers
         self.correction_mode = correction_mode
         self.sigma_sq_weights = sigma_sq_weights
+        self.member_radius_distribution = member_radius_distribution
+        self.member_radius_std = float(member_radius_std)
+        self.member_radius_values = _parse_member_radius_values(member_radius_values)
+        self.member_radius_seed = int(member_radius_seed)
+        self.member_radius_multipliers = _sample_member_radius_multipliers(
+            len(self.z_coeffs),
+            distribution=self.member_radius_distribution,
+            std=self.member_radius_std,
+            values=self.member_radius_values,
+            seed=self.member_radius_seed,
+        )
         self.activation = activation if activation is not None else getattr(base_model, 'activation', nnx.relu)
         self.kwargs = kwargs
+        self.tail_is_hidden = bool(kwargs.get("tail_is_hidden", False))
 
         # Store layer parameters (W, b) for all perturbed layers
         self.layer_params = layer_params or {}
@@ -117,13 +204,17 @@ class PJSVDEnsemble:
         self._precompute_corrections()
 
     def _get_coeffs_all(self):
-        safe_sigmas = self.sigmas + 1e-6
-        if self.sigma_sq_weights:
-            coeffs_all = self.z_coeffs / np.array(safe_sigmas ** 2)
-        else:
-            coeffs_all = self.z_coeffs / np.array(safe_sigmas)
-        norms = np.linalg.norm(coeffs_all, axis=1, keepdims=True) + 1e-12
-        return (coeffs_all / norms) * self.perturbation_scale
+        return _scale_coefficients_with_member_radii(
+            self.z_coeffs,
+            np.array(self.sigmas),
+            self.perturbation_scale,
+            self.sigma_sq_weights,
+            self.member_radius_multipliers,
+        )
+
+    @property
+    def member_radii(self) -> np.ndarray:
+        return self.perturbation_scale * self.member_radius_multipliers
 
     def _precompute_corrections(self):
         coeffs_all = self._get_coeffs_all()
@@ -289,7 +380,27 @@ class PJSVDEnsemble:
             b_next = self.next_b_news[i]
             
         z_next = h_last_perturbed @ w_next + b_next
+        if self.tail_is_hidden:
+            mean = z_next @ self.base_model.mean_layer.kernel.get_value() + self.base_model.mean_layer.bias.get_value()
+            var_logits = z_next @ self.base_model.var_layer.kernel.get_value() + self.base_model.var_layer.bias.get_value()
+            var = jax.nn.softplus(var_logits) + 1e-6
+            return mean, var
         return evaluate_tail_from_preact(self.base_model, z_next, current_layer_idx=len(self.layers), activation=self.activation)
+
+    def _predict_member_intermediate_and_corrected(self, x, i, dp_all):
+        p = dp_all[i]
+        perturbed_vals = self._apply_perturbations(x, p)
+        h_last_perturbed = perturbed_vals[-1]
+
+        if self.correction_mode == "least_squares":
+            w_next = self.next_w_news[i]
+            b_next = self.next_b_news[i]
+        else:
+            w_next = self.correction_params["next_w"] * self.scale_factors[i][:, None]
+            b_next = self.next_b_news[i]
+
+        z_next = h_last_perturbed @ w_next + b_next
+        return h_last_perturbed, z_next
 
     def _forward_bn_refit(self, x, i, p):
         # PreActResNet-18 specific forward
@@ -372,12 +483,27 @@ class PJSVDEnsemble:
         ys = []
         for i in range(len(self.z_coeffs)):
             ys.append(self._forward_member(x, i, dp_all))
+        if ys and isinstance(ys[0], tuple) and len(ys[0]) == 2:
+            means = jnp.stack([y[0] for y in ys], axis=0)
+            vars = jnp.stack([y[1] for y in ys], axis=0)
+            return means, vars
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
         coeffs_all = self._get_coeffs_all()
         dp_all = coeffs_all @ np.array(self.v_opts)
         return self._forward_member(x, idx, dp_all)
+
+    def predict_intermediate_and_corrected(self, x: jax.Array) -> tuple[jax.Array, jax.Array]:
+        coeffs_all = self._get_coeffs_all()
+        dp_all = coeffs_all @ np.array(self.v_opts)
+        h_vals = []
+        z_vals = []
+        for i in range(len(self.z_coeffs)):
+            h_last_perturbed, z_next = self._predict_member_intermediate_and_corrected(x, i, dp_all)
+            h_vals.append(h_last_perturbed)
+            z_vals.append(z_next)
+        return jnp.stack(h_vals, axis=0), jnp.stack(z_vals, axis=0)
 
 
 
@@ -877,7 +1003,11 @@ class PnCEnsemble:
         target_stage_idx: int,
         target_block_idx: int,
         lambda_reg: float = 1e-3,
-        sigma_sq_weights: bool = False
+        sigma_sq_weights: bool = False,
+        member_radius_distribution: str = "fixed",
+        member_radius_std: float = 0.0,
+        member_radius_values: Optional[Any] = None,
+        member_radius_seed: int = 0,
     ):
         self.base_model = base_model
         self.v_opts = v_opts
@@ -893,6 +1023,17 @@ class PnCEnsemble:
         self.target_block_idx = target_block_idx
         self.lambda_reg = lambda_reg
         self.sigma_sq_weights = sigma_sq_weights
+        self.member_radius_distribution = member_radius_distribution
+        self.member_radius_std = float(member_radius_std)
+        self.member_radius_values = _parse_member_radius_values(member_radius_values)
+        self.member_radius_seed = int(member_radius_seed)
+        self.member_radius_multipliers = _sample_member_radius_multipliers(
+            len(self.z_coeffs),
+            distribution=self.member_radius_distribution,
+            std=self.member_radius_std,
+            values=self.member_radius_values,
+            seed=self.member_radius_seed,
+        )
         
         self.members_w1 = []
         self.members_w2 = []
@@ -900,13 +1041,13 @@ class PnCEnsemble:
         self._precompute_corrections()
 
     def _get_coeffs_all(self):
-        safe_sigmas = self.sigmas + 1e-6
-        if self.sigma_sq_weights:
-            coeffs_all = self.z_coeffs / np.array(safe_sigmas ** 2)
-        else:
-            coeffs_all = self.z_coeffs / np.array(safe_sigmas)
-        norms = np.linalg.norm(coeffs_all, axis=1, keepdims=True) + 1e-12
-        return (coeffs_all / norms) * self.perturbation_scale
+        return _scale_coefficients_with_member_radii(
+            self.z_coeffs,
+            np.array(self.sigmas),
+            self.perturbation_scale,
+            self.sigma_sq_weights,
+            self.member_radius_multipliers,
+        )
 
     def _precompute_corrections(self):
         coeffs_all = self._get_coeffs_all()
@@ -1084,6 +1225,10 @@ class MultiBlockPnCEnsemble:
         perturbation_scale: float,
         lambda_reg: float = 1e-3,
         sigma_sq_weights: bool = False,
+        member_radius_distribution: str = "fixed",
+        member_radius_std: float = 0.0,
+        member_radius_values: Optional[Any] = None,
+        member_radius_seed: int = 0,
         members: Optional[List[List[Any]]] = None,
         raw_calib_arr: Optional[np.ndarray] = None,
         corr_calib_arr: Optional[np.ndarray] = None,
@@ -1095,6 +1240,17 @@ class MultiBlockPnCEnsemble:
         self.perturbation_scale = float(perturbation_scale)
         self.lambda_reg = lambda_reg
         self.sigma_sq_weights = sigma_sq_weights
+        self.member_radius_distribution = member_radius_distribution
+        self.member_radius_std = float(member_radius_std)
+        self.member_radius_values = _parse_member_radius_values(member_radius_values)
+        self.member_radius_seed = int(member_radius_seed)
+        self.member_radius_multipliers = _sample_member_radius_multipliers(
+            len(self.z_coeffs),
+            distribution=self.member_radius_distribution,
+            std=self.member_radius_std,
+            values=self.member_radius_values,
+            seed=self.member_radius_seed,
+        )
 
         if members is not None:
             self.members = self._normalize_members(members)
@@ -1130,7 +1286,7 @@ class MultiBlockPnCEnsemble:
                 sigmas = np.asarray(spec["sigmas"])
                 v_opts = np.asarray(spec["v_opts"])
                 w1_orig = spec["w1_orig"]
-                coeffs = self._coeffs_from_z(z_row, sigmas)
+                coeffs = self._coeffs_from_z(z_row, sigmas, member_index=i)
                 dp = coeffs @ v_opts
                 w1_pert = w1_orig + dp.reshape(w1_orig.shape)
                 w2_pert, b2_pert = solve_chunked_conv2_correction(
@@ -1179,14 +1335,15 @@ class MultiBlockPnCEnsemble:
             normalized.append(norm_row)
         return normalized
 
-    def _coeffs_from_z(self, z_row: np.ndarray, sigmas: np.ndarray) -> np.ndarray:
-        safe_sigmas = sigmas + 1e-6
-        if self.sigma_sq_weights:
-            coeffs = z_row / (safe_sigmas ** 2)
-        else:
-            coeffs = z_row / safe_sigmas
-        norm = np.linalg.norm(coeffs) + 1e-12
-        return (coeffs / norm) * self.perturbation_scale
+    def _coeffs_from_z(self, z_row: np.ndarray, sigmas: np.ndarray, member_index: int) -> np.ndarray:
+        coeffs = _scale_coefficients_with_member_radii(
+            np.asarray(z_row, dtype=np.float64)[None, :],
+            np.asarray(sigmas, dtype=np.float64),
+            self.perturbation_scale,
+            self.sigma_sq_weights,
+            np.asarray([self.member_radius_multipliers[member_index]], dtype=np.float64),
+        )
+        return coeffs[0]
 
     def _shift_diagnostics_one_block(
         self,

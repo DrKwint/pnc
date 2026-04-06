@@ -160,11 +160,19 @@ def find_pnc_subspace_lanczos(
     w1_orig: jax.Array,
     chunks: List[jax.Array],
     K: int,
+    backend: str = "projected_residual",
     seed: int = 42,
 ) -> Tuple[jax.Array, jax.Array]:
     """
     Finds the bottom K eigenvectors of A^T A via ARPACK eigsh.
     """
+    if backend not in {"projected_residual", "activation_covariance"}:
+        raise ValueError(f"Unsupported backend: {backend}")
+    if backend == "activation_covariance":
+        print(
+            "find_pnc_subspace_lanczos: activation_covariance requested, "
+            "falling back to projected_residual implementation."
+        )
     G_inv = build_chunked_geometry(get_Y_fn, w1_orig, chunks)
     chunks_stacked, mask = _pad_and_stack(chunks)
     D = int(w1_orig.size)
