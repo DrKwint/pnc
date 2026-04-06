@@ -20,6 +20,23 @@ def extract_patches(x: jax.Array, k: int = 3, strides: int = 1) -> jax.Array:
     return patches.reshape(-1, patches.shape[-1])
 
 
+def flatten_conv_kernel_to_patches(w: jax.Array) -> jax.Array:
+    """
+    Flatten a HWIO conv kernel to match `extract_patches` feature order.
+
+    `jax.lax.conv_general_dilated_patches(..., dimension_numbers=('NHWC','OIHW','NHWC'))`
+    lays out each flattened patch with channel as the slowest-changing logical axis,
+    i.e. `(C_in, kh, kw)`. The surrogate linear model must use the same ordering.
+    """
+    return w.transpose(2, 0, 1, 3).reshape(-1, w.shape[-1])
+
+
+def unflatten_conv_kernel_from_patches(w_flat: jax.Array, kernel_shape: tuple[int, int, int, int]) -> jax.Array:
+    """Inverse of `flatten_conv_kernel_to_patches`, returning an HWIO kernel."""
+    kh, kw, c_in, c_out = kernel_shape
+    return w_flat.reshape(c_in, kh, kw, c_out).transpose(1, 2, 0, 3)
+
+
 def _pad_and_stack(chunks: List[jax.Array]) -> Tuple[jax.Array, jax.Array]:
     """
     Stack a list of chunks into a single (n_chunks, chunk_size, ...) array.
@@ -229,15 +246,13 @@ def find_pnc_subspace_lanczos(
 def _ridge_regression_solve(H: jax.Array, b: jax.Array, lambda_reg: float, w2_orig: jax.Array) -> Tuple[jax.Array, jax.Array]:
     """Shared linear algebra for ridge solution."""
     D_M = H.shape[0]
-    C_out = b.shape[1]
     reg = H + lambda_reg * jnp.eye(D_M)
     Theta_delta = jnp.linalg.solve(reg, b)  # (D_M, C_out)
     
-    kh, kw, C_in, _ = w2_orig.shape
     # Delta-Bias (index 0)
     b2_new = Theta_delta[0:1, :]
     # Delta-Weights (index 1 onwards)
-    w2_delta = Theta_delta[1:, :].reshape(kh, kw, C_in, C_out)
+    w2_delta = unflatten_conv_kernel_from_patches(Theta_delta[1:, :], w2_orig.shape)
     
     # Corrected weights = Original + Delta
     w2_new = w2_orig + w2_delta
@@ -255,11 +270,11 @@ def solve_chunked_conv2_correction(
     """
     Ridge regression for new Conv2 weights, iterating over chunks to save memory.
     """
-    kh, kw, C_in, C_out = w2_orig.shape
     # Determine D_M from first chunk
     Y0 = get_Y_fn(w1_pert, chunks[0][:1])
     D_M = Y0.shape[-1] + 1
-    w2_flat_orig = w2_orig.reshape(-1, C_out)
+    C_out = w2_orig.shape[-1]
+    w2_flat_orig = flatten_conv_kernel_to_patches(w2_orig)
 
     H = jnp.zeros((D_M, D_M), jnp.float32)
     b = jnp.zeros((D_M, C_out), jnp.float32)

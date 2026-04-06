@@ -980,7 +980,7 @@ def _sample_probabilistic(out: Any, seed: int) -> jax.Array:
 # ==============================================================================
 # Perturb-and-Correct (PnC) Ensemble
 # ==============================================================================
-from pnc import solve_chunked_conv2_correction
+from pnc import flatten_conv_kernel_to_patches, solve_chunked_conv2_correction
 
 class PnCEnsemble:
     """
@@ -1092,13 +1092,12 @@ class PnCEnsemble:
             corr_arr : (N,) RMS shift after  correction, one value per member.
         """
         kh, kw, C_in, C_out = self.w2_orig.shape
-        # Patch-ordered flat views: matching (fh, fw, ic) patch layout from pnc.extract_patches.
-        w2_flat_orig = self.w2_orig.reshape(-1, C_out)
+        w2_flat_orig = flatten_conv_kernel_to_patches(self.w2_orig)
 
         raw_norms  = []
         corr_norms = []
         for w1_pert, (w2_pert, b2_pert) in zip(self.members_w1, self.members_w2):
-            w2_pert_flat = w2_pert.reshape(-1, C_out)
+            w2_pert_flat = flatten_conv_kernel_to_patches(w2_pert)
             total_samples   = 0
             raw_norm_sq_sum  = 0.0
             corr_norm_sq_sum = 0.0
@@ -1354,13 +1353,13 @@ class MultiBlockPnCEnsemble:
     ) -> Tuple[np.ndarray, np.ndarray]:
         spec = self.block_specs[block_index]
         kh, kw, c_in, c_out = spec["w2_orig"].shape
-        w2_flat_orig = spec["w2_orig"].transpose(2, 0, 1, 3).reshape(c_in * kh * kw, c_out)
+        w2_flat_orig = flatten_conv_kernel_to_patches(spec["w2_orig"])
 
         raw_norms = []
         corr_norms = []
         for member_weights in self.members:
             weights = member_weights[block_index]
-            w2_pert_flat = weights.w2.transpose(2, 0, 1, 3).reshape(c_in * kh * kw, c_out)
+            w2_pert_flat = flatten_conv_kernel_to_patches(weights.w2)
             total_samples = 0
             raw_norm_sq_sum = 0.0
             corr_norm_sq_sum = 0.0
