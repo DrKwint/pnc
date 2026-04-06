@@ -52,9 +52,141 @@
 ### Next Steps: Phase 0 Corrected Baselines
 
 1. Train SWAG with `swag_start_epoch=240` for seeds 0,1,2
-2. Run LLLA prior sweep (6 priors × 3 seeds)
+2. ~~Run LLLA prior sweep (6 priors × 3 seeds)~~ ✓ DONE
 3. Rerun MC Dropout with n=50 for seeds 0,1,2
 4. Run Deep Ensemble for seeds 1,2 (seed 0 already good)
-5. Run single model eval for seeds 1,2 (seed 0 already good)
+5. ~~Run single model eval for seeds 1,2 (seed 0 already good)~~ ✓ DONE
+
+---
+
+## 2026-04-05: LLLA Prior Sweep Results
+
+### Single Model Eval (seeds 0,1,2, posthoc calibrated)
+
+| Seed | Accuracy | NLL | ECE | PostHoc Temp |
+|------|----------|-----|-----|-------------|
+| 0 | 95.77% | 0.138 | 0.009 | 1.312 |
+| 1 | 95.90% | 0.144 | 0.010 | 1.359 |
+| 2 | 95.55% | 0.149 | 0.012 | 1.329 |
+| **Mean** | **95.74%** | **0.144** | **0.010** | |
+
+### LLLA Prior Sweep (n=50, posthoc calibrated, seeds 0,1,2)
+
+| Prior | Acc (mean) | NLL (mean) | ECE (mean) | Temp (mean) | Notes |
+|-------|-----------|-----------|-----------|------------|-------|
+| 0.01 | 25.5% | 2.11 | 0.130 | 15.2 | Destroyed — way too diffuse |
+| 0.1 | 81.2% | 1.61 | 0.596 | 1.22 | Still too diffuse |
+| 1.0 | 95.71% | 0.586 | 0.368 | 0.11 | Good acc, terrible calibration |
+| **10.0** | **95.77%** | **0.137** | **0.008** | 0.85 | **Best NLL — near-perfect** |
+| 100.0 | 95.75% | 0.141 | 0.010 | 1.29 | Also good, slightly worse |
+| 1000.0 | 95.73% | 0.144 | 0.010 | 1.33 | Converges to base model |
+
+**Key findings:**
+- **Prior=10.0 is the clear winner** across all 3 seeds: NLL=0.137 (beats base model 0.144), ECE=0.008
+- Prior=10.0 posthoc_temperature≈0.85 — nearly calibrated before scaling (only slight underconfidence)
+- Prior=100.0 is also competitive (NLL=0.141) — confirms sweet spot is 10-100
+- Prior≥100 converges to base model behavior (too-tight posterior → no diversity)
+- Prior≤1.0 is catastrophically bad — posterior way too diffuse
+
+**For paper:** Report LLLA with prior=10.0, n=50.
+
+### MC Dropout (n=50, posthoc calibrated, dropout_rate=0.1)
+
+| Seed | Accuracy | NLL | ECE |
+|------|----------|-----|-----|
+| 0 | 95.78% | 0.143 | 0.009 |
+| 1 | 95.86% | 0.146 | 0.007 |
+| 2 | 95.59% | 0.154 | 0.014 |
+| **Mean** | **95.74%** | **0.148** | **0.010** |
+
+### Phase 0 Baseline Summary (seed mean, posthoc calibrated)
+
+| Method | Accuracy | NLL | ECE | Status |
+|--------|----------|-----|-----|--------|
+| Single model | 95.74% | 0.144 | 0.010 | ✓ 3 seeds |
+| Deep Ensemble (5) | 96.51% | 0.108 | 0.005 | 1 seed only |
+| MC Dropout (n=50) | 95.74% | 0.148 | 0.010 | ✓ 3 seeds |
+| LLLA (prior=10, n=50) | 95.77% | 0.140 | 0.008 | ✓ 3 seeds |
+| SWAG (sws=240) | — | — | — | Not yet run |
+
+**Observations:**
+- LLLA (prior=10) slightly beats MC Dropout on NLL (0.140 vs 0.148) and ECE (0.008 vs 0.010)
+- Both are only marginally better than the single model (NLL 0.144)
+- Deep Ensemble is clearly best (NLL 0.108) but only 1 seed — need more
+- SWAG still needs to be run with corrected sws=240
+
+### Remaining Phase 0 Work
+- [ ] SWAG training with sws=240 for seeds 0,1,2 (~30 min each)
+- [ ] Deep Ensemble seeds 1,2 (need base models 5,6 first, ~20 min each)
+- [ ] Base model training seeds 5,6 for Deep Ensemble
+
+---
+
+## 2026-04-06: Patch Ordering Fix (commit 4ed1527)
+
+### Bug Description
+`extract_patches` outputs in `(C_in, kh, kw)` order (channel-major), but W2 was being flattened as `(kh, kw, C_in)` (spatial-major). The ridge regression solved in a scrambled basis — corrections were numerically small but semantically wrong.
+
+### Fix
+New `flatten_conv_kernel_to_patches()` does `w.transpose(2,0,1,3).reshape(-1, C_out)` to match patch ordering. Applied in `pnc.py` (ridge solve) and `ensembles.py` (diagnostics).
+
+### Impact (PnC S3B1, K=16, n=32, random, seed 0)
+
+| Scale | Acc (before→after) | NLL (before→after) | Temp (before→after) |
+|-------|-------------------|-------------------|---------------------|
+| 1.0 | 91.67%→**95.77%** | 0.266→**0.138** | 0.414→1.311 |
+| 5.0 | 92.38%→**95.78%** | 0.247→**0.138** | 0.351→1.296 |
+| 10.0 | 92.70%→**95.83%** | 0.236→**0.137** | 0.270→1.260 |
+| 50.0 | 92.40%→**95.61%** | 0.335→**0.139** | 0.126→0.999 |
+
+**Critical**: The 3% accuracy drop and ~0.1 NLL penalty were entirely caused by the bug. PnC now preserves accuracy and matches the base model NLL. All previous PnC results are invalid.
+
+---
+
+## Phase 2 — Per-Block Scale Discovery (post-fix)
+
+### S4B1 Lanczos (K=10, n=50, lambda=1e-3, seed 0)
+
+| Scale | Accuracy | NLL | ECE | diag_test_red% | PostHoc Temp |
+|-------|----------|-----|-----|---------------|-------------|
+| 1.0 | 95.76% | 0.1384 | 0.009 | 98.1% | 1.310 |
+| 5.0 | 95.77% | 0.1384 | 0.009 | 99.5% | 1.309 |
+| 10.0 | 95.76% | 0.1383 | 0.009 | 99.7% | 1.307 |
+| 50.0 | 95.78% | 0.1380 | 0.009 | 99.9% | 1.299 |
+| 100.0 | 95.76% | 0.1377 | 0.009 | 99.9% | 1.288 |
+| 200.0 | 95.80% | **0.1377** | 0.009 | 99.9% | 1.254 |
+| 500.0 | 95.79% | 0.1437 | 0.013 | 99.8% | 1.028 |
+
+**Critical insight**: Lanczos directions are SO well-aligned with the correction that diag_test_reduction is 99.5-99.9% even at scale=500. Nearly zero diversity leaks through. NLL is flat at ~0.138 (matching base model exactly) until scale=200, then worsens at scale=500.
+
+**Compare with random directions** (S3B1, K=16, post-fix re-run):
+- Random, scale=10: diag_red=60.2%, NLL=0.1369 ← BETTER NLL because more diversity
+- Lanczos, scale=10: diag_red=99.7%, NLL=0.1383 ← worse NLL because no diversity
+
+**Key strategic conclusion**: Lanczos directions optimize for correctability, but correctability = no diversity = no NLL improvement. Random directions create more useful diversity because the correction is less effective for them. Random directions may be the better choice for PnC uncertainty quantification.
+
+### S4B0 Lanczos (K=10, n=50, lambda=1e-3, seed 0)
+
+| Scale | Accuracy | NLL | ECE | diag_test_red% | PostHoc Temp |
+|-------|----------|-----|-----|---------------|-------------|
+| 1.0 | 95.77% | 0.1388 | 0.009 | 96.0% | 1.312 |
+| 200.0 | 95.77% | 0.1388 | 0.010 | 100.0% | 1.308 |
+| 500.0 | 95.79% | 0.1382 | 0.009 | 100.0% | 1.289 |
+
+S4B0 Lanczos: 100% correction at scale 200-500. NLL completely flat. Zero diversity.
+
+### S4B1 Lanczos vs Random Head-to-Head
+
+| Scale | Dir | Acc | NLL | ECE | diag_red% | Temp |
+|-------|-----|-----|-----|-----|-----------|------|
+| 10 | Lanczos | 95.76% | 0.1383 | 0.009 | 99.7% | 1.307 |
+| 10 | **Random** | **95.85%** | **0.1367** | **0.008** | 59.2% | 1.260 |
+| 50 | Lanczos | 95.78% | 0.1380 | 0.009 | 99.9% | 1.299 |
+| 50 | Random | 95.64% | 0.1386 | 0.008 | 86.4% | 1.001 |
+
+**Random directions at scale=10 on S4B1**: NLL=**0.1367** — beats base model (0.1384), LLLA (0.140), and MC Dropout (0.148). This is the best PnC result so far.
+
+### Running: All blocks with random directions
+Sweeping all 8 blocks with random directions to find overall best block + scale.
 
 ---
