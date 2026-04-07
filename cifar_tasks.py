@@ -1207,8 +1207,16 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
     lambda_reg = luigi.FloatParameter(default=1e-3)
     sigma_sq_weights = luigi.BoolParameter(default=False)
     random_directions = luigi.BoolParameter(default=False)
+    block_selection = luigi.ListParameter(default=[])
     seed = luigi.IntParameter(default=0)
     posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def _selected_block_indices(self) -> list[tuple[int, int]]:
+        all_indices = preact_resnet18_block_indices()
+        if not self.block_selection:
+            return all_indices
+        sel = [int(x) for x in self.block_selection]
+        return [all_indices[i] for i in sel]
 
     def requires(self) -> luigi.Task:
         return CIFARTrainPreActResNet18(
@@ -1220,6 +1228,9 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
         recipe = self.train_recipe_suffix()
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
         suffix = "_random" if self.random_directions else ""
+        blk_str = ""
+        if self.block_selection:
+            blk_str = "_blks" + "-".join(str(int(x)) for x in self.block_selection)
         return luigi.LocalTarget(
             str(
                 Path("results")
@@ -1227,7 +1238,7 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
                 / (
                     f"pnc_multi_block{calib_str}_k{self.n_directions}_n{self.n_perturbations}"
                     f"_ps{ps}_lr{self.lambda_reg}_e{self.epochs}{recipe}"
-                    f"_subsetsize{self.subset_size}_chunksize{self.chunk_size}_seed{self.seed}{suffix}.json"
+                    f"_subsetsize{self.subset_size}_chunksize{self.chunk_size}_seed{self.seed}{suffix}{blk_str}.json"
                 )
             )
         )
@@ -1250,8 +1261,9 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
             ckpt = pickle.load(f)
         nnx.update(model, ckpt["state"])
 
+        selected_indices = self._selected_block_indices()
         print(
-            f"\n=== CIFAR Multi-block PnC ({len(preact_resnet18_block_indices())} blocks, "
+            f"\n=== CIFAR Multi-block PnC ({len(selected_indices)} blocks, "
             f"K={self.n_directions}, n={self.n_perturbations}) ==="
         )
         t_start = time.time()
@@ -1262,7 +1274,8 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
         X_sub = x_tr[idx]
 
         stages = [model.stage1, model.stage2, model.stage3, model.stage4]
-        block_indices = preact_resnet18_block_indices()
+        all_block_indices = preact_resnet18_block_indices()
+        selected_set = set(selected_indices)
         from pnc import find_pnc_subspace_lanczos, find_random_directions
 
         @jax.jit
@@ -1305,24 +1318,24 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
             return block_inputs, block_targets, next_chunks
 
         h_calib_chunks = _stem_chunks(X_sub)
-        h_test_chunks = _stem_chunks(x_te)
 
         block_specs = []
-        test_chunks_by_block = []
-        test_targets_by_block = []
 
-        for block_flat_idx, (stage_idx, block_idx) in enumerate(block_indices):
+        for block_flat_idx, (stage_idx, block_idx) in enumerate(all_block_indices):
             target_blk = stages[stage_idx][block_idx]
             w1_orig = target_blk.conv1.kernel.value
             w2_orig = target_blk.conv2.kernel.value
             get_Y_fn = make_cifar_block_get_Y_fn(target_blk)
+            is_selected = (stage_idx, block_idx) in selected_set
 
             calib_chunks, calib_targets, h_calib_chunks = _block_forward_chunks(
                 target_blk, h_calib_chunks, w1_orig, w2_orig
             )
-            test_chunks, test_targets, h_test_chunks = _block_forward_chunks(
-                target_blk, h_test_chunks, w1_orig, w2_orig
-            )
+            if not is_selected:
+                print(f"  Skipping block {block_flat_idx} (stage={stage_idx}, block={block_idx}) — not selected")
+                del calib_chunks, calib_targets
+                jax.clear_caches()
+                continue
 
             print(f"  Finding directions for block {block_flat_idx} (stage={stage_idx}, block={block_idx})...")
             if self.random_directions:
@@ -1353,8 +1366,6 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
                     "get_Y_fn": get_Y_fn,
                 }
             )
-            test_chunks_by_block.append(test_chunks)
-            test_targets_by_block.append(test_targets)
             jax.clear_caches()
 
         setup_time = time.time() - t_start
@@ -1363,7 +1374,7 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
         all_z = rng_z.normal(
             0,
             1,
-            size=(self.n_perturbations, len(block_indices), self.n_directions),
+            size=(self.n_perturbations, len(block_specs), self.n_directions),
         )
 
         all_metrics = {}
@@ -1394,9 +1405,6 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
             m["train_time"] = setup_time
 
             raw_calib, corr_calib = ens.calib_raw_arr, ens.calib_corr_arr
-            raw_test, corr_test = ens.compute_shift_diagnostics(
-                test_chunks_by_block, test_targets_by_block, label="test"
-            )
 
             def _diag_stats(raw_arr, corr_arr, prefix):
                 return {
@@ -1410,7 +1418,6 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
                 }
 
             m.update(_diag_stats(raw_calib, corr_calib, "diag_calib"))
-            m.update(_diag_stats(raw_test, corr_test, "diag_test"))
             all_metrics[str(p_size)] = m
 
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)

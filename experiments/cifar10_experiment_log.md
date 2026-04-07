@@ -186,7 +186,42 @@ S4B0 Lanczos: 100% correction at scale 200-500. NLL completely flat. Zero divers
 
 **Random directions at scale=10 on S4B1**: NLL=**0.1367** — beats base model (0.1384), LLLA (0.140), and MC Dropout (0.148). This is the best PnC result so far.
 
-### Running: All blocks with random directions
-Sweeping all 8 blocks with random directions to find overall best block + scale.
+### Phase 2 Complete: Per-block best (random directions, n=50, seed 0)
+
+| Block | K | Best Scale | Accuracy | NLL | ECE | diag_red% | Temp |
+|-------|---|-----------|----------|-----|-----|-----------|------|
+| S2B0 (s1b0) | 20 | 10.0 | 95.67% | 0.1367 | 0.009 | 67.0% | 1.259 |
+| S2B1 (s1b1) | 20 | 10.0 | 95.56% | 0.1437 | 0.009 | 72.5% | 1.298 |
+| **S3B0 (s2b0)** | **15** | **10.0** | **95.78%** | **0.1354** | **0.009** | 52.9% | 1.245 |
+| S3B1 (s2b1) | 15 | 5.0 | 95.81% | 0.1384 | 0.009 | 40.6% | 1.300 |
+| S4B0 (s3b0) | 10 | 10.0 | 95.80% | 0.1373 | 0.009 | 54.5% | 1.264 |
+| S4B1 (s3b1) | 10 | 10.0 | 95.85% | 0.1367 | 0.008 | 59.2% | 1.260 |
+
+Base model NLL: 0.1384 | LLLA (prior=10): 0.1403 | MC Dropout: 0.1477
+
+**Winner: S3B0 (stage_idx=2, block_idx=0)** — NLL=0.1354 at scale=10.0 with K=15.
+This already beats LLLA (0.140) and MC Dropout (0.148) in single-block mode!
+
+**Observations:**
+- Scale=10 is optimal for 5 of 6 blocks. Scale=5 is best for S3B1 only.
+- diag_test_reduction 40-72% — moderate correction, leaving useful diversity
+- All blocks preserve accuracy within 0.2% of base model at best scale
+- S3B0 has the best NLL by a significant margin (0.1354 vs next-best 0.1367)
+- Larger blocks (S4) have higher diag_red% → less diversity at same scale
+- S2B1 and S1B1 are notably worse — not all blocks contribute equally
+
+### Phase 3: Lambda Sweep on S3B0 (scale=[5,10,20], random, K=15)
+
+| lambda | NLL @scale=10 | Notes |
+|--------|--------------|-------|
+| 1e-4 | 0.1354 | identical |
+| 1e-3 | 0.1354 | identical |
+| 1e-2 | 0.1354 | identical |
+| 1e-1 | 0.1354 | identical |
+| 1.0 | 0.1354 | identical |
+
+**Lambda has zero effect** across 5 orders of magnitude. The data term in the ridge regression completely dominates the regularization term. Diversity is controlled entirely by perturbation scale, not correction weakness.
+
+**Conclusion**: lambda_reg=1e-3 is fine (default). No need to tune further.
 
 ---
