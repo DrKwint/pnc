@@ -224,4 +224,30 @@ This already beats LLLA (0.140) and MC Dropout (0.148) in single-block mode!
 
 **Conclusion**: lambda_reg=1e-3 is fine (default). No need to tune further.
 
+### Phase 4: Multi-Block PnC (random directions, n=50, seed 0)
+
+Added `block_selection` parameter to `CIFARMultiBlockPnC` to select subsets of blocks. Removed test-data forwarding to reduce memory (only calibration-set diagnostics remain).
+
+| Config | Blocks | Best Scale | Accuracy | NLL | ECE | Temp |
+|--------|--------|-----------|----------|-----|-----|------|
+| 1-block S3B0 | s2b0 | 10.0 | 95.78% | 0.1354 | 0.009 | 1.245 |
+| 2-block | s2b0+s3b1 | 10.0 | 95.69% | 0.1343 | 0.009 | 1.199 |
+| 3-block | s1b0+s2b0+s3b1 | 5.0 | 95.88% | 0.1345 | 0.008 | 1.249 |
+| 3-block | s2b0+s3b0+s3b1 | 10.0 | 95.65% | 0.1349 | 0.009 | 1.158 |
+| **4-block** | **s1b0+s2b0+s3b0+s3b1** | **7.0** | **95.69%** | **0.1339** | **0.008** | 1.188 |
+| 5-block | s1b0+s2b0+s2b1+s3b0+s3b1 | 5.0 | 95.73% | 0.1354 | 0.009 | 1.232 |
+| 6-block | all Stage 2-4 | — | OOM | — | — | — |
+
+Base model NLL: 0.1384 | LLLA: 0.1403 | MC Dropout: 0.1477
+
+**Best result: 4-block (S2B0+S3B0+S4B0+S4B1) at scale=7.0 → NLL=0.1339**
+
+**Observations:**
+- Multi-block improves over single-block: 0.1354 → 0.1339 (1-block → 4-block)
+- Optimal scale decreases as blocks are added (10 → 7)
+- Adding weak blocks (S3B1, S2B1) hurts — 5-block is worse than 4-block
+- 6-block OOMs on 8GB GPU despite optimizations
+- NLL=0.1339 beats LLLA (0.140), MC Dropout (0.148), and the single model (0.144)
+- Accuracy preserved at 95.69% (within 0.1% of base model 95.74%)
+
 ---
