@@ -1,10 +1,7 @@
 import os
 import sys
 import argparse
-import time
-import json
-import pickle
-from pathlib import Path
+from typing import Any
 
 # Parse --cpu early, BEFORE importing jax, so JAX_PLATFORMS is set before JAX initializes any GPU
 if '--cpu' in sys.argv:
@@ -15,84 +12,52 @@ else:
     os.environ['JAX_PLATFORMS'] = 'cuda,cpu'
 
 import luigi
-import jax
-import jax.numpy as jnp
-from flax import nnx
-import numpy as np
 
 from util import (
-    _get_activation, seed_everything, _evaluate_gym, _evaluate_mnist, _evaluate_cifar,
-    _load_gym_data, _ps_str, ACTIVATIONS, _find_pjsvd_directions
+    seed_everything, ACTIVATIONS
 )
-from pjsvd import (
-    find_optimal_perturbation, find_optimal_perturbation_multi_layer,
-    find_optimal_perturbation_full, find_optimal_perturbation_multi_layer_full,
-    find_pjsvd_directions_randomized_svd
-)
-from models import (TransitionModel, MCDropoutTransitionModel,
-                    ClassificationModel, MCDropoutClassificationModel,
-                    RegressionModel, MCDropoutRegressionModel,
-                    ProbabilisticRegressionModel,
-                    ResNet50, MCDropoutResNet50)
-from laplace import compute_kfac_factors
-from data import (collect_data, id_policy_random, OODPolicyWrapper,
-                  load_mnist, load_uci, load_cifar10, load_cifar100)
-from training import (train_model, train_swag_model, train_classification_model,
-                      train_swag_classification_model, train_probabilistic_model,
-                      train_subspace_model, train_subspace_classification_model,
-                      train_resnet_model)
-from ensembles import (CompactPJSVDEnsemble, CompactMultiLayerPJSVDEnsemble,
-                        LeastSquaresCompactPJSVDEnsemble, LeastSquaresCompactMultiLayerPJSVDEnsemble,
-                        StandardEnsemble, MCDropoutEnsemble, SWAGEnsemble, LaplaceEnsemble,
-                        EnsemblePJSVDHybrid, SubspaceInferenceEnsemble,
-                        BatchNormRefitPJSVDEnsemble, MLBatchNormRefitPJSVDEnsemble)
-from metrics import compute_nll, compute_calibration, print_metrics, compute_ood_metrics
 
 # ---------------------------------------------------------------------------
 # Task modules  (imported so their task classes register with luigi.build)
 # ---------------------------------------------------------------------------
 from gym_tasks import (
-    CollectGymData, GymStandardEnsemble, GymMCDropout, GymSWAG, GymLaplace,
-    GymPJSVD, GymMultiLayerPJSVD, GymSubspaceInference, AllGymExperiments,
+    AllGymExperiments,
 )
 from mnist_tasks import (
-    MNISTTrainBaseModel, MNISTStandardEnsemble, MNISTMCDropout, MNISTSwag,
-    MNISTLaplace, MNISTPJSVD, MNISTEnsemblePJSVD, MNISTMultiLayerPJSVD,
     AllMNISTExperiments,
 )
 from cifar_tasks import (
-    CIFARTrainBaseModel, CIFARTrainMCDropoutModel, CIFARTrainSWAGModel,
-    CIFARStandardEnsemble, CIFARMCDropout, CIFARSWAG,
-    CIFARPJSVD, CIFARMLPJSVDv, AllCIFARExperiments,
+    AllCIFARExperiments,
 )
 from uci_tasks import (
-    UCIStandardEnsemble, UCIMCDropout, UCISWAG, UCILaplace,
-    UCIPJSVD, UCIMultiLayerPJSVD, UCISubspaceInference, AllUCIExperiments,
+    AllUCIExperiments,
 )
 
 # ===========================================================================
 # Entry point
 # ===========================================================================
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Run PJSVD experiments via Luigi")
     parser.add_argument("--env",               type=str,   default="HalfCheetah-v5",
-                        help="Gym environment name, 'MNIST', 'uci-<dataset>', 'cifar10', 'cifar100', or 'bsuite/<id>'")
+                        help="Gym environment name, 'MNIST', 'uci-<dataset>', 'cifar10', 'cifar100'")
     parser.add_argument("--steps",             type=int,   default=10000,
                         help="Training steps / env interactions per policy")
-    parser.add_argument("--subset_size",       type=int,   default=4096,
+    parser.add_argument("--epochs",            type=int,   default=100,
+                        help="Training epochs for CIFAR and other supervised tasks")
+    parser.add_argument("--subset_size",       type=int,   default=1024,
                         help="Data subset size for PJSVD null-space search")
-    parser.add_argument("--n_directions",      type=int,   default=40,
+    parser.add_argument("--n_directions",      type=int,   default=16,
                         help="Number of singular directions (K)")
-    parser.add_argument("--n_perturbations",   type=int,   default=1000,
+    parser.add_argument("--n_perturbations",   type=int,   default=32,
                         help="Number of ensemble members to generate")
     parser.add_argument("--n_baseline",        type=int,   default=5,
                         help="Number of models for the deep ensemble baseline")
     parser.add_argument("--perturbation_sizes", nargs="+", type=float,
-                        default=[20.0, 40.0, 80.0, 160.0, 320.0],
+                        default=[1.0, 5.0, 10.0, 50.0],
                         help="List of perturbation norms to sweep")
     parser.add_argument("--laplace_priors",    nargs="+",  type=float,
-                        default=[1.0, 5.0, 10.0, 50.0, 100.0],
+                        default=[1.0, 10.0, 100.0, 1000.0, 10000.0],
                         help="List of prior precisions for Laplace Approximation")
     parser.add_argument("--seed",              type=int,   default=0,
                         help="Global random seed for reproducibility")
@@ -101,17 +66,58 @@ def main():
     parser.add_argument("--activation",        type=str,   default="relu",
                         choices=list(ACTIVATIONS),
                         help="Activation function for all models (default: relu)")
+    parser.add_argument("--pjsvd_family",      type=str,   default="low",
+                        choices=["low", "random"],
+                        help="Which PJSVD direction family to use for gym experiments")
+    parser.add_argument("--posthoc_calibrate", action="store_true",
+                        help="Fit post-hoc calibration on the validation split before evaluation")
+    parser.add_argument("--random_directions", action="store_true",
+                        help="Use random directions instead of learned directions where supported")
     parser.add_argument("--task",              type=str,   default=None,
                         help="Specific Luigi task class name to run (e.g., GymPJSVD)")
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    # Process unknown arguments into a dictionary (e.g., --param value)
+    extra_kwargs = {}
+    i = 0
+    while i < len(unknown):
+        arg = unknown[i]
+        if arg.startswith("--"):
+            key = arg[2:]
+            if i + 1 < len(unknown) and not unknown[i+1].startswith("--"):
+                val = unknown[i+1]
+                # Try to cast to int/float/bool if possible
+                if val.lower() == "true":
+                    val = True
+                elif val.lower() == "false":
+                    val = False
+                else:
+                    try:
+                        if "." in val:
+                            val = float(val)
+                        else:
+                            val = int(val)
+                    except ValueError:
+                        pass
+                extra_kwargs[key] = val
+                i += 2
+            else:
+                # Boolean flag (True)
+                extra_kwargs[key] = True
+                i += 1
+        else:
+            i += 1
 
     seed_everything(args.seed)
 
     if args.task:
         # Resolve the task class by name from all registered modules
-        import gym_tasks, mnist_tasks, cifar_tasks, bsuite_experiments
+        import gym_tasks
+        import mnist_tasks
+        import cifar_tasks
+        import uci_tasks
         all_namespaces = [globals(), vars(gym_tasks), vars(mnist_tasks),
-                          vars(cifar_tasks), vars(bsuite_experiments)]
+                          vars(cifar_tasks), vars(uci_tasks)]
         task_cls = None
         for ns in all_namespaces:
             task_cls = ns.get(args.task)
@@ -122,15 +128,17 @@ def main():
             sys.exit(1)
 
         task_params = task_cls.get_param_names()
-        task_kwargs = {}
+        task_kwargs: dict[str, Any] = {}
         args_dict = vars(args)
+        
+        # Add standard args if they are requested by the task
         if "dataset" in task_params and args.env.lower().startswith("uci-"):
             task_kwargs["dataset"] = args.env.lower()[4:]
-        if "bsuite_id" in task_params and args.env.lower().startswith("bsuite/"):
-            task_kwargs["bsuite_id"] = args.env[7:]
         for param in task_params:
             if param in args_dict:
                 task_kwargs[param] = args_dict[param]
+            if param in extra_kwargs:
+                task_kwargs[param] = extra_kwargs[param]
 
         task = task_cls(**task_kwargs)
         luigi.build([task], local_scheduler=True, workers=args.workers)
@@ -160,10 +168,13 @@ def main():
     elif env_lower in ("cifar10", "cifar100"):
         task = AllCIFARExperiments(
             dataset=env_lower,
+            epochs=args.epochs,
             n_perturbations=args.n_perturbations,
             n_directions=args.n_directions,
             perturbation_sizes=args.perturbation_sizes,
             seed=args.seed,
+            posthoc_calibrate=args.posthoc_calibrate,
+            random_directions=args.random_directions,
         )
     else:
         task = AllGymExperiments(
@@ -174,6 +185,7 @@ def main():
             n_baseline=args.n_baseline,
             perturbation_sizes=args.perturbation_sizes,
             laplace_priors=args.laplace_priors,
+            pjsvd_family=args.pjsvd_family,
             seed=args.seed, activation=args.activation,
         )
 
