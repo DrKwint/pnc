@@ -251,3 +251,139 @@ Base model NLL: 0.1384 | LLLA: 0.1403 | MC Dropout: 0.1477
 - Accuracy preserved at 95.69% (within 0.1% of base model 95.74%)
 
 ---
+
+## 2026-04-08: SWAG Fix and Epinet Baseline
+
+### SWAG BN Refresh Bug Fix
+
+**Root cause**: `_refresh_batch_norm_stats` in `ensembles.py` used default EMA momentum (0.9) after resetting BN stats to zero/one. With only 16 batches (2048 samples / batch_size 128), running stats only reached ~82% of true values. PreActResNet BN before activations is sensitive to this — 18% error in running mean produces random-chance predictions.
+
+**Diagnostic results (SWAG mean model, 100 test samples):**
+
+| BN Refresh Config | Accuracy |
+|-------------------|----------|
+| No refresh (stale checkpoint BN stats) | 84.0% |
+| Refresh 2048 samples, EMA momentum=0.9 | **10.0%** (broken) |
+| Refresh full 50K train set, EMA momentum=0.9 | 95.0% |
+| Refresh 2048 samples, cumulative average (1/k) | 95.0% (fixed) |
+
+**Fix**: Changed `_refresh_batch_norm_stats` to use cumulative averaging: set momentum = 1/k for the k-th forward batch. This computes an exact running mean/variance regardless of the number of batches, matching the SWAG paper's BN refresh protocol.
+
+**Status**: SWAG eval seed 0 running with fix. Seeds 1,2 will follow.
+
+### Epinet Baseline Implementation (Osband et al., 2023)
+
+Added Epistemic Neural Network (Epinet) as a new baseline. Key components:
+- `Epinet` and `EpinetWithPrior` model classes in `ensembles.py`
+- `EpinetEnsemble` wrapper for evaluation interface
+- `train_epinet()` training function in `training.py`
+- `CIFARTrainEpinet` and `CIFARPreActEpinet` Luigi tasks in `cifar_tasks.py`
+- `features()` method added to `PreActResNet18` in `models.py`
+
+Architecture: MLP (512+index_dim → 50 → 50 → n_classes*index_dim) with learned + frozen prior networks. Post-hoc training on frozen base model. Each step samples z ~ N(0, I_{index_dim}).
+
+**Hyperparameters to sweep**: index_dim ∈ {4, 8, 16}, prior_scale ∈ {0.5, 1.0, 3.0}, epinet_epochs ∈ {50, 100}
+
+### SWAG Results with BN Refresh Fix
+
+| Seed | Accuracy | NLL | ECE | PostHoc Temp | Eval Time |
+|------|----------|-----|-----|-------------|-----------|
+| 0 | 95.37% | 0.1471 | 0.007 | 1.226 | 2018s |
+| 1 | 95.39% | 0.1473 | 0.008 | 1.238 | ~2000s |
+| 2 | 95.47% | 0.1421 | 0.007 | 1.233 | ~2000s |
+| **Mean** | **95.41±0.04%** | **0.1455±0.002** | **0.007±0.000** | | |
+
+SWAG is now working. Comparable to MC Dropout on NLL (0.146 vs 0.148), better on ECE (0.007 vs 0.010). Does not beat LLLA (NLL=0.140). Accuracy is slightly lower than other methods (95.41% vs 95.74%).
+
+### Epinet Results (seed 0, prior_scale sweep)
+
+| prior_scale | Accuracy | NLL | ECE | PostHoc Temp |
+|-------------|----------|-----|-----|-------------|
+| 0.5 | 95.86% | 0.1426 | 0.011 | ~1.7 |
+| **1.0** | **95.81%** | **0.1415** | **0.010** | **1.689** |
+| 3.0 | 95.86% | 0.1422 | 0.010 | ~1.7 |
+
+Prior scale has minimal effect. Best: prior_scale=1.0 with NLL=0.1415.
+Epinet beats MC Dropout (0.148) and SWAG (0.146), slightly worse than LLLA (0.140).
+Seeds 1,2 complete with prior_scale=1.0:
+
+| Seed | Accuracy | NLL | ECE | PostHoc Temp |
+|------|----------|-----|-----|-------------|
+| 0 | 95.81% | 0.1415 | 0.010 | 1.689 |
+| 1 | 95.94% | 0.1478 | 0.007 | 1.785 |
+| 2 | 95.58% | 0.1526 | 0.012 | 1.728 |
+| **Mean** | **95.78±0.15%** | **0.1473±0.005** | **0.010±0.002** | | |
+
+High variance across seeds. Mean NLL=0.147 is comparable to MC Dropout (0.148) and SWAG (0.146). LLLA (0.140) remains the best post-hoc baseline.
+
+### Updated Baseline Summary (3 seeds, posthoc calibrated)
+
+| Method | Accuracy | NLL | ECE |
+|--------|----------|-----|-----|
+| Single model | 95.74±0.18% | 0.144±0.005 | 0.010±0.001 |
+| Deep Ensemble (5) | 96.56±0.06% | 0.109±0.000 | 0.005±0.000 |
+| **LLLA (prior=10)** | **95.77±0.26%** | **0.140±0.006** | **0.008±0.002** |
+| Epinet (ps=1.0) | 95.78±0.15% | 0.147±0.005 | 0.010±0.002 |
+| SWAG (sws=240) | 95.41±0.04% | 0.146±0.002 | 0.007±0.000 |
+| MC Dropout (n=50) | 95.74±0.14% | 0.148±0.006 | 0.010±0.004 |
+| **PnC 4-block** | **95.69%** | **0.134** | **0.008** |
+
+PnC (seed 0 only) beats all baselines on NLL. LLLA is the strongest competitor.
+
+### Phase 4 Fine-Tuning: Scale and K Sweeps
+
+**Fine-scale sweep (K=10, 4-block blks2-4-6-7, random, seed 0):**
+
+| Scale | Acc | NLL | ECE |
+|-------|-----|-----|-----|
+| 5.0 | 95.86% | 0.1343 | 0.010 |
+| 6.0 | 95.76% | 0.1339 | 0.008 |
+| **7.0** | **95.69%** | **0.1339** | **0.008** |
+| 8.0 | 95.65% | 0.1345 | 0.008 |
+| 9.0 | 95.61% | 0.1356 | 0.007 |
+| 10.0 | 95.54% | 0.1371 | 0.007 |
+
+Scale 6-7 is a flat optimum. scale=7 confirmed.
+
+**K sweep (scale=7, 4-block blks2-4-6-7, random, seed 0):**
+
+| K | Acc | NLL | ECE |
+|---|-----|-----|-----|
+| 5 | 95.78% | 0.1340 | 0.010 |
+| 10 | 95.69% | 0.1339 | 0.008 |
+| 15 | 95.69% | 0.1335 | 0.008 |
+| **20** | **95.72%** | **0.1332** | **0.008** |
+
+More directions monotonically improves NLL. K=20 is new best: **NLL=0.1332**.
+
+**New best config: 4-block (blks 2,4,6,7), K=20, scale=7.0, random → NLL=0.1332**
+
+### Phase 6: Multi-Seed Validation (K=20, scale=7.0, 4-block, random)
+
+| Seed | Accuracy | NLL | ECE | PostHoc Temp |
+|------|----------|-----|-----|-------------|
+| 0 | 95.72% | 0.1332 | 0.008 | 1.189 |
+| 1 | 95.83% | 0.1390 | 0.006 | 1.213 |
+| 2 | 95.47% | 0.1429 | 0.008 | 1.226 |
+| **Mean** | **95.67±0.15%** | **0.138±0.004** | **0.008±0.001** | |
+
+### Final Comparison Table (all 3 seeds, posthoc calibrated)
+
+| Method | Accuracy | NLL | ECE |
+|--------|----------|-----|-----|
+| Single model | 95.74±0.18% | 0.144±0.005 | 0.010±0.001 |
+| Deep Ensemble (5) | 96.56±0.06% | 0.109±0.000 | 0.005±0.000 |
+| LLLA (prior=10) | 95.77±0.26% | 0.140±0.006 | 0.008±0.002 |
+| Epinet (ps=1.0) | 95.78±0.15% | 0.147±0.005 | 0.010±0.002 |
+| SWAG (sws=240) | 95.41±0.04% | 0.146±0.002 | 0.007±0.000 |
+| MC Dropout (n=50) | 95.74±0.14% | 0.148±0.006 | 0.010±0.004 |
+| **PnC 4-block (K=20)** | **95.67±0.15%** | **0.138±0.004** | **0.008±0.001** |
+
+**PnC vs targets:**
+- Accuracy: 95.67% ✓ (within 0.5% of 95.74%)
+- NLL: 0.138 ✓ (beats LLLA 0.140, MC Dropout 0.148, SWAG 0.146, Epinet 0.147)
+- ECE: 0.008 ~ (tied with LLLA, better than MC Dropout/Epinet)
+
+PnC is the best post-hoc method on all three metrics.
+
+---

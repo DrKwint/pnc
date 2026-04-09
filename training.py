@@ -1104,3 +1104,157 @@ def train_resnet_swag(
         f"(best val {best_val:.4f} at epoch {best_epoch})."
     )
     return model, swag_mean, swag_var, swag_cov_mat_sqrt, metadata
+
+
+def train_epinet(
+    base_model: nnx.Module,
+    epinet: nnx.Module,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_val: np.ndarray,
+    y_val: np.ndarray,
+    *,
+    epochs: int = 100,
+    batch_size: int = 128,
+    lr: float = 1e-3,
+    weight_decay: float = 1e-4,
+    warmup_epochs: int = 5,
+    cutout_size: int = 8,
+    index_dim: int = 8,
+    seed: int = 0,
+) -> nnx.Module:
+    """Train an epinet on top of a frozen base model.
+
+    Each training step samples a fresh epistemic index z ~ N(0, I) and
+    optimises cross-entropy on ``base_logits + epinet(features, z)``.
+    The base model is never updated.
+    """
+    n_tr = len(x_train)
+    steps_ep = _resnet_steps_per_epoch(n_tr, batch_size)
+    total_steps = steps_ep * epochs
+
+    schedule = optax.warmup_cosine_decay_schedule(
+        init_value=0.0,
+        peak_value=lr,
+        warmup_steps=steps_ep * warmup_epochs,
+        decay_steps=total_steps,
+        end_value=lr * 1e-3,
+    )
+    optimizer = optax.adamw(learning_rate=schedule, weight_decay=weight_decay)
+    opt_state = optimizer.init(nnx.state(epinet, nnx.Param))
+
+    rng = np.random.RandomState(seed)
+    z_key = jax.random.PRNGKey(seed)
+
+    dataloader = _make_resnet_dataloader(
+        x_train, y_train,
+        batch_size=batch_size, epochs=epochs,
+        cutout_size=cutout_size, seed=seed,
+    )
+    data_iterator = iter(dataloader)
+
+    @nnx.jit
+    def train_step(epinet_model, opt_state, x_batch, y_batch, z):
+        features = jax.lax.stop_gradient(
+            base_model.features(x_batch, use_running_average=True)
+        )
+        base_logits = jax.lax.stop_gradient(
+            base_model(x_batch, use_running_average=True)
+        )
+
+        def loss_fn(epi):
+            correction = epi(features, z)
+            logits = base_logits + correction
+            return jnp.mean(
+                optax.softmax_cross_entropy_with_integer_labels(
+                    logits=logits, labels=y_batch
+                )
+            )
+
+        grads = nnx.grad(loss_fn)(epinet_model)
+        updates, new_opt = optimizer.update(
+            nnx.state(grads, nnx.Param),
+            opt_state,
+            nnx.state(epinet_model, nnx.Param),
+        )
+        nnx.update(
+            epinet_model,
+            optax.apply_updates(nnx.state(epinet_model, nnx.Param), updates),
+        )
+        return loss_fn(epinet_model), new_opt
+
+    best_val = float("inf")
+    best_state = nnx.state(epinet)
+
+    print(
+        f"Training Epinet: {n_tr} train / {len(x_val)} val | "
+        f"epochs={epochs}, bs={batch_size}, lr={lr:g}, "
+        f"index_dim={index_dim}"
+    )
+
+    for epoch in range(epochs):
+        t_ep = time.time()
+        ep_loss = 0.0
+        processed_steps = 0
+
+        for processed_steps, batch in enumerate(
+            _iter_resnet_epoch_batches(data_iterator, steps_ep), start=1
+        ):
+            xaug = jnp.array(batch["image"])
+            yb = jnp.array(batch["label"])
+            z_key, subkey = jax.random.split(z_key)
+            z = jax.random.normal(subkey, (index_dim,))
+            loss, opt_state = train_step(epinet, opt_state, xaug, yb, z)
+            ep_loss += float(loss)
+            print(
+                f"\r  Epoch {epoch + 1:3d}/{epochs}  step {processed_steps}/{steps_ep}"
+                f"  loss={ep_loss / processed_steps:.4f}",
+                end="",
+                flush=True,
+            )
+
+        if processed_steps == 0:
+            break
+
+        ep_loss /= processed_steps
+
+        # Validation with a fixed z per batch for consistency
+        val_losses, val_ns = [], []
+        for s in range(0, len(x_val), batch_size):
+            xb = jnp.array(x_val[s : s + batch_size])
+            yb_v = jnp.array(y_val[s : s + batch_size])
+            z_key, subkey = jax.random.split(z_key)
+            z_val = jax.random.normal(subkey, (index_dim,))
+            feats = jax.lax.stop_gradient(
+                base_model.features(xb, use_running_average=True)
+            )
+            base_l = jax.lax.stop_gradient(
+                base_model(xb, use_running_average=True)
+            )
+            logits = base_l + epinet(feats, z_val)
+            vl = float(
+                jnp.mean(
+                    optax.softmax_cross_entropy_with_integer_labels(
+                        logits=logits, labels=yb_v
+                    )
+                )
+            )
+            val_losses.append(vl * len(xb))
+            val_ns.append(len(xb))
+        vl = sum(val_losses) / sum(val_ns)
+
+        ep_time = time.time() - t_ep
+        eta = ep_time * (epochs - epoch - 1)
+        print(
+            f"\r  Epoch {epoch + 1:3d}/{epochs} | "
+            f"train={ep_loss:.4f} | val={vl:.4f} | "
+            f"{ep_time:.0f}s/ep | ETA {eta / 60:.1f}min"
+        )
+
+        if vl < best_val:
+            best_val = vl
+            best_state = nnx.state(epinet)
+
+    nnx.update(epinet, best_state)
+    print(f"Epinet done. Best val loss: {best_val:.4f}")
+    return epinet

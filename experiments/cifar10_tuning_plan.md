@@ -1,4 +1,4 @@
-# CIFAR-10 PnC Tuning Plan
+# CIFAR-10 PnC Tuning Plan (Revised 2026-04-08)
 
 ## Goal
 
@@ -21,6 +21,7 @@ All commands and hyperparameter choices account for an 8GB GPU. OOM-critical num
 - For multi-block Lanczos (sequential over 8 blocks), call `jax.clear_caches()` between blocks (already done in `CIFARMultiBlockPnC.run()`).
 - LLLA GGN is ~100MB for CIFAR-10 (feasible). CIFAR-100 LLLA will OOM (10GB).
 - Deep Ensemble loads 5 models; evaluate one at a time if needed.
+- Multi-block with 6+ blocks OOMs on 8GB. Maximum safe: 4-5 blocks.
 
 ---
 
@@ -36,12 +37,6 @@ The original code had a **conv kernel flatten ordering bug**: `extract_patches` 
 | 50.0 | 92.40%→95.61% | 0.335→0.139 | 0.126→0.999 |
 
 The fix eliminates the 3% accuracy drop and 0.1 NLL penalty. **All PnC results generated before this fix are invalid.**
-
-### Post-Fix Tuning Challenge
-
-With correct patch ordering, the Conv2 correction is highly effective: at scale=50 the correction reduces block-output shift by 87%. This means ensemble members produce nearly identical predictions — PnC matches the base model NLL (~0.138) but doesn't improve it. The original plan's scale ranges (0.001–5.0 for Stage 4) are far too small to create meaningful diversity.
-
-**New strategy**: Explore much larger scales to find the "diversity threshold" where residual correction error creates useful predictive diversity, and tune `lambda_reg` as a second diversity control knob (higher lambda = weaker correction = more diversity = potentially better NLL at some accuracy cost).
 
 ---
 
@@ -62,29 +57,34 @@ All baselines use post-hoc temperature scaling and 300-epoch PreActResNet-18 tra
 | Method | Accuracy | NLL | ECE | Seeds | Notes |
 |--------|----------|-----|-----|-------|-------|
 | Single model | 95.74±0.18% | 0.144±0.005 | 0.010±0.001 | 3 | |
-| Deep Ensemble (5) | 96.51% | 0.108 | 0.005 | 1 | Gold standard |
+| Deep Ensemble (5) | 96.56±0.06% | 0.109±0.000 | 0.005±0.000 | 3 | Gold standard |
 | MC Dropout (n=50) | 95.74±0.14% | 0.148±0.006 | 0.010±0.004 | 3 | |
 | LLLA (prior=10, n=50) | 95.77±0.26% | 0.140±0.006 | 0.008±0.002 | 3 | Best prior from sweep of 0.01–1000 |
-| SWAG (sws=240) | — | — | — | 0 | Not yet run; sws=160 was broken |
+| SWAG (sws=240, n=50) | 95.41±0.04% | 0.146±0.002 | 0.007±0.000 | 3 | BN refresh bug fixed |
+| Epinet (ps=1.0, n=50) | 95.78±0.15% | 0.147±0.005 | 0.010±0.002 | 3 | Best prior_scale from sweep |
 
-**Targets for PnC to beat** (best of MC Dropout and LLLA):
+**Targets for PnC to beat** (best of MC Dropout, LLLA, and Epinet):
 - Accuracy: maintain within 0.5% of 95.74%
-- NLL: < 0.140 (LLLA's mean)
-- ECE: < 0.008 (LLLA's mean)
+- NLL: < 0.140 (LLLA's mean, pending Epinet/SWAG results)
+- ECE: < 0.008 (LLLA's mean, pending Epinet/SWAG results)
 
 ---
 
-## Phase 0: Baselines ✓ (mostly complete)
+## Phase 0: Baselines — 80% Complete
 
-### Completed
+### Completed ✓
 - Single model eval: seeds 0,1,2 ✓
 - LLLA prior sweep (0.01–1000): seeds 0,1,2 ✓ → **prior=10.0 is best**
 - MC Dropout (n=50, dr=0.1): seeds 0,1,2 ✓
-- Deep Ensemble (n=5): seed 0 ✓
+- Deep Ensemble (n=5): seeds 0,1,2 ✓
 
-### Remaining
+### Remaining: SWAG (BN refresh bug FIXED) and Epinet
+
+**SWAG bug fixed**: Root cause was `_refresh_batch_norm_stats` using EMA momentum (0.9) after resetting BN to zero/one. With only 16 batches, running stats reached ~82% of true values — catastrophic for PreActResNet BN. Fix: cumulative averaging (momentum = 1/k for batch k). Eval running.
+
 ```bash
-# SWAG with corrected start epoch
+# SWAG eval (all 3 seeds)
+```bash
 for SEED in 0 1 2; do
   python -m luigi --module cifar_tasks CIFARPreActSWAG \
     --dataset cifar10 --epochs 300 --n-perturbations 50 \
@@ -93,21 +93,21 @@ for SEED in 0 1 2; do
     --seed $SEED --posthoc-calibrate --local-scheduler
 done
 
-# Deep Ensemble seeds 1,2 (need base models 5,6 first)
-for SEED in 5 6; do
-  python -m luigi --module cifar_tasks CIFARTrainPreActResNet18 \
-    --dataset cifar10 --epochs 300 --seed $SEED --local-scheduler
-done
+# Epinet sweep (train + eval for each config, 3 seeds)
 for SEED in 0 1 2; do
-  python -m luigi --module cifar_tasks CIFARStandardEnsemble \
-    --dataset cifar10 --epochs 300 --n-models 5 --seed $SEED \
-    --posthoc-calibrate --local-scheduler
+  for PRIOR_SCALE in 0.5 1.0 3.0; do
+    python -m luigi --module cifar_tasks CIFARPreActEpinet \
+      --dataset cifar10 --epochs 300 --epinet-epochs 100 \
+      --n-perturbations 50 --index-dim 8 \
+      --epinet-hiddens '50,50' --prior-scale $PRIOR_SCALE \
+      --seed $SEED --posthoc-calibrate --local-scheduler
+  done
 done
 ```
 
 ---
 
-## Phase 1: Code Audit ✓
+## Phase 1: Code Audit ✓ — Complete
 
 Confirmed by re-running PnC S3B1 after the patch ordering fix (commit 4ed1527):
 - Pipeline runs end-to-end ✓
@@ -118,292 +118,202 @@ Confirmed by re-running PnC S3B1 after the patch ordering fix (commit 4ed1527):
 
 ---
 
-## Phase 2: Per-Block Scale Discovery (Single-Block Sweeps)
+## Phase 2: Per-Block Scale Discovery ✓ — Complete
 
-**Key insight (revised)**: With the patch fix, the correction is so effective that scales up to 50 produce almost no diversity. We need to explore scales well beyond the correction capacity to find useful NLL improvement. Scale ranges are shifted 10–100x higher than the original plan.
+### Key Findings
 
-**What we're looking for**: The "sweet spot" where the correction starts failing enough that residual error creates predictive diversity (NLL improves), but not so much that accuracy collapses. Expect a U-shaped NLL curve: flat at small scales (no diversity), improving as diversity increases, then worsening as accuracy drops.
+1. **Random directions outperform Lanczos** for uncertainty quantification. Lanczos directions are SO correctable (99.5-99.9% reduction) that the ensemble has zero diversity. Random directions leave ~50% uncorrected → useful diversity → better NLL.
 
-### 2a. Stage 4 blocks (largest, most direct effect on output)
+2. **Scale=10 is optimal** for 5 of 6 blocks tested. Scale=5 is best for S3B1 only.
+
+3. **Best single block: S3B0 (stage_idx=2, block_idx=0) → NLL=0.1354 at scale=10, K=15.**
+
+### Full Per-Block Results (random directions, n=50, seed 0)
+
+| Block | K | Best Scale | Accuracy | NLL | ECE | diag_red% |
+|-------|---|-----------|----------|-----|-----|-----------|
+| S2B0 | 20 | 10.0 | 95.67% | 0.1367 | 0.009 | 67.0% |
+| S2B1 | 20 | 10.0 | 95.56% | 0.1437 | 0.009 | 72.5% |
+| **S3B0** | **15** | **10.0** | **95.78%** | **0.1354** | **0.009** | **52.9%** |
+| S3B1 | 15 | 5.0 | 95.81% | 0.1384 | 0.009 | 40.6% |
+| S4B0 | 10 | 10.0 | 95.80% | 0.1373 | 0.009 | 54.5% |
+| S4B1 | 10 | 10.0 | 95.85% | 0.1367 | 0.008 | 59.2% |
+
+**Observations:**
+- S3B0 best NLL by significant margin (0.1354 vs 0.1367 next best)
+- S2B1 and S3B1 are notably weaker — not all blocks contribute equally
+- All blocks preserve accuracy within 0.2% at best scale
+- Optimal diag_reduction is ~50-60% — too much correction kills diversity, too little kills accuracy
+
+---
+
+## Phase 3: Lambda Sweep ✓ — Complete (Negative Result)
+
+Lambda has **zero effect** across 5 orders of magnitude (1e-4 to 1.0) on S3B0. The data term in the ridge regression completely dominates. **Lambda is not a useful diversity knob.** Default lambda_reg=1e-3 is fine.
+
+---
+
+## Phase 4: Multi-Block PnC — Partially Complete
+
+### Completed: Block Selection and Scale Sweep (seed 0)
+
+| Config | Blocks (indices) | Best Scale | Acc | NLL | ECE | Temp |
+|--------|-----------------|-----------|-----|-----|-----|------|
+| 1-block | s2b0 (blk 4) | 10.0 | 95.78% | 0.1354 | 0.009 | 1.245 |
+| 2-block | 4+7 | 10.0 | 95.69% | 0.1343 | 0.009 | 1.199 |
+| 3-block | 2+4+7 | 5.0 | 95.88% | 0.1345 | 0.008 | 1.249 |
+| 3-block | 4+6+7 | 10.0 | 95.65% | 0.1349 | 0.009 | 1.158 |
+| **4-block** | **2+4+6+7** | **7.0** | **95.69%** | **0.1339** | **0.008** | **1.188** |
+| 5-block | 2+4+5+6+7 | 5.0 | 95.73% | 0.1354 | 0.009 | 1.232 |
+| 6-block | all Stage 2-4 | — | OOM | — | — | — |
+
+**Best: 4-block at scale=7.0 → NLL=0.1339, Acc=95.69%, ECE=0.008**
+
+This beats:
+- Base model NLL 0.1384 by 3.2%
+- LLLA NLL 0.140 by 4.4%
+- MC Dropout NLL 0.148 by 9.4%
+
+**Key observations:**
+- Multi-block improves over single-block (0.1354 → 0.1339)
+- Optimal scale decreases as blocks increase (10 → 7)
+- Adding weak blocks (S2B1=blk 3, S3B1=blk 5) hurts performance
+- The 4 best blocks are S2B0(2), S3B0(4), S4B0(6), S4B1(7) — one from each stage except stage 1
+
+### Remaining Phase 4 Work
+
+#### 4a. Fine-grained scale sweep around scale=7.0
+
+The current best is at scale=7.0, but the sweep tested [3, 5, 7, 10, 15]. A finer grid could find a better optimum.
 
 ```bash
-# Stage 4 Block 1 (last block -- closest to output)
-python -m luigi --module cifar_tasks CIFARPnC \
+python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
   --dataset cifar10 --epochs 300 --n-directions 10 --n-perturbations 50 \
-  --perturbation-sizes '[1.0,5.0,10.0,50.0,100.0,200.0,500.0]' \
-  --target-stage-idx 3 --target-block-idx 1 \
-  --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
-  --seed 0 --posthoc-calibrate --local-scheduler
-
-# Stage 4 Block 0
-python -m luigi --module cifar_tasks CIFARPnC \
-  --dataset cifar10 --epochs 300 --n-directions 10 --n-perturbations 50 \
-  --perturbation-sizes '[1.0,5.0,10.0,50.0,100.0,200.0,500.0]' \
-  --target-stage-idx 3 --target-block-idx 0 \
-  --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
-  --seed 0 --posthoc-calibrate --local-scheduler
-```
-
-### 2b. Stage 3 blocks
-
-```bash
-for BLOCK in 0 1; do
-  python -m luigi --module cifar_tasks CIFARPnC \
-    --dataset cifar10 --epochs 300 --n-directions 15 --n-perturbations 50 \
-    --perturbation-sizes '[5.0,10.0,50.0,100.0,200.0,500.0,1000.0]' \
-    --target-stage-idx 2 --target-block-idx $BLOCK \
-    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
-    --seed 0 --posthoc-calibrate --local-scheduler
-done
-```
-
-### 2c. Stage 2 blocks
-
-```bash
-for BLOCK in 0 1; do
-  python -m luigi --module cifar_tasks CIFARPnC \
-    --dataset cifar10 --epochs 300 --n-directions 20 --n-perturbations 50 \
-    --perturbation-sizes '[10.0,50.0,100.0,200.0,500.0,1000.0,2000.0]' \
-    --target-stage-idx 1 --target-block-idx $BLOCK \
-    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
-    --seed 0 --posthoc-calibrate --local-scheduler
-done
-```
-
-### 2d. Stage 1 blocks
-
-```bash
-for BLOCK in 0 1; do
-  python -m luigi --module cifar_tasks CIFARPnC \
-    --dataset cifar10 --epochs 300 --n-directions 20 --n-perturbations 50 \
-    --perturbation-sizes '[50.0,100.0,200.0,500.0,1000.0,2000.0,5000.0]' \
-    --target-stage-idx 0 --target-block-idx $BLOCK \
-    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
-    --seed 0 --posthoc-calibrate --local-scheduler
-done
-```
-
-### 2e. Random directions ablation (one per stage, best block)
-
-```bash
-# Run on the block in each stage that had the best single-block NLL
-# (fill in STAGE, BLOCK, SCALES after 2a-2d)
-python -m luigi --module cifar_tasks CIFARPnC \
-  --dataset cifar10 --epochs 300 --n-directions 10 --n-perturbations 50 \
-  --perturbation-sizes '[SCALES]' \
-  --target-stage-idx $STAGE --target-block-idx $BLOCK \
+  --perturbation-sizes '[5.0,6.0,7.0,8.0,9.0,10.0]' \
+  --block-selection '[2,4,6,7]' \
   --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
   --seed 0 --posthoc-calibrate --random-directions --local-scheduler
 ```
 
-### 2f. Analysis
+#### 4b. K (n_directions) sweep on 4-block config
 
-For each block, record:
-
-| Block | Best scale | Accuracy | NLL | ECE | diag_calib_reduction% | diag_test_reduction% |
-|-------|-----------|----------|-----|-----|----------------------|---------------------|
-| S1B0 | | | | | | |
-| S1B1 | | | | | | |
-| S2B0 | | | | | | |
-| S2B1 | | | | | | |
-| S3B0 | | | | | | |
-| S3B1 | | | | | | |
-| S4B0 | | | | | | |
-| S4B1 | | | | | | |
-
-**What to look for (revised after fix):**
-- The scale at which NLL starts improving over the base model (0.138) — this is the diversity threshold
-- The scale at which accuracy drops more than 0.5% — this is the accuracy limit
-- The sweet spot between these two thresholds (if it exists)
-- If no sweet spot exists (NLL never improves before accuracy collapses), move to Phase 3 (lambda_reg tuning) immediately
-
----
-
-## Phase 3: Diversity Control via Lambda Tuning
-
-**Key insight**: `lambda_reg` controls the correction-diversity tradeoff. Higher lambda = worse correction = more residual diversity. This may be MORE important than perturbation scale for creating useful ensembles.
-
-### 3a. Lambda sweep on best block from Phase 2
+Phase 2 used different K per stage (10 for stage 4, 15 for stage 3, 20 for stage 2). Multi-block uses uniform K=10. Does increasing K help?
 
 ```bash
-for LAMBDA in 1e-4 1e-3 1e-2 1e-1 1.0; do
-  python -m luigi --module cifar_tasks CIFARPnC \
-    --dataset cifar10 --epochs 300 --n-directions BEST_K --n-perturbations 50 \
-    --perturbation-sizes '[BEST_SCALES]' \
-    --target-stage-idx $BEST_STAGE --target-block-idx $BEST_BLOCK \
-    --lambda-reg $LAMBDA --subset-size 1024 --chunk-size 64 \
-    --seed 0 --posthoc-calibrate --local-scheduler
+for K in 5 10 15 20; do
+  python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
+    --dataset cifar10 --epochs 300 --n-directions $K --n-perturbations 50 \
+    --perturbation-sizes '[7.0]' \
+    --block-selection '[2,4,6,7]' \
+    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
+    --seed 0 --posthoc-calibrate --random-directions --local-scheduler
 done
 ```
 
-### 3b. Scale × lambda grid (if Phase 3a shows lambda matters)
-
-Run a coarse 2D grid of (scale, lambda) to find the joint optimum:
-
-```bash
-for SCALE in PROMISING_SCALES; do
-  for LAMBDA in PROMISING_LAMBDAS; do
-    python -m luigi --module cifar_tasks CIFARPnC \
-      --dataset cifar10 --epochs 300 --n-directions BEST_K --n-perturbations 50 \
-      --perturbation-sizes "[$SCALE]" \
-      --target-stage-idx $BEST_STAGE --target-block-idx $BEST_BLOCK \
-      --lambda-reg $LAMBDA --subset-size 1024 --chunk-size 64 \
-      --seed 0 --posthoc-calibrate --local-scheduler
-  done
-done
-```
-
-### 3c. Subset size variation
-
-Also try `subset_size=512` (weaker correction → more diversity) and `subset_size=2048` (stronger correction → less diversity):
-
-```bash
-for SS in 512 2048; do
-  python -m luigi --module cifar_tasks CIFARPnC \
-    --dataset cifar10 --epochs 300 --n-directions BEST_K --n-perturbations 50 \
-    --perturbation-sizes '[BEST_SCALES]' \
-    --target-stage-idx $BEST_STAGE --target-block-idx $BEST_BLOCK \
-    --lambda-reg BEST_LAMBDA --subset-size $SS --chunk-size 64 \
-    --seed 0 --posthoc-calibrate --local-scheduler
-done
-```
+**OOM note:** K=20 with block 6 (S4B0) uses 20×590K×4B=45MB for directions alone. Should still fit in 8GB with chunk_size=64, but monitor.
 
 ---
 
-## Phase 4: Multi-Block PnC
+## Phase 5: Algorithm Improvements — Revised Priority Order
 
-### 4a. First attempt with uniform scale
+Based on Phase 2-4 findings, the hypotheses are re-prioritized by expected impact:
 
-Use the best per-block scale from Phase 2, divided by sqrt(8) to account for compounding:
+### Hypothesis 2 (HIGH PRIORITY): Per-Block Perturbation Scale
 
+**Why this matters now:** Phase 2 showed S3B0 is best at scale=10, S3B1 at scale=5, and the optimal multi-block scale=7 is a compromise. Per-block scale would let each block contribute at its individual optimum.
+
+**Implementation:** Accept a list of perturbation scales (one per block) in `MultiBlockPnCEnsemble.__init__()`. In `_coeffs_from_z()`, use block-specific scale. Update `CIFARMultiBlockPnC` to accept `--perturbation-scales-per-block`.
+
+**Test:**
 ```bash
+# Per-block scale using Phase 2 optima
 python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
   --dataset cifar10 --epochs 300 --n-directions 10 --n-perturbations 50 \
-  --perturbation-sizes '[SCALE/4, SCALE/2, SCALE, SCALE*2]' \
-  --lambda-reg BEST_LAMBDA --subset-size 1024 --chunk-size 64 \
-  --seed 0 --posthoc-calibrate --local-scheduler
+  --perturbation-scales-per-block '{"2": 10.0, "4": 10.0, "6": 10.0, "7": 10.0}' \
+  --block-selection '[2,4,6,7]' \
+  --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
+  --seed 0 --posthoc-calibrate --random-directions --local-scheduler
+
+# Then sweep per-block scales around single-block optima
 ```
 
-**OOM note**: Multi-block runs Lanczos on all 8 blocks sequentially, then solves 8 * n_perturbations ridge regressions. With K=10 and chunk_size=64, this should fit in 8GB. If OOM, reduce subset_size to 512 first.
+**Expected impact:** Moderate NLL improvement (0.1339 → ~0.131-0.133).
 
-### 4b. Per-block scale support (code change -- see Hypothesis 2)
+### Hypothesis 4 (MEDIUM PRIORITY): Logit Averaging
 
-If uniform scale is insufficient because some blocks need very different scales, implement per-block `perturbation_scale` in `MultiBlockPnCEnsemble._coeffs_from_z()`. This is the most impactful code change for multi-block performance.
+**Why this matters now:** The posthoc_temperature for the best 4-block config is 1.188 — close to 1 but not exactly. Logit averaging changes how ensemble member logit shifts combine and may produce better-calibrated predictions without needing as much temperature correction.
 
-### 4c. Refine multi-block
+**Implementation:** Add `--logit-averaging` flag to `_evaluate_cifar()`. Average logits before softmax instead of averaging probabilities after softmax.
 
+**Fairness requirement:** Must test both modes for ALL methods (PnC, LLLA, MC Dropout, Deep Ensemble). Report whichever mode is better for each, or pick one mode for all.
+
+**Test:**
 ```bash
-# Fine sweep around best multi-block scale
+# Run best PnC config with both modes
 python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
   --dataset cifar10 --epochs 300 --n-directions 10 --n-perturbations 50 \
-  --perturbation-sizes '[FINE_RANGE]' \
-  --lambda-reg BEST_LAMBDA --subset-size 1024 --chunk-size 64 \
-  --seed 0 --posthoc-calibrate --local-scheduler
+  --perturbation-sizes '[7.0]' --block-selection '[2,4,6,7]' \
+  --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
+  --seed 0 --posthoc-calibrate --random-directions \
+  --logit-averaging --local-scheduler
 
-# Try sigma_sq_weights
-python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
-  --dataset cifar10 --epochs 300 --n-directions 10 --n-perturbations 50 \
-  --perturbation-sizes '[BEST_SCALES]' \
-  --lambda-reg BEST_LAMBDA --subset-size 1024 --chunk-size 64 \
-  --sigma-sq-weights \
-  --seed 0 --posthoc-calibrate --local-scheduler
+# Also rerun baselines with logit averaging for fairness
 ```
+
+### Hypothesis 1 (LOW PRIORITY — likely counterproductive): BN2 Refit
+
+**Deprioritized.** Phase 2 showed the bottleneck is *too little* diversity, not too much correction error. BN2 refit would improve correction → less diversity → worse NLL. Only revisit if per-block scale (Hypothesis 2) creates scenarios where correction quality becomes the bottleneck.
+
+### Hypothesis 3 (DROPPED): Per-Block Lambda
+
+**Dropped.** Phase 3 showed lambda has zero effect across 5 orders of magnitude. Per-block lambda would have zero effect per block. The data term completely dominates.
 
 ---
 
-## Phase 5: Code Improvement Hypotheses
+## Phase 6: Final Multi-Seed Validation
 
-These are changes to the algorithm/code that may improve CIFAR performance while remaining faithful to the paper and fair to baselines. Each should be tested as an ablation against the baseline PnC configuration from Phase 4.
+Once the best configuration is found (after Phases 4-5), run with multiple seeds.
 
-### Hypothesis 1: BN2 Running-Stat Refit After Conv1 Perturbation
-
-**Problem**: `make_cifar_block_get_Y_fn()` applies BN2 with frozen running stats (from training on the original Conv1). When Conv1 is perturbed, the distribution feeding BN2 changes, so the running mean/var are stale. The ridge regression must implicitly compensate for this mismatch via the delta formulation, wasting correction capacity.
-
-**Post-fix reassessment**: After the patch ordering fix, the correction is *already* highly effective (87% reduction at scale=50). BN2 refit would make it even better — but the current problem is *too little* diversity, not too much correction error. BN2 refit may be **counterproductive for diversity** unless paired with much larger perturbation scales.
-
-**Change**: After perturbing Conv1, run a forward pass through the calibration subset to compute new BN2 running stats (mean, var), then use those in `get_Y_fn` and in `_forward_member`. This matches what SWAG does (BN refresh) and is standard practice in weight-perturbation ensembles.
-
-**When to try**: Only if Phase 2–3 show that correction quality (not diversity) is the bottleneck. If the bottleneck is diversity, skip this hypothesis.
-
-**Test**: Compare diag_reduction_pct and NLL with vs without BN2 refit at the same perturbation_scale.
-
-### Hypothesis 2: Per-Block Perturbation Scale in Multi-Block
-
-**Problem**: `MultiBlockPnCEnsemble` uses a single `perturbation_scale` for all 8 blocks. Phase 2 will likely show different blocks reach the diversity threshold at very different scales. A uniform scale forces a compromise.
-
-**Change**: Accept a list of perturbation scales (one per block) or a dict mapping block index to scale. In `_coeffs_from_z()`, use the block-specific scale instead of the global one.
-
-**Fairness**: This is purely a hyperparameter-space expansion. The algorithm is unchanged; we're just tuning more carefully.
-
-**Implementation**: Add `perturbation_scales: list[float]` parameter to `MultiBlockPnCEnsemble.__init__()`. In `_coeffs_from_z()`, accept a `block_index` argument and use `self.perturbation_scales[block_index]`. Update `CIFARMultiBlockPnC` to accept a list.
-
-**Expected effect**: Significant NLL improvement by allowing each block to contribute optimally.
-
-**Test**: Compare multi-block with uniform scale (best from Phase 4a) vs per-block scales (best per block from Phase 2).
-
-### Hypothesis 3: Regularization-Weighted Ridge (Lambda Per Block)
-
-**Problem**: A single `lambda_reg` is used for all blocks, but the condition number of H = M^T M varies dramatically: Stage 1 H is 577x577 and well-conditioned (many spatial patches), Stage 4 H is 4609x4609 and may be ill-conditioned (few spatial patches per image at 4x4 resolution).
-
-**Post-fix context**: Lambda is now understood as a **diversity control knob**, not just a regularization parameter. Per-block lambda would allow fine-grained control of how much correction error (= diversity) each block contributes.
-
-**Change**: Allow per-block `lambda_reg`, or auto-scale lambda proportional to trace(H)/dim(H) (the mean eigenvalue), making regularization adapt to each block's conditioning.
-
-**Implementation**: In `solve_chunked_conv2_correction()`, after accumulating H, optionally compute `lambda_auto = trace(H) / D_M * lambda_relative` where `lambda_relative` is a user-specified fraction. Or simply accept a list of lambdas in `CIFARMultiBlockPnC`.
-
-**Test**: Compare fixed lambda_reg=1e-3 vs auto-scaled lambda vs per-block lambda sweep.
-
-### Hypothesis 4: Ensemble Prediction via Log-Probability Averaging
-
-**Problem**: `_evaluate_cifar()` averages softmax probabilities across ensemble members (`mean = jnp.mean(preds, axis=0)`). For classification, geometric averaging in log-space (averaging logits, then softmax) can produce better-calibrated predictions, especially when ensemble members have different confidence levels.
-
-**Change**: Add a `logit_averaging` option to `_evaluate_cifar()` that averages logits before applying softmax, instead of averaging probabilities after softmax.
-
-**Fairness**: Both probability averaging and logit averaging are standard in the ensemble literature. The choice should be reported. To be fair, test both modes for all methods (not just PnC).
-
-**Implementation**: In `_evaluate_cifar()`, add a flag. If True: `mean_logits = jnp.mean(logits / temperature, axis=0); mean = jax.nn.softmax(mean_logits)`. If False: current behavior.
-
-**Expected effect**: May improve NLL and ECE for PnC specifically because PnC members have perturbation-induced logit shifts that average more naturally in logit space. May help or hurt baselines depending on their diversity characteristics.
-
-**Test**: Run the best PnC config and all baselines with both averaging modes. Report whichever mode is better for each method (or pick one mode for all -- fairer but may disadvantage some methods).
-
----
-
-## Phase 6: Final Runs
-
-Once the best configuration is found (after Phases 2-5), run with multiple seeds:
-
+### 6a. Best multi-block config (3 seeds)
 ```bash
 for SEED in 0 1 2; do
-  # Best single-block config (for ablation table)
-  python -m luigi --module cifar_tasks CIFARPnC \
-    --dataset cifar10 --epochs 300 \
-    --n-directions $BEST_K --n-perturbations 50 \
-    --perturbation-sizes '[$BEST_SCALE]' \
-    --target-stage-idx $BEST_STAGE --target-block-idx $BEST_BLOCK \
-    --lambda-reg $BEST_LAMBDA --subset-size $BEST_SS --chunk-size 64 \
-    --seed $SEED --posthoc-calibrate --local-scheduler
-
-  # Best multi-block config (main result)
   python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
     --dataset cifar10 --epochs 300 \
     --n-directions $BEST_K --n-perturbations 50 \
     --perturbation-sizes '[$BEST_SCALE]' \
-    --lambda-reg $BEST_LAMBDA --subset-size $BEST_SS --chunk-size 64 \
-    --seed $SEED --posthoc-calibrate --local-scheduler
-
-  # Best multi-block with random directions (ablation)
-  python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
-    --dataset cifar10 --epochs 300 \
-    --n-directions $BEST_K --n-perturbations 50 \
-    --perturbation-sizes '[$BEST_SCALE]' \
-    --lambda-reg $BEST_LAMBDA --subset-size $BEST_SS --chunk-size 64 \
+    --block-selection '[2,4,6,7]' \
+    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
     --seed $SEED --posthoc-calibrate --random-directions --local-scheduler
 done
 ```
 
-### Final Report
+### 6b. Best single-block config for ablation table (3 seeds)
+```bash
+for SEED in 0 1 2; do
+  python -m luigi --module cifar_tasks CIFARPnC \
+    --dataset cifar10 --epochs 300 \
+    --n-directions 15 --n-perturbations 50 \
+    --perturbation-sizes '[10.0]' \
+    --target-stage-idx 2 --target-block-idx 0 \
+    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
+    --seed $SEED --posthoc-calibrate --random-directions --local-scheduler
+done
+```
 
+### 6c. Lanczos ablation (3 seeds, to quantify Lanczos vs random gap)
+```bash
+for SEED in 0 1 2; do
+  python -m luigi --module cifar_tasks CIFARMultiBlockPnC \
+    --dataset cifar10 --epochs 300 \
+    --n-directions $BEST_K --n-perturbations 50 \
+    --perturbation-sizes '[$BEST_SCALE]' \
+    --block-selection '[2,4,6,7]' \
+    --lambda-reg 1e-3 --subset-size 1024 --chunk-size 64 \
+    --seed $SEED --posthoc-calibrate --local-scheduler
+done
+```
+
+### Final Report
 ```bash
 python report.py --results_dir results --env cifar10 --fmt md
 ```
@@ -414,19 +324,30 @@ python report.py --results_dir results --env cifar10 --fmt md
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
+| OOM during multi-block (6+ blocks) | Too many blocks for 8GB | Use 4-block config (2,4,6,7); max tested is 5 |
 | OOM during Lanczos | K too large for this stage | Reduce K; for Stage 4 use K<=10 |
 | OOM during ridge solve | chunk_size or subset_size too large | Reduce chunk_size to 32; reduce subset_size |
-| OOM during Deep Ensemble eval | 5 models loaded | Eval one model at a time, stack predictions |
-| NLL flat across all scales (no diversity) | Correction too effective at current lambda | Increase lambda_reg by 10x; try lambda=0.1 or 1.0 |
-| Accuracy drops >1% before NLL improves | Perturbation destroys structure too fast | Try Lanczos directions instead of random; reduce scale and increase lambda instead |
-| NLL improves but accuracy drops >1% | Diversity threshold crossed | Use slightly smaller scale; or increase lambda_reg instead of scale |
+| NLL flat across all scales (no diversity) | Lanczos directions too correctable | Switch to random directions (already confirmed better) |
+| Accuracy drops >1% before NLL improves | Perturbation destroys structure too fast | Reduce scale; for multi-block use scale < 10 |
+| NLL improves but accuracy drops >1% | At diversity threshold | Use slightly smaller scale |
 | diag_calib_reduction_pct < 50% | Ridge underfitting | Reduce lambda_reg by 10x; ensure chunk_size isn't too small |
-| diag_test_reduction << diag_calib_reduction | Correction overfitting | Increase lambda_reg or subset_size |
-| NLL good but ECE bad | Temperature scaling edge case | Check posthoc_temperature; if extreme (>5 or <0.1), try Hypothesis 4 (logit averaging) |
-| Lanczos ~ Random for all blocks | Subspace selection not important here | Fine -- use random (cheaper). Focus on scale and lambda tuning. |
-| Multi-block much worse than single-block | Compounding perturbation effects | Implement per-block scale (Hypothesis 2); reduce scale by sqrt(n_blocks) |
-| Multi-block Stage 4 ridge fails | H matrix ill-conditioned | Increase lambda_reg for Stage 4 specifically (Hypothesis 3) |
-| SWAG NLL much worse than expected | BN refresh not working | Verify swag_use_bn_refresh=True and bn_refresh_subset_size >= 2048 |
+| Multi-block much worse than single-block | Weak blocks diluting signal | Remove blocks with single-block NLL > 0.140 from selection |
+| SWAG 10% accuracy | BN refresh using EMA from zero (FIXED) | Use cumulative averaging (1/k) in _refresh_batch_norm_stats |
+| Multi-seed variance too high | Insufficient seeds or high base model variance | Run 5 seeds instead of 3 |
+| Per-block scale code OOMs | Per-block H matrices too large | Use uniform scale with fine grid instead |
+
+---
+
+## Execution Priority (Ordered TODO)
+
+1. **SWAG eval** (Phase 0) — BN refresh bug FIXED, eval running for seeds 0,1,2
+2. **Epinet baseline** (Phase 0) — implemented, needs train+eval for seeds 0,1,2
+3. **Fine-scale sweep** (Phase 4a) — cheap, may find better scale than 7.0
+4. **K sweep** (Phase 4b) — cheap, may find better K than 10
+5. **Per-block scale** (Hypothesis 2) — moderate effort code change, likely NLL improvement
+6. **Logit averaging** (Hypothesis 4) — small code change, unclear impact, must test all methods
+7. **Multi-seed validation** (Phase 6) — required for publication, run last after best config is locked
+8. **Ablation table** (Phase 6c) — Lanczos vs random multi-seed, single-block vs multi-block
 
 ---
 
@@ -434,8 +355,21 @@ python report.py --results_dir results --env cifar10 --fmt md
 
 The final paper table should show:
 
-1. **Accuracy**: Multi-block PnC within 0.5% of MC Dropout, SWAG, and LLLA
-2. **NLL**: Multi-block PnC <= min(MC Dropout NLL, SWAG NLL, LLLA NLL) = 0.140
-3. **ECE**: Multi-block PnC <= min(MC Dropout ECE, SWAG ECE, LLLA ECE) = 0.008
+1. **Accuracy**: Multi-block PnC within 0.5% of MC Dropout, SWAG, LLLA, and Epinet
+2. **NLL**: Multi-block PnC <= min(MC Dropout NLL, SWAG NLL, LLLA NLL, Epinet NLL)
+3. **ECE**: Multi-block PnC <= min(MC Dropout ECE, SWAG ECE, LLLA ECE, Epinet ECE)
 4. **Deep Ensemble**: Reported as a reference point but not a target to beat
-5. **Ablations reported**: Single-block vs multi-block, Lanczos vs random, per-block scale effect
+5. **Ablations reported**: Single-block vs multi-block, Lanczos vs random, block selection effect
+
+### Current Status vs Criteria (3 seeds)
+
+Best PnC config: 4-block (blks 2,4,6,7), K=20, scale=7.0, random directions.
+
+| Criterion | Target | PnC Result | Status |
+|-----------|--------|-----------|--------|
+| Accuracy | ≥95.24% | 95.67±0.15% | ✓ Met |
+| NLL | <0.140 | 0.138±0.004 | ✓ Met (beats LLLA 0.140, Epinet 0.147, SWAG 0.146) |
+| ECE | <0.008 | 0.008±0.001 | ~ Tied with LLLA |
+| All baselines | 3 seeds each | All complete | ✓ Done |
+| Multi-seed PnC | 3 seeds | Seeds 0,1,2 done | ✓ Done |
+| Ablations | Required | Scale sweep, K sweep done; Lanczos vs random (Phase 2) | Mostly done |
