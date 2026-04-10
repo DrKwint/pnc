@@ -154,6 +154,41 @@ class MCDropoutRegressionModel(nnx.Module):
         return out
 
 
+class MCDropoutProbabilisticRegressionModel(nnx.Module):
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        rngs: nnx.Rngs,
+        hidden_dims: list[int] = [50],
+        dropout_rate: float = 0.05,
+        activation: Callable = nnx.relu,
+    ):
+        layers = []
+        dropouts = []
+        dims = [in_features] + hidden_dims
+        for i in range(len(dims) - 1):
+            layers.append(nnx.Linear(dims[i], dims[i + 1], rngs=rngs))
+            dropouts.append(nnx.Dropout(dropout_rate, rngs=rngs))
+        self.layers = nnx.List(layers)
+        self.dropouts = nnx.List(dropouts)
+
+        self.mean_layer = nnx.Linear(hidden_dims[-1], out_features, rngs=rngs)
+        self.var_layer = nnx.Linear(hidden_dims[-1], out_features, rngs=rngs)
+        self.activation = activation
+
+    def __call__(
+        self, x: jax.Array, deterministic: bool = False
+    ) -> tuple[jax.Array, jax.Array]:
+        for i, layer in enumerate(self.layers):
+            x = self.activation(layer(x))
+            x = self.dropouts[i](x, deterministic=deterministic)
+
+        mean = self.mean_layer(x)
+        var = jax.nn.softplus(self.var_layer(x)) + 1e-6
+        return mean, var
+
+
 class ProbabilisticRegressionModel(nnx.Module):
     def __init__(
         self,
@@ -268,122 +303,6 @@ def _make_resnet_stage(
         inp = in_channels if i == 0 else planes * _Bottleneck.expansion
         blocks.append(_Bottleneck(inp, planes, strides=s, rngs=rngs))
     return nnx.List(blocks), planes * _Bottleneck.expansion
-
-
-class ResNet50(nnx.Module):
-    """
-    ResNet-50 adapted for CIFAR-10/100 (32×32 input, NHWC).
-
-    Differences from ImageNet ResNet-50:
-      - Stem: 3×3 conv / stride 1 (instead of 7×7 / stride 2 + max-pool)
-      - Stages: 3-4-6-3 bottleneck blocks (same as standard)
-      - Output: raw logits of shape (N, n_classes)
-
-    Every Conv is followed immediately by BatchNorm (no bias), making the
-    BatchNorm Refit trick directly applicable after the stem conv.
-    """
-
-    def __init__(self, n_classes: int = 10, rngs: nnx.Rngs = None):
-        # CIFAR stem: 3×3, 64-channel, stride 1, then BN
-        self.stem = _BNConvFixed(3, 64, kernel_size=3, strides=1, rngs=rngs)
-
-        self.stage1, c1 = _make_resnet_stage(64, 64, n_blocks=3, strides=1, rngs=rngs)
-        self.stage2, c2 = _make_resnet_stage(c1, 128, n_blocks=4, strides=2, rngs=rngs)
-        self.stage3, c3 = _make_resnet_stage(c2, 256, n_blocks=6, strides=2, rngs=rngs)
-        self.stage4, c4 = _make_resnet_stage(c3, 512, n_blocks=3, strides=2, rngs=rngs)
-
-        self.fc = nnx.Linear(c4, n_classes, rngs=rngs)
-
-    def _run_stages(self, x, use_running_average: bool):
-        for blk in self.stage1:
-            x = blk(x, use_running_average=use_running_average)
-        for blk in self.stage2:
-            x = blk(x, use_running_average=use_running_average)
-        for blk in self.stage3:
-            x = blk(x, use_running_average=use_running_average)
-        for blk in self.stage4:
-            x = blk(x, use_running_average=use_running_average)
-        return x
-
-    _SHAPE_X = "batch H W C"
-    _SHAPE_OUT = "batch n_classes"
-
-    def __call__(
-        self, x: Float[Array, _SHAPE_X], use_running_average: bool = False
-    ) -> Float[Array, _SHAPE_OUT]:
-        # x: (N, 32, 32, 3)
-        x = jax.nn.relu(self.stem(x, use_running_average=use_running_average))
-        x = self._run_stages(x, use_running_average=use_running_average)
-        x = jnp.mean(x, axis=(1, 2))  # global average pool → (N, 2048)
-        return self.fc(x)
-
-    _SHAPE_STEM_IN = "batch H W C"
-    _SHAPE_STEM_OUT = "batch H W C_out"
-
-    def stem_out(
-        self, x: Float[Array, _SHAPE_STEM_IN], use_running_average: bool = True
-    ) -> Float[Array, _SHAPE_STEM_OUT]:
-        """Post-stem-BN-ReLU activations, shape (N, 32, 32, 64)."""
-        return jax.nn.relu(self.stem(x, use_running_average=use_running_average))
-
-    _SHAPE_FORWARD_FROM_STEM_IN = "batch H W C_in"
-    _SHAPE_FORWARD_FROM_STEM_OUT = "batch n_classes"
-
-    def forward_from_stem_out(
-        self,
-        h: Float[Array, _SHAPE_FORWARD_FROM_STEM_IN],
-        use_running_average: bool = True,
-    ) -> Float[Array, _SHAPE_FORWARD_FROM_STEM_OUT]:
-        """Complete forward from stem activations through stages + head."""
-        h = self._run_stages(h, use_running_average=use_running_average)
-        h = jnp.mean(h, axis=(1, 2))
-        return self.fc(h)
-
-    _SHAPE_STEM_CONV_RAW_IN = "batch H W C"
-    _SHAPE_STEM_CONV_RAW_OUT = "batch H W C_out"
-
-    def stem_conv_out_raw(
-        self, x: Float[Array, _SHAPE_STEM_CONV_RAW_IN]
-    ) -> Float[Array, _SHAPE_STEM_CONV_RAW_OUT]:
-        """Raw post-conv (before BN) activations, shape (N, 32, 32, 64)."""
-        return self.stem.conv(x)
-
-    _SHAPE_STEM_BN_FROM_RAW_IN = "batch H W C_in"
-    _SHAPE_STEM_BN_FROM_RAW_OUT = "batch H W C_in"
-
-    def stem_bn_from_raw(
-        self,
-        raw_conv_out: Float[Array, _SHAPE_STEM_BN_FROM_RAW_IN],
-        use_running_average: bool = True,
-    ) -> Float[Array, _SHAPE_STEM_BN_FROM_RAW_OUT]:
-        """Apply stem BN to raw conv output (used by BN Refit)."""
-        return self.stem.bn(raw_conv_out, use_running_average=use_running_average)
-
-
-class MCDropoutResNet50(ResNet50):
-    """
-    ResNet-50 with MC Dropout before the classification head.
-    All conv layers are unchanged; uncertainty comes from head dropout.
-    """
-
-    def __init__(
-        self, n_classes: int = 10, dropout_rate: float = 0.1, rngs: nnx.Rngs = None
-    ):
-        super().__init__(n_classes=n_classes, rngs=rngs)
-        self.dropout = nnx.Dropout(rate=dropout_rate, rngs=rngs)
-
-    def __call__(
-        self,
-        x: Float[Array, "batch H W C"],
-        use_running_average: bool = False,
-        deterministic: bool = False,
-    ) -> Float[Array, "batch n_classes"]:
-        x = jax.nn.relu(self.stem(x, use_running_average=use_running_average))
-        x = self._run_stages(x, use_running_average=use_running_average)
-        x = jnp.mean(x, axis=(1, 2))
-        x = self.dropout(x, deterministic=deterministic)
-        return self.fc(x)
-
 
 # ===========================================================================
 # PreAct ResNet-18 for CIFAR

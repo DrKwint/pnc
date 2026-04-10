@@ -144,10 +144,11 @@ def method_name(stem: str) -> str | None:
         return "SWAG"
     if stem.startswith("laplace"):
         return "Laplace"
-    if stem.startswith("pjsvd_multi_least_squares_low_projected_residual_full_vcal_prob"):
-        return "PJSVD Low"
-    if stem.startswith("pjsvd_multi_least_squares_random_projected_residual_full_vcal_prob"):
-        return "PJSVD Random"
+    if stem.startswith("pjsvd_"):
+        if "_random_" in stem:
+            return "PJSVD Random"
+        if "_low_" in stem:
+            return "PJSVD Low"
     return None
 
 
