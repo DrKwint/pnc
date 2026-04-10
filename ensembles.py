@@ -934,16 +934,37 @@ class SWAGEnsemble:
             elif leaf_name == "var":
                 nnx.update(target, jnp.ones_like(current))
 
+    def _set_bn_momentum(self, model: Any, momentum: float) -> None:
+        """Set momentum on all BatchNorm modules in the model."""
+        for _, mod in nnx.iter_modules(model):
+            if isinstance(mod, nnx.BatchNorm):
+                mod.momentum = momentum
+
     def _refresh_batch_norm_stats(self, model: Any) -> None:
         if not self.use_bn_refresh or self.bn_refresh_inputs is None or len(self.bn_refresh_inputs) == 0:
             return
 
         self._reset_batch_norm_stats(model)
-        for start in range(0, len(self.bn_refresh_inputs), self.bn_refresh_batch_size):
+        # Use cumulative average (momentum = 1/k for batch k) instead of EMA.
+        # With default EMA momentum (~0.9), 16 batches from zero only reaches
+        # ~82% of true running stats, producing random-chance predictions.
+        # Cumulative averaging converges in O(n_batches) regardless of momentum.
+        n_batches = max(1, (len(self.bn_refresh_inputs) + self.bn_refresh_batch_size - 1) // self.bn_refresh_batch_size)
+        original_momentum = None
+        for _, mod in nnx.iter_modules(model):
+            if isinstance(mod, nnx.BatchNorm):
+                original_momentum = mod.momentum
+                break
+
+        for batch_idx, start in enumerate(range(0, len(self.bn_refresh_inputs), self.bn_refresh_batch_size)):
+            self._set_bn_momentum(model, 1.0 / (batch_idx + 1))
             xb = jnp.array(self.bn_refresh_inputs[start:start + self.bn_refresh_batch_size])
             logits = model(xb, use_running_average=False)
             if hasattr(logits, "block_until_ready"):
                 logits.block_until_ready()
+
+        if original_momentum is not None:
+            self._set_bn_momentum(model, original_momentum)
 
     def _sample_model(self) -> Any:
         sampled_model = nnx.clone(self.base_model)
@@ -1073,6 +1094,111 @@ class LaplaceEnsemble:
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
         sampled_m, _ = self._sample_model()
         return sampled_m(x)
+
+class Epinet(nnx.Module):
+    """Epistemic network (Osband et al., 2023).
+
+    Takes base-network features and an epistemic index z, and outputs a
+    logit correction of shape ``[batch, n_classes]``.  The final linear
+    layer has shape ``[hidden, n_classes * index_dim]``; its output is
+    reshaped to ``[batch, n_classes, index_dim]`` and contracted with z.
+    """
+
+    def __init__(
+        self,
+        feature_dim: int,
+        n_classes: int,
+        index_dim: int = 8,
+        hiddens: tuple[int, ...] = (50, 50),
+        *,
+        rngs: nnx.Rngs,
+    ):
+        self.n_classes = n_classes
+        self.index_dim = index_dim
+
+        in_dim = feature_dim + index_dim
+        layers = []
+        for h in hiddens:
+            layers.append(nnx.Linear(in_dim, h, rngs=rngs))
+            in_dim = h
+        layers.append(nnx.Linear(in_dim, n_classes * index_dim, rngs=rngs))
+        self.layers = nnx.List(layers)
+
+    def __call__(
+        self,
+        features: Float[Array, "batch feature_dim"],
+        z: Float[Array, "index_dim"],
+    ) -> Float[Array, "batch n_classes"]:
+        z_broadcast = jnp.broadcast_to(z, (features.shape[0], self.index_dim))
+        x = jnp.concatenate([features, z_broadcast], axis=-1)
+        for layer in self.layers[:-1]:
+            x = jax.nn.relu(layer(x))
+        x = self.layers[-1](x)  # [batch, n_classes * index_dim]
+        x = x.reshape(-1, self.n_classes, self.index_dim)  # [batch, n_classes, index_dim]
+        return jnp.sum(x * z_broadcast[:, None, :], axis=-1)  # [batch, n_classes]
+
+
+class EpinetWithPrior(nnx.Module):
+    """Trainable epinet plus a frozen random prior network (Osband et al.)."""
+
+    def __init__(
+        self,
+        feature_dim: int,
+        n_classes: int,
+        index_dim: int = 8,
+        hiddens: tuple[int, ...] = (50, 50),
+        prior_scale: float = 1.0,
+        *,
+        rngs: nnx.Rngs,
+    ):
+        self.prior_scale = prior_scale
+        self.learnable = Epinet(feature_dim, n_classes, index_dim, hiddens, rngs=rngs)
+        self.prior = Epinet(feature_dim, n_classes, index_dim, hiddens, rngs=rngs)
+
+    def __call__(
+        self,
+        features: Float[Array, "batch feature_dim"],
+        z: Float[Array, "index_dim"],
+    ) -> Float[Array, "batch n_classes"]:
+        learned = self.learnable(features, z)
+        prior = jax.lax.stop_gradient(self.prior(features, z))
+        return learned + self.prior_scale * prior
+
+
+class EpinetEnsemble:
+    """Wraps a frozen base model + trained EpinetWithPrior for ensemble prediction."""
+
+    def __init__(
+        self,
+        base_model: Any,
+        epinet: EpinetWithPrior,
+        n_models: int,
+        index_dim: int = 8,
+        seed: int = 0,
+    ):
+        self.base_model = base_model
+        self.epinet = epinet
+        self.n_models = n_models
+        self.index_dim = index_dim
+        self.rng = np.random.RandomState(seed)
+
+    def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
+        features = jax.lax.stop_gradient(self.base_model.features(x, use_running_average=True))
+        base_logits = jax.lax.stop_gradient(self.base_model(x, use_running_average=True))
+        ys = []
+        for _ in range(self.n_models):
+            z = jnp.array(self.rng.normal(size=(self.index_dim,)).astype(np.float32))
+            correction = self.epinet(features, z)
+            ys.append(base_logits + correction)
+        return jnp.stack(ys, axis=0)
+
+    def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
+        del idx
+        features = jax.lax.stop_gradient(self.base_model.features(x, use_running_average=True))
+        base_logits = jax.lax.stop_gradient(self.base_model(x, use_running_average=True))
+        z = jnp.array(self.rng.normal(size=(self.index_dim,)).astype(np.float32))
+        return base_logits + self.epinet(features, z)
+
 
 class SubspaceInferenceEnsemble:
     def __init__(

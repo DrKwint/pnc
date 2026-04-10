@@ -25,23 +25,49 @@ from collections import defaultdict
 from pathlib import Path
 
 
-METRICS = [
-    ("rmse_id", r"ID RMSE $\downarrow$"),
-    ("nll_ood_near", r"Near NLL $\downarrow$"),
-    ("nll_ood_mid", r"Mid NLL $\downarrow$"),
-    ("nll_ood_far", r"Far NLL $\downarrow$"),
-    ("auroc_ood_far", r"Far AUROC $\uparrow$"),
-]
-
-METHOD_ORDER = [
-    "MC Dropout",
-    "Deep Ensemble",
-    "Subspace",
-    "SWAG",
-    "Laplace",
-    "PJSVD Low",
-    "PJSVD Random",
-]
+PROFILES = {
+    "gym": {
+        "metrics": [
+            ("rmse_id", r"ID RMSE $\downarrow$"),
+            ("nll_ood_near", r"Near NLL $\downarrow$"),
+            ("nll_ood_mid", r"Mid NLL $\downarrow$"),
+            ("nll_ood_far", r"Far NLL $\downarrow$"),
+            ("auroc_ood_far", r"Far AUROC $\uparrow$"),
+        ],
+        "method_order": [
+            "MC Dropout",
+            "Deep Ensemble",
+            "Subspace",
+            "SWAG",
+            "Laplace",
+            "PJSVD Low",
+            "PJSVD Random",
+        ],
+        "selection_metric": "nll_id",
+        "caption": "{env}. Laplace prior and PJSVD sizes selected by best ID NLL.",
+    },
+    "cifar": {
+        "metrics": [
+            ("accuracy", r"Accuracy $\uparrow$"),
+            ("nll", r"NLL $\downarrow$"),
+            ("ece", r"ECE $\downarrow$"),
+            ("brier", r"Brier $\downarrow$"),
+            ("posthoc_temperature", r"Temp $\downarrow$"),
+        ],
+        "method_order": [
+            "Single Model",
+            "MC Dropout",
+            "Deep Ensemble",
+            "SWAG",
+            "Laplace",
+            "Epinet",
+            "PnC Single Block",
+            "PnC Multi Block",
+        ],
+        "selection_metric": "nll",
+        "caption": "{env}. Sweep settings selected by best NLL.",
+    },
+}
 
 
 def mean_std(values: list[float]) -> tuple[float, float | None]:
@@ -77,10 +103,10 @@ def is_higher_better(metric: str) -> bool:
 
 
 def best_metric_indices(
-    rows: list[tuple[str, dict[str, list[float]]]], bold_pct: float
+    rows: list[tuple[str, dict[str, list[float]]]], metrics, bold_pct: float
 ) -> dict[str, set[int]]:
     winners: dict[str, set[int]] = {}
-    for metric, _ in METRICS:
+    for metric, _ in metrics:
         scored = []
         for idx, (_, metrics) in enumerate(rows):
             mu, _ = mean_std(metrics.get(metric, []))
@@ -131,28 +157,124 @@ def canonical_stem(path: Path) -> str:
     return re.sub(r"_seed\d+(?:_T[\d.]+)?$", "", path.stem)
 
 
-def method_name(stem: str) -> str | None:
+def method_name(stem: str, profile: str) -> str | None:
     if stem.endswith(".npz"):
         return None
-    if stem.startswith("mc_dropout"):
+    if profile == "gym":
+        if stem.startswith("mc_dropout"):
+            return "MC Dropout"
+        if stem.startswith("standard_ensemble"):
+            return "Deep Ensemble"
+        if stem.startswith("subspace_inference"):
+            return "Subspace"
+        if stem.startswith("swag"):
+            return "SWAG"
+        if stem.startswith("laplace"):
+            return "Laplace"
+        if stem.startswith("pjsvd_multi_least_squares_low_projected_residual_full_vcal_prob"):
+            return "PJSVD Low"
+        if stem.startswith("pjsvd_multi_least_squares_random_projected_residual_full_vcal_prob"):
+            return "PJSVD Random"
+        return None
+
+    if stem.startswith("baseline_preact_resnet18"):
+        return "Single Model"
+    if stem.startswith("baseline_mc_dropout"):
         return "MC Dropout"
-    if stem.startswith("standard_ensemble"):
+    if stem.startswith("baseline_standard_ensemble"):
         return "Deep Ensemble"
-    if stem.startswith("subspace_inference"):
-        return "Subspace"
-    if stem.startswith("swag"):
+    if stem.startswith("baseline_swag"):
         return "SWAG"
-    if stem.startswith("laplace"):
+    if stem.startswith("baseline_llla"):
         return "Laplace"
     if stem.startswith("pjsvd_"):
         if "_random_" in stem:
             return "PJSVD Random"
         if "_low_" in stem:
             return "PJSVD Low"
+    if stem.startswith("baseline_epinet"):
+        return "Epinet"
+    if stem.startswith("pnc_single_block"):
+        return "PnC Single Block"
+    if stem.startswith("pnc_multi_block"):
+        return "PnC Multi Block"
     return None
 
 
-def load_env_results(env_dir: Path) -> dict[str, dict]:
+def detect_profile(env_dir: Path) -> str:
+    for path in sorted(env_dir.glob("*.json")):
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except Exception:
+            continue
+        if isinstance(data, dict):
+            if {"accuracy", "nll", "ece"} & set(data.keys()):
+                return "cifar"
+            first = next(iter(data.values())) if data else None
+            if isinstance(first, dict) and {"accuracy", "nll", "ece"} & set(first.keys()):
+                return "cifar"
+    return "gym"
+
+
+def config_label(stem: str, method: str, profile: str, config: str) -> str:
+    if profile == "gym":
+        if method == "Laplace":
+            return f"Laplace (prior={config})"
+        return f"{method} (size={config})"
+
+    if method == "Laplace":
+        return f"Laplace (prior={config})"
+    if method == "Epinet":
+        return f"Epinet (ps={config})"
+    if method.startswith("PnC"):
+        return f"{method} (scale={config})"
+    return f"{method} ({config})"
+
+
+def config_from_stem(stem: str, method: str, profile: str) -> str | None:
+    def extract(pattern: str) -> str | None:
+        match = re.search(pattern, stem)
+        return match.group(1) if match else None
+
+    if profile == "gym":
+        if method == "Laplace":
+            return extract(r"prior([^_]+)")
+        if method.startswith("PJSVD"):
+            return extract(r"size([^_]+)")
+        return None
+
+    if method == "MC Dropout":
+        n = extract(r"_n(\d+)")
+        dr = extract(r"_dr([0-9.]+)")
+        parts = []
+        if n is not None:
+            parts.append(f"n={n}")
+        if dr is not None:
+            parts.append(f"dr={dr}")
+        return ", ".join(parts) if parts else None
+    if method == "Deep Ensemble":
+        n = extract(r"_n(\d+)")
+        return f"n={n}" if n is not None else None
+    if method == "SWAG":
+        n = extract(r"_n(\d+)")
+        sws = extract(r"_sws([^_]+)")
+        parts = []
+        if n is not None:
+            parts.append(f"n={n}")
+        if sws is not None:
+            parts.append(f"sws={sws}")
+        return ", ".join(parts) if parts else None
+    if method == "Laplace":
+        prec = extract(r"_prec([^_]+)")
+        return prec
+    if method == "Epinet":
+        ps = extract(r"_ps([^_]+)")
+        return ps
+    return None
+
+
+def load_env_results(env_dir: Path, profile: str) -> dict[str, dict]:
     groups: dict[str, dict] = defaultdict(
         lambda: {
             "flat": defaultdict(list),
@@ -165,7 +287,7 @@ def load_env_results(env_dir: Path) -> dict[str, dict]:
             continue
 
         stem = canonical_stem(path)
-        method = method_name(stem)
+        method = method_name(stem, profile)
         if method is None:
             continue
 
@@ -179,36 +301,41 @@ def load_env_results(env_dir: Path) -> dict[str, dict]:
                     if isinstance(value, (int, float)):
                         groups[method]["configs"][str(config)][metric].append(float(value))
         else:
+            config = config_from_stem(stem, method, profile)
             for metric, value in data.items():
                 if isinstance(value, (int, float)):
-                    groups[method]["flat"][metric].append(float(value))
+                    if config is None:
+                        groups[method]["flat"][metric].append(float(value))
+                    else:
+                        groups[method]["configs"][config][metric].append(float(value))
 
     return groups
 
 
-def choose_best_config(configs: dict[str, dict[str, list[float]]]) -> str:
+def choose_best_config(
+    configs: dict[str, dict[str, list[float]]], selection_metric: str
+) -> str:
     ranked = []
     for config, metrics in configs.items():
-        mu, _ = mean_std(metrics.get("nll_id", []))
+        mu, _ = mean_std(metrics.get(selection_metric, []))
         ranked.append((mu, numeric_key(config), config))
     ranked.sort()
     return ranked[0][2]
 
 
-def method_rows(env_groups: dict[str, dict]) -> list[tuple[str, dict[str, list[float]]]]:
+def method_rows(
+    env_groups: dict[str, dict], profile: str
+) -> list[tuple[str, dict[str, list[float]]]]:
+    profile_cfg = PROFILES[profile]
     rows = []
-    for method in METHOD_ORDER:
+    for method in profile_cfg["method_order"]:
         group = env_groups.get(method)
         if not group:
             continue
 
         if group["configs"]:
-            config = choose_best_config(group["configs"])
-            label = (
-                f"Laplace (prior={config})"
-                if method == "Laplace"
-                else f"{method} (size={config})"
-            )
+            config = choose_best_config(group["configs"], profile_cfg["selection_metric"])
+            label = config_label("", method, profile, config)
             rows.append((label, group["configs"][config]))
         else:
             rows.append((method, group["flat"]))
@@ -218,27 +345,29 @@ def method_rows(env_groups: dict[str, dict]) -> list[tuple[str, dict[str, list[f
 def render_env_table(
     env: str,
     rows: list[tuple[str, dict[str, list[float]]]],
+    metric_specs,
+    caption: str,
     include_std: bool,
     bold_pct: float,
 ) -> str:
-    winners = best_metric_indices(rows, bold_pct)
+    winners = best_metric_indices(rows, metric_specs, bold_pct)
     lines = [
         r"\begin{table}[t]",
         r"\centering",
-        rf"\caption{{{env}. Laplace prior and PJSVD sizes selected by best ID NLL.}}",
-        r"\begin{tabular}{lccccc}",
+        rf"\caption{{{caption.format(env=env)}}}",
+        r"\begin{tabular}{" + ("l" + "c" * len(metric_specs)) + "}",
         r"\toprule",
-        "Method & " + " & ".join(header for _, header in METRICS) + r" \\",
+        "Method & " + " & ".join(header for _, header in metric_specs) + r" \\",
         r"\midrule",
     ]
 
-    for row_idx, (label, metrics) in enumerate(rows):
+    for row_idx, (label, row_metrics) in enumerate(rows):
         cells = [
             maybe_bold_tex(
-                fmt_cell(metrics.get(metric, []), include_std),
+                fmt_cell(row_metrics.get(metric, []), include_std),
                 row_idx in winners.get(metric, set()),
             )
-            for metric, _ in METRICS
+            for metric, _ in metric_specs
         ]
         lines.append(f"{label} & " + " & ".join(cells) + r" \\")
 
@@ -255,21 +384,22 @@ def render_env_table(
 def render_env_table_text(
     env: str,
     rows: list[tuple[str, dict[str, list[float]]]],
+    metric_specs,
     include_std: bool,
     bold_pct: float,
 ) -> str:
-    winners = best_metric_indices(rows, bold_pct)
-    headers = ["Method"] + [header.replace(r" $\downarrow$", " down").replace(r" $\uparrow$", " up") for _, header in METRICS]
+    winners = best_metric_indices(rows, metric_specs, bold_pct)
+    headers = ["Method"] + [header.replace(r" $\downarrow$", " down").replace(r" $\uparrow$", " up") for _, header in metric_specs]
     body = []
-    for row_idx, (label, metrics) in enumerate(rows):
+    for row_idx, (label, row_metrics) in enumerate(rows):
         body.append(
             [label]
             + [
                 maybe_bold_text(
-                    fmt_cell_text(metrics.get(metric, []), include_std),
+                    fmt_cell_text(row_metrics.get(metric, []), include_std),
                     row_idx in winners.get(metric, set()),
                 )
-                for metric, _ in METRICS
+                for metric, _ in metric_specs
             ]
         )
 
@@ -305,13 +435,32 @@ def build_tables(
 
     tables = []
     for env_dir in env_dirs:
-        groups = load_env_results(env_dir)
-        rows = method_rows(groups)
+        profile = detect_profile(env_dir)
+        profile_cfg = PROFILES[profile]
+        groups = load_env_results(env_dir, profile)
+        rows = method_rows(groups, profile)
         if rows:
             if fmt == "tex":
-                tables.append(render_env_table(env_dir.name, rows, include_std, bold_pct))
+                tables.append(
+                    render_env_table(
+                        env_dir.name,
+                        rows,
+                        profile_cfg["metrics"],
+                        profile_cfg["caption"],
+                        include_std,
+                        bold_pct,
+                    )
+                )
             else:
-                tables.append(render_env_table_text(env_dir.name, rows, include_std, bold_pct))
+                tables.append(
+                    render_env_table_text(
+                        env_dir.name,
+                        rows,
+                        profile_cfg["metrics"],
+                        include_std,
+                        bold_pct,
+                    )
+                )
 
     return "\n\n".join(tables) + ("\n" if tables else "")
 

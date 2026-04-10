@@ -442,6 +442,16 @@ class PreActResNet18(nnx.Module):
         x = jnp.mean(x, axis=(1, 2))
         return self.fc(x)
 
+    def features(
+        self, x: Float[Array, "batch H W C"], use_running_average: bool = True
+    ) -> Float[Array, "batch 512"]:
+        """Extract penultimate features (512-d) before the classification head."""
+        x = self.stem(x)
+        x = self._run_stages(x, use_running_average=use_running_average)
+        x = self.final_bn(x, use_running_average=use_running_average)
+        x = jax.nn.relu(x)
+        return jnp.mean(x, axis=(1, 2))
+
     def forward_from_stem_out(
         self, h: Float[Array, "batch H W C_in"], use_running_average: bool = True
     ) -> Float[Array, "batch n_classes"]:

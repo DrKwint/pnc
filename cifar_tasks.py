@@ -29,8 +29,8 @@ from util import (
 from models import PreActResNet18, MCDropoutPreActResNet18, _PreActBasicBlock
 from data import load_cifar10, load_cifar100
 from data import load_openood_cifar_benchmark
-from training import train_resnet_model, train_resnet_swag
-from ensembles import SWAGEnsemble, PnCEnsemble, MultiBlockPnCEnsemble, LLLAEnsemble
+from training import train_resnet_model, train_resnet_swag, train_epinet
+from ensembles import SWAGEnsemble, PnCEnsemble, MultiBlockPnCEnsemble, LLLAEnsemble, EpinetWithPrior, EpinetEnsemble
 from openood_eval import evaluate_openood_cifar
 
 try:
@@ -918,6 +918,178 @@ class CIFARPreActSWAG(CIFARRecipeMixin, luigi.Task):
         Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output().path, 'w') as f:
             json.dump(metrics, f, indent=2)
+
+class CIFARTrainEpinet(CIFARRecipeMixin, luigi.Task):
+    """Train an Epinet (Osband et al., 2023) on top of a frozen PreAct ResNet-18."""
+    dataset         = luigi.Parameter(default='cifar10')
+    epochs          = luigi.IntParameter(default=200)
+    epinet_epochs   = luigi.IntParameter(default=100)
+    epinet_lr       = luigi.FloatParameter(default=1e-3)
+    epinet_wd       = luigi.FloatParameter(default=1e-4)
+    index_dim       = luigi.IntParameter(default=8)
+    epinet_hiddens  = luigi.Parameter(default='50,50')
+    prior_scale     = luigi.FloatParameter(default=1.0)
+    seed            = luigi.IntParameter(default=0)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+            **self.task_recipe_kwargs()
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
+        return luigi.LocalTarget(
+            str(Path('results') / self.dataset /
+                f'epinet_train_epi{self.epinet_epochs}_idim{self.index_dim}'
+                f'_h{self.epinet_hiddens}_ps{self.prior_scale}'
+                f'_e{self.epochs}{recipe}_seed{self.seed}.pkl'))
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
+
+        print(
+            f'\n=== Train Epinet ({self.dataset}, epinet_epochs={self.epinet_epochs}, '
+            f'index_dim={self.index_dim}, hiddens={self.epinet_hiddens}, '
+            f'prior_scale={self.prior_scale}) ==='
+        )
+        t0 = time.time()
+        base_model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, 'rb') as f:
+            ckpt = pickle.load(f)
+        nnx.update(base_model, ckpt['state'])
+
+        hiddens = tuple(int(h) for h in self.epinet_hiddens.split(','))
+        epinet = EpinetWithPrior(
+            feature_dim=512,
+            n_classes=n_cls,
+            index_dim=self.index_dim,
+            hiddens=hiddens,
+            prior_scale=self.prior_scale,
+            rngs=nnx.Rngs(self.seed + 1000),
+        )
+
+        epinet = train_epinet(
+            base_model, epinet, x_tr, y_tr, x_va, y_va,
+            epochs=self.epinet_epochs,
+            batch_size=self.batch_size,
+            lr=self.epinet_lr,
+            weight_decay=self.epinet_wd,
+            warmup_epochs=5,
+            cutout_size=self.cutout_size,
+            index_dim=self.index_dim,
+            seed=self.seed,
+        )
+
+        print(f'Training time: {time.time()-t0:.2f}s')
+
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, 'wb') as f:
+            pickle.dump({
+                'epinet_state': nnx.state(epinet),
+                'base_model_path': self.input().path,
+                'index_dim': self.index_dim,
+                'hiddens': hiddens,
+                'prior_scale': self.prior_scale,
+                'n_classes': n_cls,
+            }, f)
+        print(f'Epinet checkpoint saved to {self.output().path}')
+
+
+class CIFARPreActEpinet(CIFARRecipeMixin, luigi.Task):
+    """Evaluate Epinet (Osband et al., 2023) uncertainty."""
+    dataset         = luigi.Parameter(default='cifar10')
+    epochs          = luigi.IntParameter(default=200)
+    epinet_epochs   = luigi.IntParameter(default=100)
+    epinet_lr       = luigi.FloatParameter(default=1e-3)
+    epinet_wd       = luigi.FloatParameter(default=1e-4)
+    n_perturbations = luigi.IntParameter(default=50)
+    index_dim       = luigi.IntParameter(default=8)
+    epinet_hiddens  = luigi.Parameter(default='50,50')
+    prior_scale     = luigi.FloatParameter(default=1.0)
+    seed            = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> dict:
+        return {
+            'epinet': CIFARTrainEpinet(
+                dataset=self.dataset, epochs=self.epochs,
+                epinet_epochs=self.epinet_epochs,
+                epinet_lr=self.epinet_lr, epinet_wd=self.epinet_wd,
+                index_dim=self.index_dim, epinet_hiddens=self.epinet_hiddens,
+                prior_scale=self.prior_scale, seed=self.seed,
+                **self.task_recipe_kwargs()
+            ),
+            'base_model': CIFARTrainPreActResNet18(
+                dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+                **self.task_recipe_kwargs()
+            ),
+        }
+
+    def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        return luigi.LocalTarget(
+            str(Path('results') / self.dataset /
+                f'baseline_epinet{calib_str}_n{self.n_perturbations}'
+                f'_epi{self.epinet_epochs}_idim{self.index_dim}'
+                f'_h{self.epinet_hiddens}_ps{self.prior_scale}'
+                f'_e{self.epochs}{recipe}_seed{self.seed}.json'))
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        x_train_full, y_train_full, x_te, y_te, n_cls = _load_cifar_dataset(self.dataset)
+        x_tr, y_tr, x_va, y_va = _split_data(x_train_full, y_train_full)
+
+        print(
+            f'\n=== Epinet Eval (n={self.n_perturbations}, '
+            f'index_dim={self.index_dim}, prior_scale={self.prior_scale}) ==='
+        )
+        t0 = time.time()
+
+        base_model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input()['base_model'].path, 'rb') as f:
+            ckpt = pickle.load(f)
+        nnx.update(base_model, ckpt['state'])
+
+        with open(self.input()['epinet'].path, 'rb') as f:
+            epi_ckpt = pickle.load(f)
+
+        hiddens = epi_ckpt['hiddens']
+        epinet = EpinetWithPrior(
+            feature_dim=512,
+            n_classes=n_cls,
+            index_dim=epi_ckpt['index_dim'],
+            hiddens=hiddens,
+            prior_scale=epi_ckpt['prior_scale'],
+            rngs=nnx.Rngs(self.seed + 1000),
+        )
+        nnx.update(epinet, epi_ckpt['epinet_state'])
+
+        ens = EpinetEnsemble(
+            base_model, epinet,
+            n_models=self.n_perturbations,
+            index_dim=epi_ckpt['index_dim'],
+            seed=self.seed,
+        )
+
+        metrics = _evaluate_cifar('Epinet', ens, x_te, y_te, n_cls,
+                                  calibration_data=(x_va, y_va),
+                                  posthoc_calibrate=self.posthoc_calibrate)
+        metrics['train_time'] = time.time() - t0
+        metrics['epinet_config'] = {
+            'index_dim': int(self.index_dim),
+            'hiddens': list(hiddens),
+            'prior_scale': float(self.prior_scale),
+            'epinet_epochs': int(self.epinet_epochs),
+        }
+
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, 'w') as f:
+            json.dump(metrics, f, indent=2)
+
 
 class CIFARTrainPreActResNet18(CIFARRecipeMixin, luigi.Task):
     """Train and checkpoint the base PreAct ResNet-18 learner for CIFAR."""
