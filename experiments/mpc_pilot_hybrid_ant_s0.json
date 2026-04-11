@@ -1,0 +1,34 @@
+{
+  "env": "Ant-v5",
+  "method": "hybrid",
+  "seed": 0,
+  "gravity_scale": 1.0,
+  "variance_penalty": 0.0,
+  "horizon": 6,
+  "n_candidates": 24,
+  "n_iters": 2,
+  "train_time_s": 122.83406591415405,
+  "episodes": [
+    {
+      "return": 12.18271852581228,
+      "failed": true,
+      "n_steps": 22,
+      "time_s": 55.81871151924133
+    },
+    {
+      "return": 54.456939412682765,
+      "failed": false,
+      "n_steps": 100,
+      "time_s": 261.08665227890015
+    },
+    {
+      "return": 43.01089911754389,
+      "failed": false,
+      "n_steps": 100,
+      "time_s": 262.73320984840393
+    }
+  ],
+  "mean_return": 36.550185685346314,
+  "std_return": 17.852787857693503,
+  "failure_rate": 0.3333333333333333
+}

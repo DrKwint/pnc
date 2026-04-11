@@ -1,0 +1,70 @@
+[
+  {
+    "env": "Ant-v5",
+    "method": "hybrid",
+    "seed": 0,
+    "gravity_scale": 1.0,
+    "variance_penalty": 1.0,
+    "horizon": 4,
+    "n_candidates": 16,
+    "n_iters": 1,
+    "train_time_s": 106.2083351612091,
+    "episodes": [
+      {
+        "return": 9.689306296343906,
+        "failed": false,
+        "n_steps": 50,
+        "time_s": 44.73107552528381
+      },
+      {
+        "return": 29.175861661276535,
+        "failed": false,
+        "n_steps": 50,
+        "time_s": 46.14108419418335
+      },
+      {
+        "return": 33.70646956251552,
+        "failed": false,
+        "n_steps": 50,
+        "time_s": 43.05770397186279
+      }
+    ],
+    "mean_return": 24.19054584004532,
+    "std_return": 10.419406995811535,
+    "failure_rate": 0.0
+  },
+  {
+    "env": "Ant-v5",
+    "method": "hybrid",
+    "seed": 0,
+    "gravity_scale": 1.3,
+    "variance_penalty": 1.0,
+    "horizon": 4,
+    "n_candidates": 16,
+    "n_iters": 1,
+    "train_time_s": 106.2083351612091,
+    "episodes": [
+      {
+        "return": 28.093988865929937,
+        "failed": false,
+        "n_steps": 50,
+        "time_s": 43.727806091308594
+      },
+      {
+        "return": 35.81900612511103,
+        "failed": false,
+        "n_steps": 50,
+        "time_s": 43.3306999206543
+      },
+      {
+        "return": 27.85476436623676,
+        "failed": false,
+        "n_steps": 50,
+        "time_s": 45.851783990859985
+      }
+    ],
+    "mean_return": 30.589253119092575,
+    "std_return": 3.6992832160012346,
+    "failure_rate": 0.0
+  }
+]

@@ -1,0 +1,70 @@
+Ant-v5
+selection note: collapsed over backend, grid, k, n, vcal; rows still split on remaining stem distinctions such as T, act, family, full, prob, scope
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Method                                                                      ID RMSE down  Near NLL down  Mid NLL down  Far NLL down  Far AUROC up
+-------------------------------------------------------------------------------------------------------------------------------------------------
+MC Dropout + VCal (n=100) [relu]                                                  0.5568         1.1325      118.4088      771.2724        0.4925
+Deep Ensemble (n=10) [relu]                                                       0.5707         0.2961        0.8063        4.2055        0.5712
+Subspace + VCal (n=100) (T=0.0) [relu]                                            0.5499         0.4442        0.7657       14.2278        0.2752
+SWAG + VCal (n=100) [relu]                                                        0.6630         0.0266        0.1732        4.1937        0.4909
+Laplace + VCal (n=100) [relu] (prior=100000.0)                                    0.6098         1.4025        2.8432       16.0859        0.4022
+Evidential (lam=0.001) [relu]                                                     0.5792        14.0821       24.3820     1164.7349        0.3421
+Evidential (lam=0.01) [relu]                                                      0.5872        14.3900       24.5882      763.7568        0.3682
+Evidential (lam=0.1) [relu]                                                       0.5876        19.4094       32.7544      751.2675        0.2198
+Evidential (lam=1) [relu]                                                       *0.5033*        27.5041       45.9819      750.6276        0.1790
+PJSVD-Multi- + Prob (Random-Proj) (k=20, n=50) [relu] (size=5.0)                  0.5803      *-0.2011*     *-0.0532*        5.3435        0.3870
+PJSVD-Multi-LS + VCal + Prob (Random-Proj) (k=20, n=50) [relu] (size=20.0)        0.6090         0.2894        1.0308      *3.0642*        0.9016
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=10, K=5) [relu] (5.0)                0.5498         1.4817        2.8804        3.6595      *0.9868*
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=2, K=25) [relu] (20.0)               0.5712         1.0255        2.7011        4.9154        0.9246
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=5, K=10) [relu] (50.0)               0.5510         1.8118        3.8925        7.6947        0.9036
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+HalfCheetah-v5
+selection note: collapsed over backend, grid, k, n, vcal; rows still split on remaining stem distinctions such as T, act, family, full, prob, scope
+-----------------------------------------------------------------------------------------------------------------------------------------
+Method                                                              ID RMSE down  Near NLL down  Mid NLL down  Far NLL down  Far AUROC up
+-----------------------------------------------------------------------------------------------------------------------------------------
+MC Dropout + VCal (n=100) [relu]                                          1.6824        14.6744        3.0719        3.8826        0.9133
+Deep Ensemble (n=20) [relu]                                               1.2535         8.6254      *2.0233*        2.7637        0.9797
+Subspace + VCal (n=100) (T=0.0) [relu]                                    1.6725        13.3963        4.5545        3.8113        0.9487
+SWAG + VCal (n=100) [relu]                                                1.4899        18.0744        4.3174        4.8587        0.9628
+Laplace + VCal (n=100) [relu] (prior=100000.0)                            1.2566        72.4796        4.2190        8.0215        0.9661
+Evidential + VCal (lam=0.01) [relu]                                       1.2224     13374.0351        3.1816       56.3744        0.8040
+PJSVD-Multi- + Prob (Random-Proj) (k=20, n=50) [relu] (size=5.0)          1.8773       *5.2640*        2.0863      *1.6513*        0.5513
+PJSVD-Multi-LS + Prob (Random-Proj) (k=20, n=50) [relu] (size=5.0)        1.5976         6.5958        2.5903        2.8918        0.9784
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=10, K=5) [relu] (5.0)        1.2102        15.1033        2.3944        4.7557      *0.9862*
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=2, K=25) [relu] (5.0)        1.2184        13.4820        2.3293        4.3789        0.9847
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=5, K=10) [relu] (5.0)      *1.2088*        14.3240        2.3286        4.4412        0.9858
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Hopper-v5
+selection note: collapsed over backend, grid, k, n, vcal; rows still split on remaining stem distinctions such as T, act, family, full, prob, scope
+------------------------------------------------------------------------------------------------------------------------------------------------
+Method                                                                     ID RMSE down  Near NLL down  Mid NLL down  Far NLL down  Far AUROC up
+------------------------------------------------------------------------------------------------------------------------------------------------
+MC Dropout + VCal (n=100) [relu]                                                 0.2407         5.3915        8.1560        7.2331        0.6648
+Deep Ensemble (n=10) [relu]                                                    *0.1581*         0.4733        1.0689        1.1122        0.9105
+Subspace + VCal (n=100) (T=0.0) [relu]                                           0.1987         5.8965       13.4721        6.9617        0.7752
+SWAG + VCal (n=100) [relu]                                                       0.1768         7.2842       17.1608       10.3062        0.7955
+Laplace + VCal (n=100) [relu] (prior=100000.0)                                   0.1694         4.2810       11.5117        7.2915        0.7981
+Evidential + VCal (lam=0.01) [relu]                                              0.1765         3.0830       17.4703        7.0225        0.8264
+PJSVD-Multi- + Prob (Random-Proj) (k=20, n=50) [relu] (size=5.0)                 0.2756      *-0.0083*      *0.2615*      *0.8009*        0.1346
+PJSVD-Multi-LS + VCal + Prob (Random-Proj) (k=20, n=50) [relu] (size=5.0)        0.1977         1.1463        2.1226        1.1989        0.8775
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=10, K=5) [relu] (5.0)               0.1581         3.6013        4.7505        4.1244      *0.9281*
+Hybrid PnC+DE + Prob (Random-Proj) (M=2, K=10) [relu] (5.0)                      0.1663         0.1587        0.8340        0.9244        0.9169
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=2, K=25) [relu] (5.0)               0.1699         2.0592        3.1213        2.5928        0.9193
+Hybrid PnC+DE + VCal + Prob (Random-Proj) (M=5, K=10) [relu] (5.0)               0.1632         3.1426        4.3464        3.8049        0.9265
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Humanoid-v5
+selection note: collapsed over backend, grid, k, n, vcal; rows still split on remaining stem distinctions such as T, act, family, full, prob, scope
+------------------------------------------------------------------------------------------------------------------------------------------
+Method                                                               ID RMSE down  Near NLL down  Mid NLL down  Far NLL down  Far AUROC up
+------------------------------------------------------------------------------------------------------------------------------------------
+MC Dropout + VCal (n=100) [relu]                                          44.9173         3.9460        4.1962        3.7968        0.2648
+Deep Ensemble + VCal (n=5) [relu]                                         55.1623         4.1268        4.2649        4.1621      *0.2737*
+Subspace + VCal (n=100) (T=0.0) [relu]                                  *43.8507*       *3.6329*      *3.7083*      *3.5549*        0.1800
+SWAG (n=100) [relu]                                                       46.3202         3.8992        3.9393        3.7277        0.1952
+Laplace + VCal (n=100) [relu] (prior=100000.0)                            51.2238         3.9727        3.9497        3.7152        0.2684
+PJSVD-Multi-LS + Prob (Random-Proj) (k=20, n=50) [relu] (size=50.0)       54.4857         4.3344        4.1130        4.1294        0.2076
+------------------------------------------------------------------------------------------------------------------------------------------

@@ -52,13 +52,24 @@ def load_neurips_policy(env_name: str, regime: str, strict: bool = True) -> tupl
 
     # Exact Repo ID
     repo_id = f"farama-minari/{env_base}-{algo}-{level}"
-    filename = "model.zip"
 
+    # The farama-minari repos use a per-repo filename convention that mirrors
+    # the env / algo / level slug. Casing varies between repos:
+    #   hopper-v5-SAC-expert.zip
+    #   halfcheetah-v5-TQC-expert.zip
+    #   ant-v5-sac-expert.zip   (lowercase sac for Ant expert!)
+    #   ant-v5-SAC-medium.zip
+    # We list the repo and pick the first top-level .zip file as the artifact.
     print(f"Loading {repo_id} ({algo}) ...")
 
     # Try Hugging Face download
     try:
-        from huggingface_hub import hf_hub_download
+        from huggingface_hub import hf_hub_download, list_repo_files
+        files = list_repo_files(repo_id)
+        zip_candidates = [f for f in files if f.endswith(".zip") and "/" not in f]
+        if not zip_candidates:
+            raise RuntimeError(f"No top-level .zip file found in {repo_id}")
+        filename = zip_candidates[0]
         local_path = hf_hub_download(repo_id=repo_id, filename=filename)
         source = "hf_hub_download"
     except ImportError as e:
@@ -80,13 +91,16 @@ def load_neurips_policy(env_name: str, regime: str, strict: bool = True) -> tupl
         return _fallback_wrapper(env_name, regime, repo_id, algo)
 
     # 2. Load the downloaded artifact using SB3 or SB3-Contrib
+    # Force CPU device — many older GPUs (e.g. Pascal sm_61) are not supported
+    # by the torch versions that ship with current SB3, and we only need
+    # SB3 for fast inference here, not training.
     try:
         if algo == "SAC":
             from stable_baselines3 import SAC
-            model = SAC.load(local_path, custom_objects={"lr_schedule": lambda _: 0.0})
+            model = SAC.load(local_path, device="cpu", custom_objects={"lr_schedule": lambda _: 0.0})
         elif algo == "TQC":
             from sb3_contrib import TQC
-            model = TQC.load(local_path, custom_objects={"lr_schedule": lambda _: 0.0})
+            model = TQC.load(local_path, device="cpu", custom_objects={"lr_schedule": lambda _: 0.0})
         else:
             raise ValueError(f"Unsupported algo family: {algo}")
             

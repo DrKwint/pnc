@@ -229,8 +229,11 @@ class PJSVDEnsemble:
         return self.perturbation_scale * self.member_radius_multipliers
 
     def _precompute_corrections(self):
-        # Per-layer independent multi-layer: skip joint coefficient scaling
-        if self.layer_specs is not None and self.correction_mode == "least_squares":
+        # Per-layer independent multi-layer: skip joint coefficient scaling.
+        # Both "least_squares" and "none" enter the sequential path; "none" just
+        # uses the original next-layer W/b as the (non-)correction so the
+        # perturbation propagates through without compensation.
+        if self.layer_specs is not None and self.correction_mode in ("least_squares", "none"):
             self._precompute_sequential_ls(dp_all=None)
             return
 
@@ -242,8 +245,28 @@ class PJSVDEnsemble:
             self._precompute_bn_refit(dp_all)
         elif self.correction_mode == "least_squares":
             self._precompute_least_squares(dp_all)
+        elif self.correction_mode == "none":
+            self._precompute_none(dp_all)
         else: # Default: affine
             self._precompute_affine(dp_all)
+
+    def _precompute_none(self, dp_all):
+        """No-correction mode: perturb but use the ORIGINAL next-layer W/b
+        instead of any compensation. Stores per-member original weights so the
+        forward path can reuse the same scaffolding as the LS path.
+        """
+        n_members = len(self.z_coeffs)
+        # The perturbed weights are stored as next_w_news/next_b_news for the
+        # forward path; here we just broadcast the ORIGINAL next-layer params.
+        w_next_orig = self.correction_params["next_w"]
+        b_next_orig = self.correction_params.get("next_b")
+        if b_next_orig is None:
+            b_next_orig = jnp.zeros(w_next_orig.shape[-1], dtype=w_next_orig.dtype)
+        self.next_w_news = [w_next_orig for _ in range(n_members)]
+        self.next_b_news = [b_next_orig for _ in range(n_members)]
+        # dp_all is needed by _forward_member to apply the perturbation
+        self.dp_all = dp_all
+        self.scale_factors = [jnp.ones(w_next_orig.shape[0], dtype=w_next_orig.dtype) for _ in range(n_members)]
 
     def _precompute_affine(self, dp_all):
         # We assume for affine correction we are matching mu_old, std_old
@@ -420,12 +443,22 @@ class PJSVDEnsemble:
                 else:
                     target = final_target
 
-                # Solve LS: [h_pert, 1] @ W_aug ≈ target
-                ones = jnp.ones((h_pert.shape[0], 1), dtype=h_pert.dtype)
-                h_aug = jnp.concatenate([h_pert, ones], axis=-1)
-                W_aug, _, _, _ = jnp.linalg.lstsq(h_aug, target, rcond=None)
-                W_corr = W_aug[:-1, :]
-                b_corr = W_aug[-1, :]
+                if self.correction_mode == "none":
+                    # No correction: use the ORIGINAL next-layer weights so
+                    # the perturbation propagates through unchanged.
+                    if corr_idx < len(base_model.layers):
+                        W_corr = W_corr_orig
+                        b_corr = b_corr_orig
+                    else:
+                        W_corr = jnp.eye(h_pert.shape[-1], dtype=h_pert.dtype)
+                        b_corr = jnp.zeros(h_pert.shape[-1], dtype=h_pert.dtype)
+                else:
+                    # Solve LS: [h_pert, 1] @ W_aug ≈ target
+                    ones = jnp.ones((h_pert.shape[0], 1), dtype=h_pert.dtype)
+                    h_aug = jnp.concatenate([h_pert, ones], axis=-1)
+                    W_aug, _, _, _ = jnp.linalg.lstsq(h_aug, target, rcond=None)
+                    W_corr = W_aug[:-1, :]
+                    b_corr = W_aug[-1, :]
 
                 per_block_w[j].append(W_corr)
                 per_block_b[j].append(b_corr)
@@ -516,8 +549,8 @@ class PJSVDEnsemble:
         return results
 
     def _forward_member(self, x, i, dp_all):
-        # Sequential correction for multi-layer least_squares
-        if self.correction_mode == "least_squares" and len(self.layers) > 1:
+        # Sequential correction for multi-layer least_squares (or no-correction).
+        if self.correction_mode in ("least_squares", "none") and len(self.layers) > 1:
             return self._forward_member_sequential(x, i, dp_all)
 
         p = dp_all[i]
@@ -528,7 +561,7 @@ class PJSVDEnsemble:
         perturbed_vals = self._apply_perturbations(x, p)
         h_last_perturbed = perturbed_vals[-1]
 
-        if self.correction_mode == "least_squares":
+        if self.correction_mode in ("least_squares", "none"):
             w_next = self.next_w_news[i]
             b_next = self.next_b_news[i]
         else: # affine
@@ -586,15 +619,15 @@ class PJSVDEnsemble:
         raise ValueError("Sequential forward requires model.layers interface")
 
     def _predict_member_intermediate_and_corrected(self, x, i, dp_all):
-        # Sequential correction for multi-layer least_squares
-        if self.correction_mode == "least_squares" and len(self.layers) > 1:
+        # Sequential correction for multi-layer least_squares (or no-correction).
+        if self.correction_mode in ("least_squares", "none") and len(self.layers) > 1:
             return self._predict_member_intermediate_and_corrected_sequential(x, i, dp_all)
 
         p = dp_all[i]
         perturbed_vals = self._apply_perturbations(x, p)
         h_last_perturbed = perturbed_vals[-1]
 
-        if self.correction_mode == "least_squares":
+        if self.correction_mode in ("least_squares", "none"):
             w_next = self.next_w_news[i]
             b_next = self.next_b_news[i]
         else:
@@ -740,27 +773,38 @@ class PJSVDEnsemble:
 
 class EnsemblePJSVDHybrid:
     """
-    Hybrid uncertainty estimator: trains M independent base models (deep ensemble)
-    and applies PJSVD to each member, yielding M × n_perturbations total samples.
+    Hybrid uncertainty estimator: M independent base models (deep ensemble)
+    with PJSVD applied to each member, yielding M × K total samples.
 
-    predict() concatenates predictions from all per-member CompactPJSVDEnsembles
-    along axis 0, so the output shape is (M * n_perturbations, N, output_dim).
+    If the per-member ensembles are probabilistic (each ``predict`` returns a
+    ``(means, vars)`` tuple of shape ``((K, B, D), (K, B, D))``), the hybrid
+    concatenates both the means and the variances along the member axis and
+    returns a tuple of shape ``((M*K, B, D), (M*K, B, D))``. Downstream
+    ``_predictive_mean_var`` then applies the law of total variance correctly.
+
+    If the per-member ensembles are deterministic (each ``predict`` returns a
+    single ``(K, B, D)`` tensor), the hybrid concatenates along axis 0 and
+    returns a single ``(M*K, B, D)`` tensor.
     """
 
-    def __init__(self, pjsvd_ensembles: List['CompactPJSVDEnsemble']):
+    def __init__(self, pjsvd_ensembles: List['PJSVDEnsemble']):
         """
         Args:
-            pjsvd_ensembles: one CompactPJSVDEnsemble per base model.
+            pjsvd_ensembles: one PJSVDEnsemble per base model.
         """
         self.pjsvd_ensembles = pjsvd_ensembles
 
-    def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
-        """Returns (M * S, N, output_dim) stacked predictions."""
+    def predict(self, x):
+        """Returns concatenated predictions along the ensemble axis."""
         all_preds = [ens.predict(x) for ens in self.pjsvd_ensembles]
+        if all_preds and isinstance(all_preds[0], tuple) and len(all_preds[0]) == 2:
+            means = jnp.concatenate([p[0] for p in all_preds], axis=0)
+            vars_ = jnp.concatenate([p[1] for p in all_preds], axis=0)
+            return means, vars_
         return jnp.concatenate(all_preds, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
-        """Index into the flattened list of M*S members."""
+        """Index into the flattened list of M*K members."""
         n_per = len(self.pjsvd_ensembles[0].z_coeffs)
         member_idx = idx // n_per
         sample_idx = idx % n_per
