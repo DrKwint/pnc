@@ -31,7 +31,7 @@ from data import load_cifar10, load_cifar100
 from data import load_openood_cifar_benchmark
 from training import train_resnet_model, train_resnet_swag, train_epinet
 from ensembles import SWAGEnsemble, PnCEnsemble, MultiBlockPnCEnsemble, LLLAEnsemble, EpinetWithPrior, EpinetEnsemble
-from openood_eval import evaluate_openood_cifar
+from openood_eval import evaluate_openood_cifar, evaluate_openood_cifar_mahalanobis, _extract_features_batched
 
 try:
     from tqdm import tqdm
@@ -2212,6 +2212,7 @@ class CIFAROpenOODSWAG(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
             bn_refresh_batch_size=min(self.batch_size, max(1, self.bn_refresh_subset_size)),
             use_bn_refresh=self.swag_use_bn_refresh,
             seed=self.seed,
+            cache_samples=True,  # Sample n models once, reuse across all batches.
         )
         metrics = evaluate_openood_cifar(
             "SWAG",
@@ -2434,6 +2435,293 @@ class CIFAROpenOODLLLA(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
             json.dump(metrics, f, indent=2)
 
 
+class CIFAROpenOODEpinet(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
+    """Evaluate Epinet (Osband et al., 2023) under the OpenOOD v1.5 CIFAR protocol."""
+    dataset         = luigi.Parameter(default='cifar10')
+    epochs          = luigi.IntParameter(default=200)
+    epinet_epochs   = luigi.IntParameter(default=100)
+    epinet_lr       = luigi.FloatParameter(default=1e-3)
+    epinet_wd       = luigi.FloatParameter(default=1e-4)
+    n_perturbations = luigi.IntParameter(default=50)
+    index_dim       = luigi.IntParameter(default=8)
+    epinet_hiddens  = luigi.Parameter(default='50,50')
+    prior_scale     = luigi.FloatParameter(default=1.0)
+    seed            = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> dict:
+        return {
+            'epinet': CIFARTrainEpinet(
+                dataset=self.dataset, epochs=self.epochs,
+                epinet_epochs=self.epinet_epochs,
+                epinet_lr=self.epinet_lr, epinet_wd=self.epinet_wd,
+                index_dim=self.index_dim, epinet_hiddens=self.epinet_hiddens,
+                prior_scale=self.prior_scale, seed=self.seed,
+                **self.task_recipe_kwargs(),
+            ),
+            'base_model': CIFARTrainPreActResNet18(
+                dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+                **self.task_recipe_kwargs(),
+            ),
+        }
+
+    def output(self) -> luigi.LocalTarget:
+        recipe = self.train_recipe_suffix()
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        max_str = "" if self.openood_max_examples_per_dataset <= 0 else f"_oomax{self.openood_max_examples_per_dataset}"
+        return luigi.LocalTarget(
+            str(Path('results') / self.dataset /
+                f'openood_v1p5_epinet{calib_str}_n{self.n_perturbations}'
+                f'_epi{self.epinet_epochs}_idim{self.index_dim}'
+                f'_h{self.epinet_hiddens}_ps{self.prior_scale}'
+                f'_e{self.epochs}{recipe}_seed{self.seed}{max_str}.json'))
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        benchmark, _, _, x_va, y_va, n_cls = _load_cifar_openood_context(self)
+
+        base_model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input()['base_model'].path, 'rb') as f:
+            ckpt = pickle.load(f)
+        nnx.update(base_model, ckpt['state'])
+
+        with open(self.input()['epinet'].path, 'rb') as f:
+            epi_ckpt = pickle.load(f)
+
+        hiddens = epi_ckpt['hiddens']
+        epinet = EpinetWithPrior(
+            feature_dim=512, n_classes=n_cls,
+            index_dim=epi_ckpt['index_dim'], hiddens=hiddens,
+            prior_scale=epi_ckpt['prior_scale'],
+            rngs=nnx.Rngs(self.seed + 1000),
+        )
+        nnx.update(epinet, epi_ckpt['epinet_state'])
+
+        ens = EpinetEnsemble(
+            base_model, epinet,
+            n_models=self.n_perturbations,
+            index_dim=epi_ckpt['index_dim'],
+            seed=self.seed,
+        )
+
+        metrics = evaluate_openood_cifar(
+            'Epinet', ens, benchmark,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+            batch_size=self.batch_size,
+        )
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, 'w') as f:
+            json.dump(metrics, f, indent=2)
+
+
+class CIFAROpenOODMSP(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
+    """MSP (Maximum Softmax Probability) OOD baseline under OpenOOD v1.5."""
+    dataset = luigi.Parameter(default="cifar10")
+    epochs = luigi.IntParameter(default=200)
+    seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+            **self.task_recipe_kwargs(),
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        recipe = self.train_recipe_suffix()
+        max_str = "" if self.openood_max_examples_per_dataset <= 0 else f"_oomax{self.openood_max_examples_per_dataset}"
+        return luigi.LocalTarget(
+            str(Path("results") / self.dataset / f"openood_v1p5_msp{calib_str}_e{self.epochs}{recipe}_seed{self.seed}{max_str}.json")
+        )
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        benchmark, _, _, x_va, y_va, n_cls = _load_cifar_openood_context(self)
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, "rb") as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt["state"])
+
+        class _SingleEns:
+            def __init__(self, m):
+                self.m = m
+            def predict(self, x):
+                return jnp.expand_dims(self.m(x, use_running_average=True), axis=0)
+
+        metrics = evaluate_openood_cifar(
+            "MSP", _SingleEns(model), benchmark,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+            batch_size=self.batch_size,
+            primary_score="max_softmax_uncertainty",
+        )
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, "w") as f:
+            json.dump(metrics, f, indent=2)
+
+
+class CIFAROpenOODEnergy(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
+    """Energy score OOD baseline under OpenOOD v1.5."""
+    dataset = luigi.Parameter(default="cifar10")
+    epochs = luigi.IntParameter(default=200)
+    seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+            **self.task_recipe_kwargs(),
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        recipe = self.train_recipe_suffix()
+        max_str = "" if self.openood_max_examples_per_dataset <= 0 else f"_oomax{self.openood_max_examples_per_dataset}"
+        return luigi.LocalTarget(
+            str(Path("results") / self.dataset / f"openood_v1p5_energy{calib_str}_e{self.epochs}{recipe}_seed{self.seed}{max_str}.json")
+        )
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        benchmark, _, _, x_va, y_va, n_cls = _load_cifar_openood_context(self)
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, "rb") as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt["state"])
+
+        class _SingleEns:
+            def __init__(self, m):
+                self.m = m
+            def predict(self, x):
+                return jnp.expand_dims(self.m(x, use_running_average=True), axis=0)
+
+        metrics = evaluate_openood_cifar(
+            "Energy", _SingleEns(model), benchmark,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+            batch_size=self.batch_size,
+            primary_score="energy_score",
+        )
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, "w") as f:
+            json.dump(metrics, f, indent=2)
+
+
+class CIFAROpenOODMahalanobis(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
+    """Mahalanobis distance OOD baseline under OpenOOD v1.5.
+
+    Uses penultimate (512-d) features, per-class means and shared covariance
+    fitted on ID train only.  No OOD combiner or multi-layer fusion.
+    """
+    dataset = luigi.Parameter(default="cifar10")
+    epochs = luigi.IntParameter(default=200)
+    seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+            **self.task_recipe_kwargs(),
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        recipe = self.train_recipe_suffix()
+        max_str = "" if self.openood_max_examples_per_dataset <= 0 else f"_oomax{self.openood_max_examples_per_dataset}"
+        return luigi.LocalTarget(
+            str(Path("results") / self.dataset / f"openood_v1p5_mahalanobis{calib_str}_e{self.epochs}{recipe}_seed{self.seed}{max_str}.json")
+        )
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        benchmark, _, _, x_va, y_va, n_cls = _load_cifar_openood_context(self)
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, "rb") as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt["state"])
+
+        metrics = evaluate_openood_cifar_mahalanobis(
+            "Mahalanobis", model, benchmark,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+            batch_size=self.batch_size,
+        )
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, "w") as f:
+            json.dump(metrics, f, indent=2)
+
+
+class CIFAROpenOODReActEnergy(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Task):
+    """ReAct + Energy OOD baseline under OpenOOD v1.5.
+
+    Clips penultimate activations at the 90th percentile of ID train features,
+    then computes energy score from the clipped representation.
+    """
+    dataset = luigi.Parameter(default="cifar10")
+    epochs = luigi.IntParameter(default=200)
+    react_percentile = luigi.FloatParameter(default=90.0)
+    seed = luigi.IntParameter(default=0)
+    posthoc_calibrate = luigi.BoolParameter(default=False)
+
+    def requires(self) -> luigi.Task:
+        return CIFARTrainPreActResNet18(
+            dataset=self.dataset, epochs=self.epochs, seed=self.seed,
+            **self.task_recipe_kwargs(),
+        )
+
+    def output(self) -> luigi.LocalTarget:
+        calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        recipe = self.train_recipe_suffix()
+        max_str = "" if self.openood_max_examples_per_dataset <= 0 else f"_oomax{self.openood_max_examples_per_dataset}"
+        return luigi.LocalTarget(
+            str(Path("results") / self.dataset / f"openood_v1p5_react_energy{calib_str}_p{self.react_percentile}_e{self.epochs}{recipe}_seed{self.seed}{max_str}.json")
+        )
+
+    def run(self) -> None:
+        seed_everything(self.seed)
+        benchmark, _, _, x_va, y_va, n_cls = _load_cifar_openood_context(self)
+        model = PreActResNet18(n_classes=n_cls, rngs=nnx.Rngs(self.seed))
+        with open(self.input().path, "rb") as f:
+            ckpt = pickle.load(f)
+        nnx.update(model, ckpt["state"])
+
+        # Compute clipping threshold from ID train features
+        train_feats = _extract_features_batched(model, benchmark["id_train"]["inputs"], self.batch_size)
+        clip_threshold = float(np.percentile(train_feats, self.react_percentile))
+        print(f"ReAct clip threshold (p{self.react_percentile}): {clip_threshold:.4f}")
+
+        fc_layer = model.fc
+
+        class _ReActEns:
+            def __init__(self, m, threshold, fc):
+                self.m = m
+                self.threshold = threshold
+                self.fc = fc
+
+            def predict(self, x):
+                feats = self.m.features(x, use_running_average=True)
+                feats_clipped = jnp.clip(feats, a_max=self.threshold)
+                logits = self.fc(feats_clipped)
+                return jnp.expand_dims(logits, axis=0)
+
+        react_ens = _ReActEns(model, clip_threshold, fc_layer)
+
+        metrics = evaluate_openood_cifar(
+            "ReAct+Energy", react_ens, benchmark,
+            calibration_data=(x_va, y_va),
+            posthoc_calibrate=self.posthoc_calibrate,
+            batch_size=self.batch_size,
+            primary_score="energy_score",
+        )
+        metrics["react_clip_threshold"] = clip_threshold
+        metrics["react_percentile"] = float(self.react_percentile)
+        Path(self.output().path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output().path, "w") as f:
+            json.dump(metrics, f, indent=2)
+
+
 class AllCIFAROpenOODExperiments(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.WrapperTask):
     """Evaluate the main CIFAR baselines and PnC variants on OpenOOD v1.5."""
     dataset = luigi.Parameter(default="cifar10")
@@ -2476,4 +2764,11 @@ class AllCIFAROpenOODExperiments(CIFARRecipeMixin, CIFAROpenOODMixin, luigi.Wrap
                 **shared,
             ),
             CIFAROpenOODLLLA(n_perturbations=self.n_perturbations, **shared),
+            # Epinet
+            CIFAROpenOODEpinet(n_perturbations=self.n_perturbations, **shared),
+            # Dedicated OOD baselines
+            CIFAROpenOODMSP(**shared),
+            CIFAROpenOODEnergy(**shared),
+            CIFAROpenOODMahalanobis(**shared),
+            CIFAROpenOODReActEnergy(**shared),
         ]

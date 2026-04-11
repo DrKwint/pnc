@@ -649,6 +649,7 @@ class SWAGEnsemble:
         bn_refresh_batch_size: int = 128,
         use_bn_refresh: bool = True,
         seed: int = 0,
+        cache_samples: bool = False,
     ):
         self.base_model = nnx.clone(model)
         self.swag_mean = swag_mean
@@ -659,6 +660,8 @@ class SWAGEnsemble:
         self.bn_refresh_batch_size = max(1, int(bn_refresh_batch_size))
         self.use_bn_refresh = bool(use_bn_refresh and self.bn_refresh_inputs is not None)
         self.rng = np.random.RandomState(seed)
+        self.cache_samples = bool(cache_samples)
+        self._cached_models: Optional[list] = None
         self.swag_mean_flat, self.unflatten_fn = jax.flatten_util.ravel_pytree(swag_mean)
         self.swag_var_flat, _ = jax.flatten_util.ravel_pytree(swag_var)
         if swag_cov_mat_sqrt is None:
@@ -745,14 +748,26 @@ class SWAGEnsemble:
         self._refresh_batch_norm_stats(sampled_model)
         return sampled_model
 
+    def _get_cached_models(self) -> list:
+        if self._cached_models is None:
+            self._cached_models = [self._sample_model() for _ in range(self.n_models)]
+        return self._cached_models
+
     def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
-        ys = []
-        for _ in range(self.n_models):
-            sampled_m = self._sample_model()
-            ys.append(sampled_m(x, use_running_average=True))
+        if self.cache_samples:
+            models = self._get_cached_models()
+            ys = [m(x, use_running_average=True) for m in models]
+        else:
+            ys = []
+            for _ in range(self.n_models):
+                sampled_m = self._sample_model()
+                ys.append(sampled_m(x, use_running_average=True))
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
+        if self.cache_samples:
+            models = self._get_cached_models()
+            return models[idx](x, use_running_average=True)
         del idx
         return self._sample_model()(x, use_running_average=True)
 
