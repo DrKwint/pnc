@@ -7,6 +7,135 @@ import jax.numpy as jnp
 import numpy as np
 
 
+# ---------------------------------------------------------------------------
+# Minari pre-collected dataset loader (NeurIPS preset)
+# ---------------------------------------------------------------------------
+
+# Mapping from our env names to Minari dataset slugs.
+_MINARI_ENV_SLUG = {
+    "Hopper-v5": "hopper",
+    "HalfCheetah-v5": "halfcheetah",
+    "Ant-v5": "ant",
+    "Humanoid-v5": "humanoid",
+}
+
+# Mapping from our regime names to Minari level slugs.
+_MINARI_REGIME_LEVEL = {
+    "id": "expert",
+    "id_train": "expert",
+    "id_eval": "expert",
+    "ood_near": "medium",
+    "ood_mid": "simple",
+    # ood_far is *not* in Minari — it's pure-random actions, handled separately.
+}
+
+
+def load_minari_transitions(
+    env_name: str,
+    regime: str,
+    n_steps: int,
+    seed: int = 0,
+) -> tuple[jax.Array, jax.Array, dict]:
+    """Load `n_steps` (state, action, next_state) transitions from a Minari dataset.
+
+    Returns (inputs, targets, metadata) where:
+        inputs[i]  = concat(state_i, action_i)            shape (n_steps, S+A)
+        targets[i] = next_state_i                         shape (n_steps, S)
+
+    For `regime=ood_far`, falls back to running `id_policy_random` against the
+    live env (Minari has no random-policy dataset). All other regimes are read
+    from `mujoco/{env}/{level}-v0` Minari datasets.
+
+    `seed` controls which slice of episodes is sampled (different `seed`s give
+    disjoint sub-samples drawn deterministically from the same dataset). This
+    matches the legacy `CollectGymData` behaviour where the seed parameter
+    affected the rollout RNG.
+    """
+    import minari
+
+    # ood_far / ood is uniform random actions — no Minari dataset for this.
+    if regime in ("ood_far", "ood"):
+        print(f"Collecting {n_steps} steps of uniform-random actions for {env_name} ({regime})...")
+        env = gym.make(env_name)
+        inputs, targets = [], []
+        obs, _ = env.reset(seed=seed)
+        while len(inputs) < n_steps:
+            action = env.action_space.sample()
+            next_obs, _, term, trunc, _ = env.step(action)
+            inputs.append(np.concatenate([obs, action]))
+            targets.append(next_obs)
+            obs = next_obs
+            if term or trunc:
+                obs, _ = env.reset()
+        env.close()
+        inputs_arr = np.stack(inputs[:n_steps]).astype(np.float32)
+        targets_arr = np.stack(targets[:n_steps]).astype(np.float32)
+        return jnp.array(inputs_arr), jnp.array(targets_arr), {
+            "policy_id": "pure_random",
+            "algo_family": "random",
+            "source": "id_policy_random",
+            "n_steps": int(n_steps),
+        }
+
+    if env_name not in _MINARI_ENV_SLUG:
+        raise ValueError(f"Unknown environment for Minari preset: {env_name}")
+    if regime not in _MINARI_REGIME_LEVEL:
+        raise ValueError(f"Unknown regime for Minari preset: {regime}")
+
+    env_slug = _MINARI_ENV_SLUG[env_name]
+    level = _MINARI_REGIME_LEVEL[regime]
+    ds_id = f"mujoco/{env_slug}/{level}-v0"
+
+    print(f"Loading Minari dataset {ds_id} for {regime} ({n_steps} transitions, seed={seed})...")
+    ds = minari.load_dataset(ds_id, download=True)
+
+    # Deterministic episode ordering by seed: shuffle episode IDs with `seed`,
+    # then read transitions episode-by-episode until we have enough.
+    rng = np.random.default_rng(seed)
+    episode_ids = list(range(len(ds)))
+    rng.shuffle(episode_ids)
+
+    inputs_blocks = []
+    targets_blocks = []
+    collected = 0
+    for ep_id in episode_ids:
+        ep = ds[ep_id][0] if isinstance(ds[ep_id], tuple) else ds[ep_id]
+        # Some Minari versions index by id rather than positional; fall back.
+        if not hasattr(ep, "observations"):
+            ep = next(iter(ds.iterate_episodes(episode_indices=[ep_id])))
+        obs = np.asarray(ep.observations, dtype=np.float32)
+        act = np.asarray(ep.actions, dtype=np.float32)
+        # `obs` has length T+1; transitions: (obs[i], act[i]) -> obs[i+1].
+        n_t = len(act)
+        ep_inputs = np.concatenate([obs[:n_t], act], axis=-1)
+        ep_targets = obs[1 : n_t + 1]
+        take = min(n_t, n_steps - collected)
+        inputs_blocks.append(ep_inputs[:take])
+        targets_blocks.append(ep_targets[:take])
+        collected += take
+        if collected >= n_steps:
+            break
+
+    if collected < n_steps:
+        print(
+            f"WARNING: requested {n_steps} transitions but Minari dataset {ds_id} only "
+            f"provided {collected} (will return short array)."
+        )
+
+    inputs_arr = np.concatenate(inputs_blocks, axis=0).astype(np.float32)
+    targets_arr = np.concatenate(targets_blocks, axis=0).astype(np.float32)
+
+    metadata = {
+        "policy_id": ds_id,
+        "algo_family": "minari",
+        "source": "minari.load_dataset",
+        "n_steps": int(len(inputs_arr)),
+        "n_episodes_used": len(inputs_blocks),
+    }
+    return jnp.array(inputs_arr), jnp.array(targets_arr), metadata
+
+
+
 def positive_policy(env: gym.Env, obs: np.ndarray) -> np.ndarray:
     """A placeholder policy that always takes positive actions."""
     action_dim = env.action_space.shape[0]  # type: ignore
@@ -21,9 +150,12 @@ def negative_policy(env: gym.Env, obs: np.ndarray) -> np.ndarray:
 
 def id_policy_random(env: gym.Env, obs: np.ndarray) -> np.ndarray:
     """
-    ID Policy: Pure Random Exploration.
-    Mimics 'training data' in offline RL.
-    State coverage: Low velocity, chaotic poses, falling over.
+    Uniform random action policy.
+
+    NOTE: Despite the historical name, this is used as the **Far OOD** policy
+    in the current `get_policy_for_regime` mapping. ID is the structured
+    expert policy (sine-wave gait), and OOD progresses as
+    expert + noise → expert + noise + dropout → pure random (this function).
     """
     return env.action_space.sample()
 
@@ -82,12 +214,12 @@ def halfcheetah_expert_policy(
     env: gym.Env, obs: np.ndarray, step_count: int
 ) -> np.ndarray:
     """
-    OOD Policy: A structured Sine-Wave Gait.
-    Mimics an 'expert' or 'deployment' policy.
-    State coverage: High velocity, coordinated periodic motion.
+    Structured sine-wave gait used as the **ID policy** in the current
+    `get_policy_for_regime` mapping. The model is trained on transitions
+    sampled under this policy and evaluated on shifted regimes that
+    add noise / dropout / randomize actions on top of (or in place of) it.
 
-    This is OOD because the model has never seen 'coordinated running'
-    dynamics, only 'random flailing' dynamics.
+    State coverage: High velocity, coordinated periodic motion.
     """
     # A simple trotting gait for HalfCheetah
     # Joints: [bthigh, bshin, bfoot, fthigh, fshin, ffoot]

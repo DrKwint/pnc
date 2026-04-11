@@ -197,8 +197,15 @@ def _evaluate_gym(
     sidecar_path: str | None = None,
     calibration_data: tuple[jax.Array, jax.Array] | None = None,
     posthoc_calibrate: bool = False,
+    validation_data: tuple[jax.Array, jax.Array] | None = None,
 ) -> dict[str, float]:
-    """Evaluate a gym ensemble, return a scalar metrics dict over multiple regimes."""
+    """Evaluate a gym ensemble, return a scalar metrics dict over multiple regimes.
+
+    `validation_data` is the held-out *training* split slice (e.g., `x_va, y_va`)
+    used purely for hyperparameter selection. Metrics computed on it land under
+    keys with the `_val` suffix and MUST NOT be reported as final test metrics.
+    Reports based on `id_eval` (`*_id` keys) remain the test metrics.
+    """
     print(f"\\n--- Results: {ensemble_name} ---")
 
     variance_scale = 1.0
@@ -234,11 +241,22 @@ def _evaluate_gym(
 
     results = {}
     sidecar_data = {}
-    
-    # ID
+
+    # Validation split (held out from training data, used ONLY for hyperparameter
+    # selection — not for final test reporting)
+    if validation_data is not None:
+        val_inputs, val_targets = validation_data
+        if len(val_inputs) > 0:
+            rmse_val, var_val, nll_val, ece_val, _, _, _ = _group("VAL", val_inputs, val_targets)
+            results["rmse_val"] = rmse_val
+            results["nll_val"] = nll_val
+            results["ece_val"] = ece_val
+            results["var_val"] = var_val
+
+    # ID (this is the test split, reported as the final test metrics)
     inputs_id, targets_id = dataset["id_eval"]
     rmse_id, var_id, nll_id, ece_id, sq_err_id, pred_var_id, t_id = _group("ID", inputs_id, targets_id)
-    
+
     results["rmse_id"] = rmse_id
     results["nll_id"] = nll_id
     results["ece_id"] = ece_id
@@ -246,7 +264,7 @@ def _evaluate_gym(
     results["eval_time"] = t_id
     if posthoc_calibrate:
         results["posthoc_variance_scale"] = variance_scale
-    
+
     sidecar_data["sq_error_id"] = sq_err_id
     sidecar_data["pred_var_id"] = pred_var_id
 

@@ -108,6 +108,13 @@ def evaluate_tail_from_preact(
             h = activation(h)
             layer = base_model.layers[idx]
             h = h @ layer.kernel.get_value() + layer.bias.get_value()
+        # Handle ProbabilisticRegressionModel dual-head output
+        if hasattr(base_model, 'mean_layer'):
+            h = activation(h)
+            mean = h @ base_model.mean_layer.kernel.get_value() + base_model.mean_layer.bias.get_value()
+            var_logits = h @ base_model.var_layer.kernel.get_value() + base_model.var_layer.bias.get_value()
+            var = jax.nn.softplus(var_logits) + 1e-6
+            return mean, var
         return h
     elif hasattr(base_model, f'l{current_layer_idx + 1}'):
         i = current_layer_idx + 2
@@ -194,9 +201,14 @@ class PJSVDEnsemble:
 
         # Store layer parameters (W, b) for all perturbed layers
         self.layer_params = layer_params or {}
-        # Store correction parameters (e.g., mu_old, std_old or next layer params)
+        # Targets for correction (e.g. following layer weights/biases or original stats)
         self.correction_params = correction_params or {}
+        # Per-layer independent specs for multi-layer PnC (like CIFAR MultiBlock).
+        # Each entry: {"v_opts": array(K, D), "sigmas": array(K,), "W_shape": tuple}
+        # When set, z_coeffs shape must be (n_members, n_layers, K).
+        self.layer_specs = kwargs.get("layer_specs", None)
 
+        self._n_members = self.z_coeffs.shape[0] if hasattr(self.z_coeffs, 'shape') else len(self.z_coeffs)
         self._precompute_corrections()
 
     def set_perturbation_size(self, size: float):
@@ -217,6 +229,14 @@ class PJSVDEnsemble:
         return self.perturbation_scale * self.member_radius_multipliers
 
     def _precompute_corrections(self):
+        # Per-layer independent multi-layer: skip joint coefficient scaling.
+        # Both "least_squares" and "none" enter the sequential path; "none" just
+        # uses the original next-layer W/b as the (non-)correction so the
+        # perturbation propagates through without compensation.
+        if self.layer_specs is not None and self.correction_mode in ("least_squares", "none"):
+            self._precompute_sequential_ls(dp_all=None)
+            return
+
         coeffs_all = self._get_coeffs_all()
         # dW for all members: (N, K) @ (K, D_flat) -> (N, D_flat)
         dp_all = coeffs_all @ np.array(self.v_opts)
@@ -225,8 +245,28 @@ class PJSVDEnsemble:
             self._precompute_bn_refit(dp_all)
         elif self.correction_mode == "least_squares":
             self._precompute_least_squares(dp_all)
+        elif self.correction_mode == "none":
+            self._precompute_none(dp_all)
         else: # Default: affine
             self._precompute_affine(dp_all)
+
+    def _precompute_none(self, dp_all):
+        """No-correction mode: perturb but use the ORIGINAL next-layer W/b
+        instead of any compensation. Stores per-member original weights so the
+        forward path can reuse the same scaffolding as the LS path.
+        """
+        n_members = len(self.z_coeffs)
+        # The perturbed weights are stored as next_w_news/next_b_news for the
+        # forward path; here we just broadcast the ORIGINAL next-layer params.
+        w_next_orig = self.correction_params["next_w"]
+        b_next_orig = self.correction_params.get("next_b")
+        if b_next_orig is None:
+            b_next_orig = jnp.zeros(w_next_orig.shape[-1], dtype=w_next_orig.dtype)
+        self.next_w_news = [w_next_orig for _ in range(n_members)]
+        self.next_b_news = [b_next_orig for _ in range(n_members)]
+        # dp_all is needed by _forward_member to apply the perturbation
+        self.dp_all = dp_all
+        self.scale_factors = [jnp.ones(w_next_orig.shape[0], dtype=w_next_orig.dtype) for _ in range(n_members)]
 
     def _precompute_affine(self, dp_all):
         # We assume for affine correction we are matching mu_old, std_old
@@ -264,7 +304,12 @@ class PJSVDEnsemble:
         self.next_b_news = jnp.stack(next_b_news, axis=0)
 
     def _precompute_least_squares(self, dp_all):
-        # Target is the original unperturbed activations/outputs of the next layer
+        if len(self.layers) > 1:
+            # Multi-layer: sequential correction at each layer interface
+            self._precompute_sequential_ls(dp_all)
+            return
+
+        # Single layer: one correction at the next-layer interface
         Z = self.correction_params.get("target_act")
         N_samples = Z.shape[0]
 
@@ -286,6 +331,146 @@ class PJSVDEnsemble:
 
         self.next_w_news = jnp.stack(next_w_news, axis=0)
         self.next_b_news = jnp.stack(next_b_news, axis=0)
+
+    def _precompute_sequential_ls(self, dp_all):
+        """Sequential layerwise correction for multi-layer PnC.
+
+        Two modes depending on whether per-layer independent specs are provided:
+
+        1. **Per-layer independent** (``self.layer_specs`` is set): each layer has
+           its own direction set, sigmas, and z_coeffs.  Perturbation at layer j
+           is computed from ``layer_specs[j]`` independently, then corrected at the
+           j→(j+1) interface via LS.  This is the intended algorithm behaviour and
+           matches the CIFAR MultiBlockPnCEnsemble approach.
+
+        2. **Joint fallback** (``self.layer_specs`` is None): perturbations come
+           from a single joint direction vector split across layers.  Each layer's
+           segment is applied and corrected sequentially, but the segments are
+           correlated because they come from the same direction.
+        """
+        n_layers = len(self.layers)
+        n_members = len(self.z_coeffs) if self.layer_specs is None else self.z_coeffs.shape[0]
+
+        # 1. Compute original pre-activations at each interface (correction targets)
+        h = self.X_sub
+        orig_preacts = []
+        for l_name in self.layers:
+            W = self.layer_params[l_name]["W"]
+            b = self.layer_params[l_name]["b"]
+            z = h @ W + b
+            orig_preacts.append(z)
+            h = self.activation(z)
+        final_target = self.correction_params.get("target_act")
+
+        # 2. Compute per-layer perturbation dWs for every member
+        if self.layer_specs is not None:
+            # Per-layer independent: each layer has own v_opts/sigmas/z_coeffs
+            all_dWs = []  # list of length n_members, each a list of n_layers dW arrays
+            for i in range(n_members):
+                member_dWs = []
+                for j, spec in enumerate(self.layer_specs):
+                    z_row = self.z_coeffs[i, j]  # (K,)
+                    coeffs = _scale_coefficients_with_member_radii(
+                        z_row[None, :],
+                        np.asarray(spec["sigmas"]),
+                        self.perturbation_scale,
+                        self.sigma_sq_weights,
+                        np.asarray([self.member_radius_multipliers[i]]),
+                    )[0]
+                    dp = coeffs @ np.asarray(spec["v_opts"])
+                    member_dWs.append(jnp.array(dp.reshape(spec["W_shape"])))
+                all_dWs.append(member_dWs)
+        else:
+            # Joint fallback: split single dp vector per layer
+            all_dWs = []
+            for i in range(n_members):
+                p = dp_all[i]
+                dWs = []
+                offset = 0
+                for l_name in self.layers:
+                    W = self.layer_params[l_name]["W"]
+                    dw = p[offset:offset + W.size].reshape(W.shape)
+                    dWs.append(dw)
+                    offset += W.size
+                all_dWs.append(dWs)
+
+        # 3. Compute original hidden states needed for correction targets.
+        #    For each perturbed layer j, the correction at the NEXT layer targets
+        #    the original pre-activation there: orig_h[j] @ W_next + b_next.
+        #    We need the original post-activation after each perturbed layer's
+        #    correction pair to feed into the next block.
+        all_orig_h = []  # post-activation through entire original model at each layer
+        h_orig = self.X_sub
+        n_model_layers = max(
+            int(l_name.replace("l", "")) for l_name in self.layer_params
+        )  # highest perturbed layer index
+        # Walk through the full model to collect all intermediate activations
+        base_model = self.base_model
+        h_walk = self.X_sub
+        if hasattr(base_model, 'layers'):
+            for idx in range(len(base_model.layers)):
+                z = h_walk @ base_model.layers[idx].kernel.get_value() + base_model.layers[idx].bias.get_value()
+                all_orig_h.append(h_walk)  # input to this layer
+                h_walk = self.activation(z)
+            all_orig_h.append(h_walk)  # final post-activation
+
+        # 4. Sequential perturb-correct per member
+        #    Each perturbed layer j is paired with correction layer j+1.
+        #    The correction target is: all_orig_h[j+1] @ W_{j+1} + b_{j+1}
+        #    (the original pre-activation at the correction layer).
+        per_block_w = [[] for _ in range(n_layers)]
+        per_block_b = [[] for _ in range(n_layers)]
+
+        for i in range(n_members):
+            dWs = all_dWs[i]
+            h = self.X_sub
+
+            for j in range(n_layers):
+                l_name = self.layers[j]
+                layer_idx = int(l_name.replace("l", "")) - 1  # 0-based model layer index
+                corr_idx = layer_idx + 1  # correction layer is the next one
+                W_pert = self.layer_params[l_name]["W"]
+                b_pert = self.layer_params[l_name]["b"]
+
+                # Perturb this layer
+                h_pert = self.activation(h @ (W_pert + dWs[j]) + b_pert)
+
+                # Correction target: original pre-activation at the correction layer
+                if corr_idx < len(base_model.layers):
+                    W_corr_orig = base_model.layers[corr_idx].kernel.get_value()
+                    b_corr_orig = base_model.layers[corr_idx].bias.get_value()
+                    target = all_orig_h[corr_idx] @ W_corr_orig + b_corr_orig
+                else:
+                    target = final_target
+
+                if self.correction_mode == "none":
+                    # No correction: use the ORIGINAL next-layer weights so
+                    # the perturbation propagates through unchanged.
+                    if corr_idx < len(base_model.layers):
+                        W_corr = W_corr_orig
+                        b_corr = b_corr_orig
+                    else:
+                        W_corr = jnp.eye(h_pert.shape[-1], dtype=h_pert.dtype)
+                        b_corr = jnp.zeros(h_pert.shape[-1], dtype=h_pert.dtype)
+                else:
+                    # Solve LS: [h_pert, 1] @ W_aug ≈ target
+                    ones = jnp.ones((h_pert.shape[0], 1), dtype=h_pert.dtype)
+                    h_aug = jnp.concatenate([h_pert, ones], axis=-1)
+                    W_aug, _, _, _ = jnp.linalg.lstsq(h_aug, target, rcond=None)
+                    W_corr = W_aug[:-1, :]
+                    b_corr = W_aug[-1, :]
+
+                per_block_w[j].append(W_corr)
+                per_block_b[j].append(b_corr)
+
+                # Apply correction and move to next block's input
+                h = self.activation(h_pert @ W_corr + b_corr)
+
+        self.seq_w_effs = [jnp.stack(ws, axis=0) for ws in per_block_w]
+        self.seq_b_effs = [jnp.stack(bs, axis=0) for bs in per_block_b]
+        # Store per-member per-layer perturbation dWs for the forward pass
+        self.seq_dWs = [[dWs[j] for dWs in all_dWs] for j in range(n_layers)]
+        self.seq_dWs = [jnp.stack(dws, axis=0) for dws in self.seq_dWs]
 
     def _precompute_bn_refit(self, dp_all):
         # Specialized ResNet logic
@@ -364,21 +549,25 @@ class PJSVDEnsemble:
         return results
 
     def _forward_member(self, x, i, dp_all):
+        # Sequential correction for multi-layer least_squares (or no-correction).
+        if self.correction_mode in ("least_squares", "none") and len(self.layers) > 1:
+            return self._forward_member_sequential(x, i, dp_all)
+
         p = dp_all[i]
-        
+
         if self.correction_mode == "bn_refit":
             return self._forward_bn_refit(x, i, p)
-        
+
         perturbed_vals = self._apply_perturbations(x, p)
         h_last_perturbed = perturbed_vals[-1]
-        
-        if self.correction_mode == "least_squares":
+
+        if self.correction_mode in ("least_squares", "none"):
             w_next = self.next_w_news[i]
             b_next = self.next_b_news[i]
         else: # affine
             w_next = self.correction_params["next_w"] * self.scale_factors[i][:, None]
             b_next = self.next_b_news[i]
-            
+
         z_next = h_last_perturbed @ w_next + b_next
         if self.tail_is_hidden:
             mean = z_next @ self.base_model.mean_layer.kernel.get_value() + self.base_model.mean_layer.bias.get_value()
@@ -387,12 +576,58 @@ class PJSVDEnsemble:
             return mean, var
         return evaluate_tail_from_preact(self.base_model, z_next, current_layer_idx=len(self.layers), activation=self.activation)
 
+    def _forward_member_sequential(self, x, i, dp_all):
+        """Forward pass with alternating perturb/correct blocks.
+
+        Each block j:
+          1. Perturb layer j: h = act(h @ (W_j + dW_j) + b_j)
+          2. Correct next layer: h = act(h @ W_corr + b_corr)
+        After all blocks, evaluate remaining tail layers.
+        """
+        n_blocks = len(self.layers)
+        h = x
+
+        for j in range(n_blocks):
+            l_name = self.layers[j]
+            W_pert = self.layer_params[l_name]["W"]
+            b_pert = self.layer_params[l_name]["b"]
+            # Perturb
+            h = self.activation(h @ (W_pert + self.seq_dWs[j][i]) + b_pert)
+            # Correct
+            h = self.activation(h @ self.seq_w_effs[j][i] + self.seq_b_effs[j][i])
+
+        # h is post-activation past 2*n_blocks layers. Evaluate remaining tail.
+        last_perturb_idx = int(self.layers[-1].replace("l", "")) - 1
+        tail_start_idx = last_perturb_idx + 2  # 0-based index of first remaining layer
+
+        if hasattr(self.base_model, 'layers'):
+            for idx in range(tail_start_idx, len(self.base_model.layers)):
+                layer = self.base_model.layers[idx]
+                z = h @ layer.kernel.get_value() + layer.bias.get_value()
+                if idx < len(self.base_model.layers) - 1:
+                    h = self.activation(z)
+                else:
+                    h = z  # last layer: no activation
+            # Handle probabilistic dual-head
+            if hasattr(self.base_model, 'mean_layer'):
+                h = self.activation(h)  # activate last hidden pre-act
+                mean = h @ self.base_model.mean_layer.kernel.get_value() + self.base_model.mean_layer.bias.get_value()
+                var_logits = h @ self.base_model.var_layer.kernel.get_value() + self.base_model.var_layer.bias.get_value()
+                var = jax.nn.softplus(var_logits) + 1e-6
+                return mean, var
+            return h
+        raise ValueError("Sequential forward requires model.layers interface")
+
     def _predict_member_intermediate_and_corrected(self, x, i, dp_all):
+        # Sequential correction for multi-layer least_squares (or no-correction).
+        if self.correction_mode in ("least_squares", "none") and len(self.layers) > 1:
+            return self._predict_member_intermediate_and_corrected_sequential(x, i, dp_all)
+
         p = dp_all[i]
         perturbed_vals = self._apply_perturbations(x, p)
         h_last_perturbed = perturbed_vals[-1]
 
-        if self.correction_mode == "least_squares":
+        if self.correction_mode in ("least_squares", "none"):
             w_next = self.next_w_news[i]
             b_next = self.next_b_news[i]
         else:
@@ -401,6 +636,23 @@ class PJSVDEnsemble:
 
         z_next = h_last_perturbed @ w_next + b_next
         return h_last_perturbed, z_next
+
+    def _predict_member_intermediate_and_corrected_sequential(self, x, i, dp_all):
+        """Intermediate + corrected output using alternating perturb/correct blocks."""
+        n_blocks = len(self.layers)
+        h = x
+
+        for j in range(n_blocks):
+            l_name = self.layers[j]
+            W_pert = self.layer_params[l_name]["W"]
+            b_pert = self.layer_params[l_name]["b"]
+            h = self.activation(h @ (W_pert + self.seq_dWs[j][i]) + b_pert)
+            z_corr = h @ self.seq_w_effs[j][i] + self.seq_b_effs[j][i]
+            h = self.activation(z_corr)
+
+        # h_last_perturbed: post-activation of last perturbed layer (before correction)
+        # z_next: pre-activation after last correction
+        return h, z_corr
 
     def _forward_bn_refit(self, x, i, p):
         # PreActResNet-18 specific forward
@@ -476,12 +728,18 @@ class PJSVDEnsemble:
         out = jnp.mean(out, axis=(1, 2))
         return self.base_model.fc(out)
 
-    def predict(self, x: jax.Array) -> jax.Array:
+    def _compute_dp_all(self):
+        """Compute per-member perturbation vectors. Not needed for per-layer independent mode."""
+        if self.layer_specs is not None:
+            return None  # sequential methods use self.seq_dWs instead
         coeffs_all = self._get_coeffs_all()
-        dp_all = coeffs_all @ np.array(self.v_opts)
-        
+        return coeffs_all @ np.array(self.v_opts)
+
+    def predict(self, x: jax.Array) -> jax.Array:
+        dp_all = self._compute_dp_all()
+
         ys = []
-        for i in range(len(self.z_coeffs)):
+        for i in range(self._n_members):
             ys.append(self._forward_member(x, i, dp_all))
         if ys and isinstance(ys[0], tuple) and len(ys[0]) == 2:
             means = jnp.stack([y[0] for y in ys], axis=0)
@@ -490,16 +748,14 @@ class PJSVDEnsemble:
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: jax.Array, idx: int) -> jax.Array:
-        coeffs_all = self._get_coeffs_all()
-        dp_all = coeffs_all @ np.array(self.v_opts)
+        dp_all = self._compute_dp_all()
         return self._forward_member(x, idx, dp_all)
 
     def predict_intermediate_and_corrected(self, x: jax.Array) -> tuple[jax.Array, jax.Array]:
-        coeffs_all = self._get_coeffs_all()
-        dp_all = coeffs_all @ np.array(self.v_opts)
+        dp_all = self._compute_dp_all()
         h_vals = []
         z_vals = []
-        for i in range(len(self.z_coeffs)):
+        for i in range(self._n_members):
             h_last_perturbed, z_next = self._predict_member_intermediate_and_corrected(x, i, dp_all)
             h_vals.append(h_last_perturbed)
             z_vals.append(z_next)
@@ -517,27 +773,38 @@ class PJSVDEnsemble:
 
 class EnsemblePJSVDHybrid:
     """
-    Hybrid uncertainty estimator: trains M independent base models (deep ensemble)
-    and applies PJSVD to each member, yielding M × n_perturbations total samples.
+    Hybrid uncertainty estimator: M independent base models (deep ensemble)
+    with PJSVD applied to each member, yielding M × K total samples.
 
-    predict() concatenates predictions from all per-member CompactPJSVDEnsembles
-    along axis 0, so the output shape is (M * n_perturbations, N, output_dim).
+    If the per-member ensembles are probabilistic (each ``predict`` returns a
+    ``(means, vars)`` tuple of shape ``((K, B, D), (K, B, D))``), the hybrid
+    concatenates both the means and the variances along the member axis and
+    returns a tuple of shape ``((M*K, B, D), (M*K, B, D))``. Downstream
+    ``_predictive_mean_var`` then applies the law of total variance correctly.
+
+    If the per-member ensembles are deterministic (each ``predict`` returns a
+    single ``(K, B, D)`` tensor), the hybrid concatenates along axis 0 and
+    returns a single ``(M*K, B, D)`` tensor.
     """
 
-    def __init__(self, pjsvd_ensembles: List['CompactPJSVDEnsemble']):
+    def __init__(self, pjsvd_ensembles: List['PJSVDEnsemble']):
         """
         Args:
-            pjsvd_ensembles: one CompactPJSVDEnsemble per base model.
+            pjsvd_ensembles: one PJSVDEnsemble per base model.
         """
         self.pjsvd_ensembles = pjsvd_ensembles
 
-    def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
-        """Returns (M * S, N, output_dim) stacked predictions."""
+    def predict(self, x):
+        """Returns concatenated predictions along the ensemble axis."""
         all_preds = [ens.predict(x) for ens in self.pjsvd_ensembles]
+        if all_preds and isinstance(all_preds[0], tuple) and len(all_preds[0]) == 2:
+            means = jnp.concatenate([p[0] for p in all_preds], axis=0)
+            vars_ = jnp.concatenate([p[1] for p in all_preds], axis=0)
+            return means, vars_
         return jnp.concatenate(all_preds, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
-        """Index into the flattened list of M*S members."""
+        """Index into the flattened list of M*K members."""
         n_per = len(self.pjsvd_ensembles[0].z_coeffs)
         member_idx = idx // n_per
         sample_idx = idx % n_per
@@ -624,6 +891,10 @@ class MCDropoutEnsemble:
         ys = []
         for _ in range(self.n_models):
             ys.append(self.model(x, deterministic=False))
+        if ys and isinstance(ys[0], tuple) and len(ys[0]) == 2:
+            means = jnp.stack([y[0] for y in ys], axis=0)
+            vars_ = jnp.stack([y[1] for y in ys], axis=0)
+            return means, vars_
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
@@ -753,23 +1024,34 @@ class SWAGEnsemble:
             self._cached_models = [self._sample_model() for _ in range(self.n_models)]
         return self._cached_models
 
+    def _call_model(self, model, x):
+        """Call model, passing use_running_average only if it accepts it (BN models)."""
+        try:
+            return model(x, use_running_average=True)
+        except TypeError:
+            return model(x)
+
     def predict(self, x: Float[Array, "batch ..."]) -> Float[Array, "ens batch ..."]:
         if self.cache_samples:
             models = self._get_cached_models()
-            ys = [m(x, use_running_average=True) for m in models]
+            ys = [self._call_model(m, x) for m in models]
         else:
             ys = []
             for _ in range(self.n_models):
                 sampled_m = self._sample_model()
-                ys.append(sampled_m(x, use_running_average=True))
+                ys.append(self._call_model(sampled_m, x))
+        if ys and isinstance(ys[0], tuple) and len(ys[0]) == 2:
+            means = jnp.stack([y[0] for y in ys], axis=0)
+            vars_ = jnp.stack([y[1] for y in ys], axis=0)
+            return means, vars_
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
         if self.cache_samples:
             models = self._get_cached_models()
-            return models[idx](x, use_running_average=True)
+            return self._call_model(models[idx], x)
         del idx
-        return self._sample_model()(x, use_running_average=True)
+        return self._call_model(self._sample_model(), x)
 
 
 class LaplaceEnsemble:
@@ -801,6 +1083,12 @@ class LaplaceEnsemble:
                 self.map_params[f'l{i}'] = (layer.kernel.get_value(), layer.bias.get_value())
                 i += 1
 
+        # Detect dual-head probabilistic model
+        self.is_probabilistic = hasattr(model, 'mean_layer') and hasattr(model, 'var_layer')
+        if self.is_probabilistic:
+            self.map_params['mean_layer'] = (model.mean_layer.kernel.get_value(), model.mean_layer.bias.get_value())
+            self.map_params['var_layer'] = (model.var_layer.kernel.get_value(), model.var_layer.bias.get_value())
+
     def _sample_layer_weights(self, layer_name: str):
         W_map, b_map = self.map_params[layer_name]
         W_full = jnp.concatenate([W_map, jnp.expand_dims(b_map, axis=0)], axis=0)
@@ -823,6 +1111,14 @@ class LaplaceEnsemble:
                 total_norm_sq += norm**2
                 nnx.update(layer.kernel, w)
                 nnx.update(layer.bias, b)
+            # Also perturb mean/var heads for probabilistic models
+            if self.is_probabilistic:
+                for head_name, head_attr in [('mean_layer', self.model.mean_layer), ('var_layer', self.model.var_layer)]:
+                    w, b = self._sample_layer_weights(head_name)
+                    norm = jnp.linalg.norm((w - self.map_params[head_name][0]).flatten())
+                    total_norm_sq += norm**2
+                    nnx.update(head_attr.kernel, w)
+                    nnx.update(head_attr.bias, b)
             total_norm = float(jnp.sqrt(total_norm_sq))
             return self.model, total_norm
 
@@ -848,6 +1144,10 @@ class LaplaceEnsemble:
         for _ in range(self.n_models):
             sampled_m, _ = self._sample_model()
             ys.append(sampled_m(x))
+        if ys and isinstance(ys[0], tuple) and len(ys[0]) == 2:
+            means = jnp.stack([y[0] for y in ys], axis=0)
+            vars_ = jnp.stack([y[1] for y in ys], axis=0)
+            return means, vars_
         return jnp.stack(ys, axis=0)
 
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:

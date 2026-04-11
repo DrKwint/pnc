@@ -147,12 +147,6 @@ def train_generic(
 
 # ======== Metrics Callables ========
 
-
-def mse_loss(m: nnx.Module, x: Float[Array, "batch ..."], y: Array) -> Float[Array, ""]:
-    preds = m(x)
-    return jnp.mean((preds - y) ** 2)
-
-
 def gaussian_nll_loss(
     m: nnx.Module, x: Float[Array, "batch ..."], y: Array
 ) -> Float[Array, ""]:
@@ -523,88 +517,6 @@ def train_subspace_model(
         pca_components = jnp.zeros((swag_mean_flat.shape[0], max_rank))
 
     return trained_model, swag_mean, pca_components
-
-
-def train_subspace_classification_model(
-    model: nnx.Module,
-    train_inputs: Float[Array, "batch ..."],
-    train_targets: Array,
-    val_inputs: Float[Array, "batch ..."],
-    val_targets: Array,
-    steps: int = 5000,
-    batch_size: int = 256,
-    lr: float = 1e-3,
-    swag_start: int = 3000,
-    max_rank: int = 20,
-    patience: int = 15,
-    eval_freq: int = 100,
-) -> Tuple[nnx.Module, nnx.State, jax.Array]:
-    subspace_state = {"swag_mean": None, "n_swag_steps": 0, "snapshots": []}
-    snapshot_freq = max(1, (steps - swag_start) // max_rank)
-
-    def subspace_hook(step: int, m: nnx.Module, loss: float, best_val: float):
-        if step >= swag_start:
-            current_params = nnx.state(m, nnx.Param)
-            if subspace_state["swag_mean"] is None:
-                subspace_state["swag_mean"] = jax.tree.map(
-                    jnp.zeros_like, current_params
-                )
-
-            n_swag_steps = subspace_state.get("n_swag_steps", 0)
-            assert isinstance(n_swag_steps, int)
-            n_swag_steps = int(n_swag_steps)
-            n = float(n_swag_steps + 1)
-
-            subspace_state["swag_mean"] = jax.tree.map(
-                lambda s_m, p: (s_m * n_swag_steps + p) / n,
-                subspace_state["swag_mean"],
-                current_params,
-            )
-            subspace_state["n_swag_steps"] = n_swag_steps + 1
-
-            if (step - swag_start) % snapshot_freq == 0:
-                snaps = subspace_state.get("snapshots", [])
-                if isinstance(snaps, list) and len(snaps) < max_rank:
-                    flat_params, _ = jax.flatten_util.ravel_pytree(current_params)
-                    snaps.append(flat_params)
-                    subspace_state["snapshots"] = snaps
-
-    trained_model = train_generic(
-        model,
-        train_inputs,
-        train_targets,
-        val_inputs,
-        val_targets,
-        loss_fn=ce_loss,
-        steps=steps,
-        batch_size=batch_size,
-        lr=lr,
-        patience=patience,
-        eval_freq=eval_freq,
-        step_hook=subspace_hook,
-        log_prefix=f"Training Classification Subspace (rank {max_rank}, SWAG after {swag_start})",
-    )
-
-    n_swag_steps = subspace_state["n_swag_steps"]
-    snapshots = subspace_state["snapshots"]
-
-    if n_swag_steps == 0:
-        swag_mean = nnx.state(trained_model, nnx.Param)
-    else:
-        swag_mean = subspace_state["swag_mean"]
-
-    swag_mean_flat, _ = jax.flatten_util.ravel_pytree(swag_mean)
-    if len(snapshots) > 0:
-        A = jnp.stack([s - swag_mean_flat for s in snapshots], axis=1)
-        U, S, _ = jnp.linalg.svd(A, full_matrices=False)
-        pca_components = U[:, :max_rank] * (
-            S[:max_rank] / jnp.sqrt(max(1, len(snapshots) - 1))
-        )
-    else:
-        pca_components = jnp.zeros((swag_mean_flat.shape[0], max_rank))
-
-    return trained_model, swag_mean, pca_components
-
 
 # ---------------------------------------------------------------------------
 # CIFAR ResNet training helpers (2D conv, BatchNorm)
