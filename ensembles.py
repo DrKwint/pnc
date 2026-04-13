@@ -1038,6 +1038,14 @@ class SWAGEnsemble:
         del idx
         return self._call_model(self._sample_model(), x)
 
+    def predict_intermediate(self, x: jax.Array, layer_idx: int = 1) -> jax.Array:
+        from util import get_intermediate_state
+        hs = []
+        for _ in range(self.n_models):
+            sampled_m = self._sample_model()
+            hs.append(get_intermediate_state(sampled_m, x, layer_idx))
+        return jnp.stack(hs, axis=0)
+
 
 class LaplaceEnsemble:
     def __init__(self, model: TransitionModel, kfac_factors: dict, prior_precision: float, n_models: int, data_size: int):
@@ -1138,6 +1146,15 @@ class LaplaceEnsemble:
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
         sampled_m, _ = self._sample_model()
         return sampled_m(x)
+
+    def predict_intermediate(self, x: jax.Array, layer_idx: int = 1) -> jax.Array:
+        from util import get_intermediate_state
+        hs = []
+        for _ in range(self.n_models):
+            sampled_m, _ = self._sample_model()
+            hs.append(get_intermediate_state(sampled_m, x, layer_idx))
+        return jnp.stack(hs, axis=0)
+
 
 class Epinet(nnx.Module):
     """Epistemic network (Osband et al., 2023).
@@ -1349,6 +1366,14 @@ class SubspaceInferenceEnsemble:
     def predict_one(self, x: Float[Array, "batch ..."], idx: int) -> Float[Array, "batch ..."]:
         sampled_m, _ = self._sample_model(idx)
         return _sample_probabilistic(sampled_m(x), idx)
+
+    def predict_intermediate(self, x: jax.Array, layer_idx: int = 1) -> jax.Array:
+        from util import get_intermediate_state
+        hs = []
+        for i in range(self.n_samples):
+            self._sample_model(i)
+            hs.append(get_intermediate_state(self.base_model, x, layer_idx))
+        return jnp.stack(hs, axis=0)
 
 
 # ==============================================================================

@@ -1,0 +1,2361 @@
+=== START Sun Apr 12 16:08:08 PDT 2026 ===
+  backed up results/Ant-v5/swag_n100_h200-200-200-200_act-relu_seed0.json
+[16:08:08] RUN swag_Ant-v5_0
+DEBUG: Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___aa475996f0   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___aa475996f0   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 314625] Worker Worker(salt=2683446877, workers=1, host=EriiNoDesktop, username=elean, pid=314625) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 314625] Worker Worker(salt=2683446877, workers=1, host=EriiNoDesktop, username=elean, pid=314625) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 314625] Worker Worker(salt=2683446877, workers=1, host=EriiNoDesktop, username=elean, pid=314625) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 314625] Worker Worker(salt=2683446877, workers=1, host=EriiNoDesktop, username=elean, pid=314625) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___aa475996f0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___aa475996f0   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=2683446877, workers=1, host=EriiNoDesktop, username=elean, pid=314625) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2683446877, workers=1, host=EriiNoDesktop, username=elean, pid=314625) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 4: SWAG (Ant-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.84623 | Val Loss -1.82574
+Early stopping at step 3200. Best Val Loss: -2.96263
+Final Train Loss: -3.31221 | Best Val Loss: -2.96263
+| SWAG steps collected: 2200
+Training time: 43.30s
+\n--- Results: SWAG ---
+[VAL] RMSE: 0.68539 | Var: 0.26735 | NLL: -0.56801 | CalibErr: 0.12737
+[ID] RMSE: 0.69691 | Var: 0.26715 | NLL: -0.58558 | CalibErr: 0.12663
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.84759 | Var: 0.27222 | NLL: -0.23126 | CalibErr: 0.12264
+[ood_near] AUROC: 0.5455 | AUPR: 0.5200 | RMSE Rat: 1.22x
+[OOD (ood_mid)] RMSE: 0.89740 | Var: 0.27034 | NLL: -0.16941 | CalibErr: 0.12453
+[ood_mid] AUROC: 0.5491 | AUPR: 0.5113 | RMSE Rat: 1.29x
+[OOD (ood_far)] RMSE: 1.34102 | Var: 0.26954 | NLL: 1.36459 | CalibErr: 0.09086
+[ood_far] AUROC: 0.5599 | AUPR: 0.5278 | RMSE Rat: 1.92x
+[OOD (ood)] RMSE: 1.33962 | Var: 0.26937 | NLL: 1.35677 | CalibErr: 0.09069
+[ood] AUROC: 0.5607 | AUPR: 0.5270 | RMSE Rat: 1.92x
+[16:09:07] DONE swag_Ant-v5_0 rc=0
+  backed up results/Ant-v5/swag_vcal_n100_h200-200-200-200_act-relu_seed0.json
+[16:09:07] RUN swag_vcal_Ant-v5_0
+DEBUG: Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___a839138f06   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___a839138f06   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 315244] Worker Worker(salt=9439494740, workers=1, host=EriiNoDesktop, username=elean, pid=315244) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 315244] Worker Worker(salt=9439494740, workers=1, host=EriiNoDesktop, username=elean, pid=315244) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 315244] Worker Worker(salt=9439494740, workers=1, host=EriiNoDesktop, username=elean, pid=315244) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 315244] Worker Worker(salt=9439494740, workers=1, host=EriiNoDesktop, username=elean, pid=315244) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___a839138f06   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___a839138f06   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9439494740, workers=1, host=EriiNoDesktop, username=elean, pid=315244) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9439494740, workers=1, host=EriiNoDesktop, username=elean, pid=315244) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 4: SWAG (Ant-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.84623 | Val Loss -1.82574
+Early stopping at step 3200. Best Val Loss: -2.96263
+Final Train Loss: -3.31221 | Best Val Loss: -2.96263
+| SWAG steps collected: 2200
+Training time: 40.81s
+\n--- Results: SWAG ---
+[posthoc] Learned variance scale on validation split: 0.322096
+[VAL] RMSE: 0.68442 | Var: 0.08615 | NLL: -0.80573 | CalibErr: 0.08387
+[ID] RMSE: 0.69788 | Var: 0.08601 | NLL: -0.80373 | CalibErr: 0.08732
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.85038 | Var: 0.08743 | NLL: 0.03059 | CalibErr: 0.08574
+[ood_near] AUROC: 0.5509 | AUPR: 0.5176 | RMSE Rat: 1.22x
+[OOD (ood_mid)] RMSE: 0.89629 | Var: 0.08731 | NLL: 0.08387 | CalibErr: 0.08899
+[ood_mid] AUROC: 0.5594 | AUPR: 0.5177 | RMSE Rat: 1.28x
+[OOD (ood_far)] RMSE: 1.33962 | Var: 0.08676 | NLL: 4.78279 | CalibErr: 0.05989
+[ood_far] AUROC: 0.5646 | AUPR: 0.5275 | RMSE Rat: 1.92x
+[OOD (ood)] RMSE: 1.34061 | Var: 0.08704 | NLL: 4.83164 | CalibErr: 0.05973
+[ood] AUROC: 0.5672 | AUPR: 0.5315 | RMSE Rat: 1.92x
+[16:10:09] DONE swag_vcal_Ant-v5_0 rc=0
+  backed up results/Ant-v5/subspace_inference_n100_h200-200-200-200_act-relu_seed0_T0.0.json
+[16:10:09] RUN sub_Ant-v5_0
+DEBUG: Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___099e18ddfb   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___099e18ddfb   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 315810] Worker Worker(salt=1136697152, workers=1, host=EriiNoDesktop, username=elean, pid=315810) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 315810] Worker Worker(salt=1136697152, workers=1, host=EriiNoDesktop, username=elean, pid=315810) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO: [pid 315810] Worker Worker(salt=1136697152, workers=1, host=EriiNoDesktop, username=elean, pid=315810) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 315810] Worker Worker(salt=1136697152, workers=1, host=EriiNoDesktop, username=elean, pid=315810) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___099e18ddfb   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___099e18ddfb   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=1136697152, workers=1, host=EriiNoDesktop, username=elean, pid=315810) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=1136697152, workers=1, host=EriiNoDesktop, username=elean, pid=315810) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP: Subspace Inference (Ant-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss -2.32187 | Val Loss -2.29396
+Step 1000: Train Loss -2.21237 | Val Loss -2.27168
+Step 1500: Train Loss -1.91507 | Val Loss -1.83727
+Step 2000: Train Loss -2.89409 | Val Loss -2.67287
+Final Train Loss: -2.89409 | Best Val Loss: -2.89079
+Training time: 26.51s
+\n--- Results: Subspace Inference ---
+[VAL] RMSE: 0.54461 | Var: 0.37184 | NLL: -1.66649 | CalibErr: 0.07761
+[ID] RMSE: 0.53418 | Var: 0.37094 | NLL: -1.67845 | CalibErr: 0.07826
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.69997 | Var: 0.36933 | NLL: -0.05788 | CalibErr: 0.06104
+[ood_near] AUROC: 0.4909 | AUPR: 0.4983 | RMSE Rat: 1.31x
+[OOD (ood_mid)] RMSE: 0.81361 | Var: 0.35472 | NLL: 0.04492 | CalibErr: 0.06656
+[ood_mid] AUROC: 0.4447 | AUPR: 0.4578 | RMSE Rat: 1.52x
+[OOD (ood_far)] RMSE: 1.43034 | Var: 0.31600 | NLL: 10.41197 | CalibErr: 0.03507
+[ood_far] AUROC: 0.2932 | AUPR: 0.3841 | RMSE Rat: 2.68x
+[OOD (ood)] RMSE: 1.43034 | Var: 0.31600 | NLL: 10.41197 | CalibErr: 0.03507
+[ood] AUROC: 0.2932 | AUPR: 0.3841 | RMSE Rat: 2.68x
+[16:10:50] DONE sub_Ant-v5_0 rc=0
+  backed up results/Ant-v5/subspace_inference_vcal_n100_h200-200-200-200_act-relu_seed0_T0.0.json
+[16:10:50] RUN sub_vcal_Ant-v5_0
+DEBUG: Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___2e0050a8ab   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___2e0050a8ab   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 316309] Worker Worker(salt=2349831457, workers=1, host=EriiNoDesktop, username=elean, pid=316309) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 316309] Worker Worker(salt=2349831457, workers=1, host=EriiNoDesktop, username=elean, pid=316309) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO: [pid 316309] Worker Worker(salt=2349831457, workers=1, host=EriiNoDesktop, username=elean, pid=316309) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 316309] Worker Worker(salt=2349831457, workers=1, host=EriiNoDesktop, username=elean, pid=316309) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___2e0050a8ab   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___2e0050a8ab   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=2349831457, workers=1, host=EriiNoDesktop, username=elean, pid=316309) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2349831457, workers=1, host=EriiNoDesktop, username=elean, pid=316309) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP: Subspace Inference (Ant-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss -2.32187 | Val Loss -2.29396
+Step 1000: Train Loss -2.21237 | Val Loss -2.27168
+Step 1500: Train Loss -1.91507 | Val Loss -1.83727
+Step 2000: Train Loss -2.89409 | Val Loss -2.67287
+Final Train Loss: -2.89409 | Best Val Loss: -2.89079
+Training time: 27.17s
+\n--- Results: Subspace Inference ---
+[posthoc] Learned variance scale on validation split: 0.710788
+[VAL] RMSE: 0.54461 | Var: 0.26430 | NLL: -1.69242 | CalibErr: 0.05819
+[ID] RMSE: 0.53418 | Var: 0.26366 | NLL: -1.70899 | CalibErr: 0.05918
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.69997 | Var: 0.26252 | NLL: 0.51159 | CalibErr: 0.04237
+[ood_near] AUROC: 0.4909 | AUPR: 0.4983 | RMSE Rat: 1.31x
+[OOD (ood_mid)] RMSE: 0.81361 | Var: 0.25213 | NLL: 0.59787 | CalibErr: 0.04862
+[ood_mid] AUROC: 0.4447 | AUPR: 0.4578 | RMSE Rat: 1.52x
+[OOD (ood_far)] RMSE: 1.43034 | Var: 0.22461 | NLL: 15.00524 | CalibErr: 0.02635
+[ood_far] AUROC: 0.2932 | AUPR: 0.3841 | RMSE Rat: 2.68x
+[OOD (ood)] RMSE: 1.43034 | Var: 0.22461 | NLL: 15.00524 | CalibErr: 0.02635
+[ood] AUROC: 0.2932 | AUPR: 0.3841 | RMSE Rat: 2.68x
+[16:11:32] DONE sub_vcal_Ant-v5_0 rc=0
+  backed up results/Ant-v5/laplace_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed0.json
+[16:11:32] RUN lap_Ant-v5_0
+DEBUG: Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___87d3ce4a57   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___87d3ce4a57   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 316809] Worker Worker(salt=6471162855, workers=1, host=EriiNoDesktop, username=elean, pid=316809) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 316809] Worker Worker(salt=6471162855, workers=1, host=EriiNoDesktop, username=elean, pid=316809) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 316809] Worker Worker(salt=6471162855, workers=1, host=EriiNoDesktop, username=elean, pid=316809) done      GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 316809] Worker Worker(salt=6471162855, workers=1, host=EriiNoDesktop, username=elean, pid=316809) done      GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___87d3ce4a57   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___87d3ce4a57   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=6471162855, workers=1, host=EriiNoDesktop, username=elean, pid=316809) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=6471162855, workers=1, host=EriiNoDesktop, username=elean, pid=316809) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 5: Laplace (Ant-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.84623 | Val Loss -1.82574
+Early stopping at step 3200. Best Val Loss: -2.96263
+Final Train Loss: -3.31221 | Best Val Loss: -2.96263
+Computing KFAC Factors...
+Training + KFAC time: 20.83s
+\n--- Results: Laplace (prior=1.0) ---
+[VAL] RMSE: 5114.22656 | Var: 1885227520.00000 | NLL: 11.48388 | CalibErr: 0.18152
+[ID] RMSE: 6147.38770 | Var: 1928692096.00000 | NLL: 11.51504 | CalibErr: 0.18426
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 5944.51758 | Var: 2438693120.00000 | NLL: 11.62834 | CalibErr: 0.18052
+[ood_near] AUROC: 0.6154 | AUPR: 0.6001 | RMSE Rat: 0.97x
+[OOD (ood_mid)] RMSE: 6617.00293 | Var: 2334634496.00000 | NLL: 11.57951 | CalibErr: 0.17996
+[ood_mid] AUROC: 0.5652 | AUPR: 0.5775 | RMSE Rat: 1.08x
+[OOD (ood_far)] RMSE: 9088.21191 | Var: 4956198912.00000 | NLL: 11.99914 | CalibErr: 0.18024
+[ood_far] AUROC: 0.8707 | AUPR: 0.8636 | RMSE Rat: 1.48x
+[OOD (ood)] RMSE: 9091.53613 | Var: 5038843392.00000 | NLL: 12.00672 | CalibErr: 0.18158
+[ood] AUROC: 0.8733 | AUPR: 0.8672 | RMSE Rat: 1.48x
+\n--- Results: Laplace (prior=10.0) ---
+[VAL] RMSE: 37.48335 | Var: 19302.31055 | NLL: 5.72263 | CalibErr: 0.17166
+[ID] RMSE: 42.02915 | Var: 20417.15234 | NLL: 5.75828 | CalibErr: 0.16849
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 43.77852 | Var: 23562.99609 | NLL: 5.83158 | CalibErr: 0.17063
+[ood_near] AUROC: 0.5731 | AUPR: 0.5554 | RMSE Rat: 1.04x
+[OOD (ood_mid)] RMSE: 42.30643 | Var: 24552.90625 | NLL: 5.82203 | CalibErr: 0.17745
+[ood_mid] AUROC: 0.5575 | AUPR: 0.5630 | RMSE Rat: 1.01x
+[OOD (ood_far)] RMSE: 57.52314 | Var: 43391.38281 | NLL: 6.17812 | CalibErr: 0.17317
+[ood_far] AUROC: 0.8184 | AUPR: 0.7759 | RMSE Rat: 1.37x
+[OOD (ood)] RMSE: 60.43988 | Var: 44188.09766 | NLL: 6.18776 | CalibErr: 0.17402
+[ood] AUROC: 0.8223 | AUPR: 0.7812 | RMSE Rat: 1.44x
+\n--- Results: Laplace (prior=100.0) ---
+[VAL] RMSE: 0.76176 | Var: 1.39331 | NLL: 0.46086 | CalibErr: 0.15149
+[ID] RMSE: 0.80222 | Var: 1.38222 | NLL: 0.46413 | CalibErr: 0.15393
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.01719 | Var: 1.57936 | NLL: 0.64388 | CalibErr: 0.14311
+[ood_near] AUROC: 0.6466 | AUPR: 0.5701 | RMSE Rat: 1.27x
+[OOD (ood_mid)] RMSE: 1.11034 | Var: 1.71375 | NLL: 0.64181 | CalibErr: 0.14201
+[ood_mid] AUROC: 0.6467 | AUPR: 0.6040 | RMSE Rat: 1.38x
+[OOD (ood_far)] RMSE: 1.98451 | Var: 2.96739 | NLL: 1.20475 | CalibErr: 0.12948
+[ood_far] AUROC: 0.8652 | AUPR: 0.8456 | RMSE Rat: 2.47x
+[OOD (ood)] RMSE: 1.99854 | Var: 3.11159 | NLL: 1.21772 | CalibErr: 0.13065
+[ood] AUROC: 0.8722 | AUPR: 0.8571 | RMSE Rat: 2.49x
+\n--- Results: Laplace (prior=1000.0) ---
+[VAL] RMSE: 0.56630 | Var: 0.39815 | NLL: -1.33688 | CalibErr: 0.14025
+[ID] RMSE: 0.56524 | Var: 0.39983 | NLL: -1.34012 | CalibErr: 0.14001
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.81077 | Var: 0.42936 | NLL: -0.43178 | CalibErr: 0.12252
+[ood_near] AUROC: 0.5917 | AUPR: 0.5762 | RMSE Rat: 1.43x
+[OOD (ood_mid)] RMSE: 0.90620 | Var: 0.42098 | NLL: -0.29373 | CalibErr: 0.12027
+[ood_mid] AUROC: 0.5910 | AUPR: 0.5333 | RMSE Rat: 1.60x
+[OOD (ood_far)] RMSE: 1.53663 | Var: 0.48536 | NLL: 3.31751 | CalibErr: 0.07661
+[ood_far] AUROC: 0.6287 | AUPR: 0.6673 | RMSE Rat: 2.72x
+[OOD (ood)] RMSE: 1.53016 | Var: 0.47111 | NLL: 3.39640 | CalibErr: 0.07537
+[ood] AUROC: 0.6134 | AUPR: 0.6488 | RMSE Rat: 2.71x
+\n--- Results: Laplace (prior=10000.0) ---
+[VAL] RMSE: 0.52839 | Var: 0.34411 | NLL: -1.64386 | CalibErr: 0.13009
+[ID] RMSE: 0.52590 | Var: 0.34870 | NLL: -1.69672 | CalibErr: 0.12936
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.78392 | Var: 0.36121 | NLL: 0.25538 | CalibErr: 0.10386
+[ood_near] AUROC: 0.5658 | AUPR: 0.5380 | RMSE Rat: 1.49x
+[OOD (ood_mid)] RMSE: 0.88648 | Var: 0.35287 | NLL: 0.76258 | CalibErr: 0.09690
+[ood_mid] AUROC: 0.5569 | AUPR: 0.5141 | RMSE Rat: 1.69x
+[OOD (ood_far)] RMSE: 1.52497 | Var: 0.33225 | NLL: 13.04677 | CalibErr: 0.03380
+[ood_far] AUROC: 0.4203 | AUPR: 0.4799 | RMSE Rat: 2.90x
+[OOD (ood)] RMSE: 1.52408 | Var: 0.33313 | NLL: 12.93764 | CalibErr: 0.03380
+[ood] AUROC: 0.4241 | AUPR: 0.4820 | RMSE Rat: 2.90x
+\n--- Results: Laplace (prior=100000.0) ---
+[VAL] RMSE: 0.52591 | Var: 0.33653 | NLL: -1.74514 | CalibErr: 0.11497
+[ID] RMSE: 0.52225 | Var: 0.33831 | NLL: -1.86511 | CalibErr: 0.11404
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.78130 | Var: 0.35009 | NLL: 1.83362 | CalibErr: 0.08179
+[ood_near] AUROC: 0.5627 | AUPR: 0.5381 | RMSE Rat: 1.50x
+[OOD (ood_mid)] RMSE: 0.88386 | Var: 0.34151 | NLL: 2.57883 | CalibErr: 0.07663
+[ood_mid] AUROC: 0.5524 | AUPR: 0.5146 | RMSE Rat: 1.69x
+[OOD (ood_far)] RMSE: 1.52722 | Var: 0.31577 | NLL: 29.41157 | CalibErr: 0.02598
+[ood_far] AUROC: 0.3981 | AUPR: 0.4628 | RMSE Rat: 2.92x
+[OOD (ood)] RMSE: 1.52816 | Var: 0.31600 | NLL: 29.87914 | CalibErr: 0.02592
+[ood] AUROC: 0.3984 | AUPR: 0.4634 | RMSE Rat: 2.93x
+[16:15:09] DONE lap_Ant-v5_0 rc=0
+  backed up results/Ant-v5/laplace_vcal_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed0.json
+[16:15:09] RUN lap_vcal_Ant-v5_0
+DEBUG: Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___e3833da67e   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___e3833da67e   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_0_847232522c   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 318055] Worker Worker(salt=2714899022, workers=1, host=EriiNoDesktop, username=elean, pid=318055) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 318055] Worker Worker(salt=2714899022, workers=1, host=EriiNoDesktop, username=elean, pid=318055) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 318055] Worker Worker(salt=2714899022, workers=1, host=EriiNoDesktop, username=elean, pid=318055) done      GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 318055] Worker Worker(salt=2714899022, workers=1, host=EriiNoDesktop, username=elean, pid=318055) done      GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___e3833da67e   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___e3833da67e   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=2714899022, workers=1, host=EriiNoDesktop, username=elean, pid=318055) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2714899022, workers=1, host=EriiNoDesktop, username=elean, pid=318055) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 5: Laplace (Ant-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.84623 | Val Loss -1.82574
+Early stopping at step 3200. Best Val Loss: -2.96263
+Final Train Loss: -3.31221 | Best Val Loss: -2.96263
+Computing KFAC Factors...
+Training + KFAC time: 17.34s
+\n--- Results: Laplace (prior=1.0) ---
+[posthoc] Learned variance scale on validation split: 0.013665
+[VAL] RMSE: 6066.52490 | Var: 25652806.00000 | NLL: 10.02327 | CalibErr: 0.04624
+[ID] RMSE: 5281.91162 | Var: 26553290.00000 | NLL: 9.84541 | CalibErr: 0.01068
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 6580.37549 | Var: 32589946.00000 | NLL: 10.09203 | CalibErr: 0.01801
+[ood_near] AUROC: 0.6127 | AUPR: 0.5799 | RMSE Rat: 1.25x
+[OOD (ood_mid)] RMSE: 6253.28369 | Var: 32739656.00000 | NLL: 9.99819 | CalibErr: 0.02042
+[ood_mid] AUROC: 0.5822 | AUPR: 0.5784 | RMSE Rat: 1.18x
+[OOD (ood_far)] RMSE: 9091.53613 | Var: 68856656.00000 | NLL: 10.44493 | CalibErr: 0.02622
+[ood_far] AUROC: 0.8690 | AUPR: 0.8546 | RMSE Rat: 1.72x
+[OOD (ood)] RMSE: 9194.04590 | Var: 68198128.00000 | NLL: 10.44081 | CalibErr: 0.00761
+[ood] AUROC: 0.8667 | AUPR: 0.8516 | RMSE Rat: 1.74x
+\n--- Results: Laplace (prior=10.0) ---
+[posthoc] Learned variance scale on validation split: 0.061281
+[VAL] RMSE: 38.68623 | Var: 1149.13879 | NLL: 4.73547 | CalibErr: 0.07261
+[ID] RMSE: 39.21449 | Var: 1291.66296 | NLL: 4.76188 | CalibErr: 0.07895
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 41.40981 | Var: 1490.09314 | NLL: 4.82302 | CalibErr: 0.08315
+[ood_near] AUROC: 0.5761 | AUPR: 0.5548 | RMSE Rat: 1.06x
+[OOD (ood_mid)] RMSE: 44.60666 | Var: 1489.11230 | NLL: 4.85856 | CalibErr: 0.07986
+[ood_mid] AUROC: 0.5537 | AUPR: 0.5469 | RMSE Rat: 1.14x
+[OOD (ood_far)] RMSE: 58.21609 | Var: 2679.64062 | NLL: 5.21133 | CalibErr: 0.07475
+[ood_far] AUROC: 0.8138 | AUPR: 0.7625 | RMSE Rat: 1.48x
+[OOD (ood)] RMSE: 57.57043 | Var: 2654.21289 | NLL: 5.21015 | CalibErr: 0.07026
+[ood] AUROC: 0.8112 | AUPR: 0.7593 | RMSE Rat: 1.47x
+\n--- Results: Laplace (prior=100.0) ---
+[posthoc] Learned variance scale on validation split: 0.133746
+[VAL] RMSE: 0.75861 | Var: 0.18730 | NLL: -0.14684 | CalibErr: 0.07537
+[ID] RMSE: 0.78408 | Var: 0.18481 | NLL: -0.13233 | CalibErr: 0.06953
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.03090 | Var: 0.23033 | NLL: 0.54651 | CalibErr: 0.06229
+[ood_near] AUROC: 0.6643 | AUPR: 0.6249 | RMSE Rat: 1.31x
+[OOD (ood_mid)] RMSE: 1.11628 | Var: 0.22329 | NLL: 0.51329 | CalibErr: 0.06629
+[ood_mid] AUROC: 0.6211 | AUPR: 0.5969 | RMSE Rat: 1.42x
+[OOD (ood_far)] RMSE: 2.04141 | Var: 0.42580 | NLL: 2.28595 | CalibErr: 0.05052
+[ood_far] AUROC: 0.8794 | AUPR: 0.8770 | RMSE Rat: 2.60x
+[OOD (ood)] RMSE: 1.99306 | Var: 0.41564 | NLL: 2.34657 | CalibErr: 0.05228
+[ood] AUROC: 0.8723 | AUPR: 0.8693 | RMSE Rat: 2.54x
+\n--- Results: Laplace (prior=1000.0) ---
+[posthoc] Learned variance scale on validation split: 0.324695
+[VAL] RMSE: 0.56628 | Var: 0.13021 | NLL: -1.56502 | CalibErr: 0.09803
+[ID] RMSE: 0.56825 | Var: 0.13190 | NLL: -1.58184 | CalibErr: 0.09745
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.82046 | Var: 0.14233 | NLL: 1.01716 | CalibErr: 0.08049
+[ood_near] AUROC: 0.5963 | AUPR: 0.5761 | RMSE Rat: 1.44x
+[OOD (ood_mid)] RMSE: 0.90865 | Var: 0.13745 | NLL: 1.53182 | CalibErr: 0.07595
+[ood_mid] AUROC: 0.5792 | AUPR: 0.5233 | RMSE Rat: 1.60x
+[OOD (ood_far)] RMSE: 1.52286 | Var: 0.15346 | NLL: 12.22219 | CalibErr: 0.03629
+[ood_far] AUROC: 0.5892 | AUPR: 0.6386 | RMSE Rat: 2.68x
+[OOD (ood)] RMSE: 1.53568 | Var: 0.15603 | NLL: 12.38411 | CalibErr: 0.03468
+[ood] AUROC: 0.6004 | AUPR: 0.6495 | RMSE Rat: 2.70x
+\n--- Results: Laplace (prior=10000.0) ---
+[posthoc] Learned variance scale on validation split: 0.630492
+[VAL] RMSE: 0.52893 | Var: 0.21853 | NLL: -1.69001 | CalibErr: 0.11321
+[ID] RMSE: 0.52574 | Var: 0.21792 | NLL: -1.77377 | CalibErr: 0.11246
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.78318 | Var: 0.22725 | NLL: 1.14342 | CalibErr: 0.08240
+[ood_near] AUROC: 0.5760 | AUPR: 0.5470 | RMSE Rat: 1.49x
+[OOD (ood_mid)] RMSE: 0.88707 | Var: 0.22220 | NLL: 1.85195 | CalibErr: 0.07579
+[ood_mid] AUROC: 0.5716 | AUPR: 0.5224 | RMSE Rat: 1.69x
+[OOD (ood_far)] RMSE: 1.52480 | Var: 0.20974 | NLL: 20.60540 | CalibErr: 0.02277
+[ood_far] AUROC: 0.4330 | AUPR: 0.4880 | RMSE Rat: 2.90x
+[OOD (ood)] RMSE: 1.52593 | Var: 0.21053 | NLL: 21.31610 | CalibErr: 0.02426
+[ood] AUROC: 0.4367 | AUPR: 0.4909 | RMSE Rat: 2.90x
+\n--- Results: Laplace (prior=100000.0) ---
+[posthoc] Learned variance scale on validation split: 1.026831
+[VAL] RMSE: 0.52540 | Var: 0.34550 | NLL: -1.74607 | CalibErr: 0.11424
+[ID] RMSE: 0.52274 | Var: 0.34760 | NLL: -1.85563 | CalibErr: 0.11501
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.78226 | Var: 0.35950 | NLL: 1.64407 | CalibErr: 0.08296
+[ood_near] AUROC: 0.5606 | AUPR: 0.5373 | RMSE Rat: 1.50x
+[OOD (ood_mid)] RMSE: 0.88573 | Var: 0.35103 | NLL: 2.55520 | CalibErr: 0.07706
+[ood_mid] AUROC: 0.5518 | AUPR: 0.5148 | RMSE Rat: 1.69x
+[OOD (ood_far)] RMSE: 1.52739 | Var: 0.32421 | NLL: 30.15829 | CalibErr: 0.02633
+[ood_far] AUROC: 0.3966 | AUPR: 0.4624 | RMSE Rat: 2.92x
+[OOD (ood)] RMSE: 1.52799 | Var: 0.32450 | NLL: 29.56398 | CalibErr: 0.02608
+[ood] AUROC: 0.3979 | AUPR: 0.4630 | RMSE Rat: 2.92x
+[16:19:07] DONE lap_vcal_Ant-v5_0 rc=0
+  backed up results/HalfCheetah-v5/swag_n100_h200-200-200-200_act-relu_seed0.json
+[16:19:07] RUN swag_HalfCheetah-v5_0
+DEBUG: Checking if GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___69b7d1c547   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___69b7d1c547   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 319309] Worker Worker(salt=7568867338, workers=1, host=EriiNoDesktop, username=elean, pid=319309) running   GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 319309] Worker Worker(salt=7568867338, workers=1, host=EriiNoDesktop, username=elean, pid=319309) running   GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 319309] Worker Worker(salt=7568867338, workers=1, host=EriiNoDesktop, username=elean, pid=319309) done      GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 319309] Worker Worker(salt=7568867338, workers=1, host=EriiNoDesktop, username=elean, pid=319309) done      GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___69b7d1c547   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___69b7d1c547   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=7568867338, workers=1, host=EriiNoDesktop, username=elean, pid=319309) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=7568867338, workers=1, host=EriiNoDesktop, username=elean, pid=319309) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 4: SWAG (HalfCheetah-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.09817 | Val Loss -0.95395
+Step 5000: Train Loss -1.30217 | Val Loss -1.23010
+Final Train Loss: -1.30217 | Best Val Loss: -1.24240
+| SWAG steps collected: 4000
+Training time: 71.93s
+\n--- Results: SWAG ---
+[VAL] RMSE: 1.53340 | Var: 2.09401 | NLL: 0.08874 | CalibErr: 0.06007
+[ID] RMSE: 1.42652 | Var: 1.96957 | NLL: 0.03224 | CalibErr: 0.06051
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.05949 | Var: 2.95844 | NLL: 12.31902 | CalibErr: 0.03376
+[ood_near] AUROC: 0.6949 | AUPR: 0.7179 | RMSE Rat: 2.14x
+[OOD (ood_mid)] RMSE: 4.82268 | Var: 3.91728 | NLL: 2.65807 | CalibErr: 0.04468
+[ood_mid] AUROC: 0.8579 | AUPR: 0.8638 | RMSE Rat: 3.38x
+[OOD (ood_far)] RMSE: 3.81465 | Var: 5.50025 | NLL: 1.88176 | CalibErr: 0.03538
+[ood_far] AUROC: 0.9715 | AUPR: 0.9623 | RMSE Rat: 2.67x
+[OOD (ood)] RMSE: 3.81745 | Var: 5.61002 | NLL: 1.85884 | CalibErr: 0.03424
+[ood] AUROC: 0.9729 | AUPR: 0.9645 | RMSE Rat: 2.68x
+[16:20:37] DONE swag_HalfCheetah-v5_0 rc=0
+  backed up results/HalfCheetah-v5/swag_vcal_n100_h200-200-200-200_act-relu_seed0.json
+[16:20:37] RUN swag_vcal_HalfCheetah-v5_0
+DEBUG: Checking if GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___c5e5b937f2   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___c5e5b937f2   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 319995] Worker Worker(salt=8468536530, workers=1, host=EriiNoDesktop, username=elean, pid=319995) running   GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 319995] Worker Worker(salt=8468536530, workers=1, host=EriiNoDesktop, username=elean, pid=319995) running   GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 319995] Worker Worker(salt=8468536530, workers=1, host=EriiNoDesktop, username=elean, pid=319995) done      GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 319995] Worker Worker(salt=8468536530, workers=1, host=EriiNoDesktop, username=elean, pid=319995) done      GymSWAG(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___c5e5b937f2   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_HalfCheetah_v5__200__200__200___c5e5b937f2   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=8468536530, workers=1, host=EriiNoDesktop, username=elean, pid=319995) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=8468536530, workers=1, host=EriiNoDesktop, username=elean, pid=319995) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 4: SWAG (HalfCheetah-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.09817 | Val Loss -0.95395
+Step 5000: Train Loss -1.30217 | Val Loss -1.23010
+Final Train Loss: -1.30217 | Best Val Loss: -1.24240
+| SWAG steps collected: 4000
+Training time: 72.46s
+\n--- Results: SWAG ---
+[posthoc] Learned variance scale on validation split: 0.689686
+[VAL] RMSE: 1.53344 | Var: 1.43184 | NLL: 0.05424 | CalibErr: 0.04148
+[ID] RMSE: 1.42625 | Var: 1.36456 | NLL: -0.02300 | CalibErr: 0.04459
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.05901 | Var: 2.01796 | NLL: 16.27087 | CalibErr: 0.05139
+[ood_near] AUROC: 0.6879 | AUPR: 0.7097 | RMSE Rat: 2.14x
+[OOD (ood_mid)] RMSE: 4.82663 | Var: 2.69558 | NLL: 3.42278 | CalibErr: 0.06382
+[ood_mid] AUROC: 0.8554 | AUPR: 0.8598 | RMSE Rat: 3.38x
+[OOD (ood_far)] RMSE: 3.81745 | Var: 3.86915 | NLL: 2.22667 | CalibErr: 0.05430
+[ood_far] AUROC: 0.9719 | AUPR: 0.9626 | RMSE Rat: 2.68x
+[OOD (ood)] RMSE: 3.82595 | Var: 3.82371 | NLL: 2.25435 | CalibErr: 0.05466
+[ood] AUROC: 0.9711 | AUPR: 0.9612 | RMSE Rat: 2.68x
+[16:22:05] DONE swag_vcal_HalfCheetah-v5_0 rc=0
+  backed up results/HalfCheetah-v5/subspace_inference_n100_h200-200-200-200_act-relu_seed0_T0.0.json
+[16:22:05] RUN sub_HalfCheetah-v5_0
+DEBUG: Checking if GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___620380f6ef   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___620380f6ef   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 320613] Worker Worker(salt=4207564145, workers=1, host=EriiNoDesktop, username=elean, pid=320613) running   GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 320613] Worker Worker(salt=4207564145, workers=1, host=EriiNoDesktop, username=elean, pid=320613) running   GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO: [pid 320613] Worker Worker(salt=4207564145, workers=1, host=EriiNoDesktop, username=elean, pid=320613) done      GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 320613] Worker Worker(salt=4207564145, workers=1, host=EriiNoDesktop, username=elean, pid=320613) done      GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___620380f6ef   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___620380f6ef   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=4207564145, workers=1, host=EriiNoDesktop, username=elean, pid=320613) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=4207564145, workers=1, host=EriiNoDesktop, username=elean, pid=320613) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP: Subspace Inference (HalfCheetah-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss 0.05652 | Val Loss 0.06282
+Step 1000: Train Loss -0.45750 | Val Loss -0.46068
+Step 1500: Train Loss -0.84663 | Val Loss -0.73803
+Step 2000: Train Loss -0.76218 | Val Loss -0.70847
+Final Train Loss: -0.76218 | Best Val Loss: -0.77073
+Training time: 20.71s
+\n--- Results: Subspace Inference ---
+[VAL] RMSE: 1.72314 | Var: 2.54209 | NLL: 0.16564 | CalibErr: 0.06374
+[ID] RMSE: 1.61600 | Var: 2.48163 | NLL: 0.09812 | CalibErr: 0.06411
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.26364 | Var: 3.01059 | NLL: 5.95327 | CalibErr: 0.02844
+[ood_near] AUROC: 0.6193 | AUPR: 0.6476 | RMSE Rat: 2.02x
+[OOD (ood_mid)] RMSE: 5.04903 | Var: 3.74623 | NLL: 2.90233 | CalibErr: 0.04140
+[ood_mid] AUROC: 0.7402 | AUPR: 0.7867 | RMSE Rat: 3.12x
+[OOD (ood_far)] RMSE: 4.04542 | Var: 5.61072 | NLL: 1.86433 | CalibErr: 0.03450
+[ood_far] AUROC: 0.9574 | AUPR: 0.9550 | RMSE Rat: 2.50x
+[OOD (ood)] RMSE: 4.04542 | Var: 5.61072 | NLL: 1.86433 | CalibErr: 0.03450
+[ood] AUROC: 0.9574 | AUPR: 0.9550 | RMSE Rat: 2.50x
+[16:22:39] DONE sub_HalfCheetah-v5_0 rc=0
+  backed up results/HalfCheetah-v5/subspace_inference_vcal_n100_h200-200-200-200_act-relu_seed0_T0.0.json
+[16:22:39] RUN sub_vcal_HalfCheetah-v5_0
+DEBUG: Checking if GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___3eb0d7db06   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___3eb0d7db06   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 321092] Worker Worker(salt=5737018278, workers=1, host=EriiNoDesktop, username=elean, pid=321092) running   GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 321092] Worker Worker(salt=5737018278, workers=1, host=EriiNoDesktop, username=elean, pid=321092) running   GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO: [pid 321092] Worker Worker(salt=5737018278, workers=1, host=EriiNoDesktop, username=elean, pid=321092) done      GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 321092] Worker Worker(salt=5737018278, workers=1, host=EriiNoDesktop, username=elean, pid=321092) done      GymSubspaceInference(env=HalfCheetah-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___3eb0d7db06   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_HalfCheetah_v5__200__200__200___3eb0d7db06   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=5737018278, workers=1, host=EriiNoDesktop, username=elean, pid=321092) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=5737018278, workers=1, host=EriiNoDesktop, username=elean, pid=321092) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP: Subspace Inference (HalfCheetah-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss 0.05652 | Val Loss 0.06282
+Step 1000: Train Loss -0.45750 | Val Loss -0.46068
+Step 1500: Train Loss -0.84663 | Val Loss -0.73803
+Step 2000: Train Loss -0.76218 | Val Loss -0.70847
+Final Train Loss: -0.76218 | Best Val Loss: -0.77073
+Training time: 20.99s
+\n--- Results: Subspace Inference ---
+[posthoc] Learned variance scale on validation split: 0.663310
+[VAL] RMSE: 1.72314 | Var: 1.68619 | NLL: 0.12874 | CalibErr: 0.03953
+[ID] RMSE: 1.61600 | Var: 1.64609 | NLL: 0.04308 | CalibErr: 0.04014
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.26364 | Var: 1.99695 | NLL: 8.69113 | CalibErr: 0.05089
+[ood_near] AUROC: 0.6193 | AUPR: 0.6476 | RMSE Rat: 2.02x
+[OOD (ood_mid)] RMSE: 5.04903 | Var: 2.48491 | NLL: 3.85058 | CalibErr: 0.06033
+[ood_mid] AUROC: 0.7402 | AUPR: 0.7867 | RMSE Rat: 3.12x
+[OOD (ood_far)] RMSE: 4.04542 | Var: 3.72164 | NLL: 2.22855 | CalibErr: 0.05321
+[ood_far] AUROC: 0.9574 | AUPR: 0.9550 | RMSE Rat: 2.50x
+[OOD (ood)] RMSE: 4.04542 | Var: 3.72164 | NLL: 2.22855 | CalibErr: 0.05321
+[ood] AUROC: 0.9574 | AUPR: 0.9550 | RMSE Rat: 2.50x
+[16:23:14] DONE sub_vcal_HalfCheetah-v5_0 rc=0
+  backed up results/HalfCheetah-v5/laplace_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed0.json
+[16:23:14] RUN lap_HalfCheetah-v5_0
+DEBUG: Checking if GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___004add6095   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___004add6095   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 321576] Worker Worker(salt=8121469922, workers=1, host=EriiNoDesktop, username=elean, pid=321576) running   GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 321576] Worker Worker(salt=8121469922, workers=1, host=EriiNoDesktop, username=elean, pid=321576) running   GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 321576] Worker Worker(salt=8121469922, workers=1, host=EriiNoDesktop, username=elean, pid=321576) done      GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 321576] Worker Worker(salt=8121469922, workers=1, host=EriiNoDesktop, username=elean, pid=321576) done      GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___004add6095   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___004add6095   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=8121469922, workers=1, host=EriiNoDesktop, username=elean, pid=321576) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=8121469922, workers=1, host=EriiNoDesktop, username=elean, pid=321576) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 5: Laplace (HalfCheetah-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.09817 | Val Loss -0.95395
+Step 5000: Train Loss -1.30217 | Val Loss -1.23010
+Final Train Loss: -1.30217 | Best Val Loss: -1.24240
+Computing KFAC Factors...
+Training + KFAC time: 28.73s
+\n--- Results: Laplace (prior=1.0) ---
+[VAL] RMSE: 2177.78101 | Var: 154196640.00000 | NLL: 10.25656 | CalibErr: 0.17799
+[ID] RMSE: 2320.17212 | Var: 142039360.00000 | NLL: 10.22191 | CalibErr: 0.17161
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3486.39136 | Var: 263688944.00000 | NLL: 10.43823 | CalibErr: 0.17190
+[ood_near] AUROC: 0.7241 | AUPR: 0.7631 | RMSE Rat: 1.50x
+[OOD (ood_mid)] RMSE: 3388.83813 | Var: 345165600.00000 | NLL: 10.60942 | CalibErr: 0.17285
+[ood_mid] AUROC: 0.8815 | AUPR: 0.9055 | RMSE Rat: 1.46x
+[OOD (ood_far)] RMSE: 2904.36401 | Var: 262240576.00000 | NLL: 10.48033 | CalibErr: 0.17350
+[ood_far] AUROC: 0.7950 | AUPR: 0.8320 | RMSE Rat: 1.25x
+[OOD (ood)] RMSE: 2740.25537 | Var: 273173504.00000 | NLL: 10.48161 | CalibErr: 0.17948
+[ood] AUROC: 0.8079 | AUPR: 0.8436 | RMSE Rat: 1.18x
+\n--- Results: Laplace (prior=10.0) ---
+[VAL] RMSE: 64.01286 | Var: 22519.51758 | NLL: 5.85594 | CalibErr: 0.15910
+[ID] RMSE: 68.05139 | Var: 23239.37305 | NLL: 5.87815 | CalibErr: 0.16891
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 72.55579 | Var: 27985.98633 | NLL: 5.93951 | CalibErr: 0.16440
+[ood_near] AUROC: 0.5882 | AUPR: 0.6506 | RMSE Rat: 1.07x
+[OOD (ood_mid)] RMSE: 85.25732 | Var: 37393.43750 | NLL: 6.04421 | CalibErr: 0.15839
+[ood_mid] AUROC: 0.7072 | AUPR: 0.7995 | RMSE Rat: 1.25x
+[OOD (ood_far)] RMSE: 73.80150 | Var: 29432.75391 | NLL: 5.91935 | CalibErr: 0.16395
+[ood_far] AUROC: 0.5766 | AUPR: 0.6858 | RMSE Rat: 1.08x
+[OOD (ood)] RMSE: 73.07008 | Var: 28339.27930 | NLL: 5.91222 | CalibErr: 0.16133
+[ood] AUROC: 0.5576 | AUPR: 0.6685 | RMSE Rat: 1.07x
+\n--- Results: Laplace (prior=100.0) ---
+[VAL] RMSE: 3.29389 | Var: 38.19489 | NLL: 2.25256 | CalibErr: 0.12809
+[ID] RMSE: 3.25996 | Var: 35.61075 | NLL: 2.24187 | CalibErr: 0.13375
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 4.29341 | Var: 42.08245 | NLL: 2.37927 | CalibErr: 0.11141
+[ood_near] AUROC: 0.5944 | AUPR: 0.6572 | RMSE Rat: 1.32x
+[OOD (ood_mid)] RMSE: 5.75571 | Var: 50.74512 | NLL: 2.50382 | CalibErr: 0.08937
+[ood_mid] AUROC: 0.6762 | AUPR: 0.7773 | RMSE Rat: 1.77x
+[OOD (ood_far)] RMSE: 4.90827 | Var: 45.35609 | NLL: 2.42326 | CalibErr: 0.10215
+[ood_far] AUROC: 0.6094 | AUPR: 0.7102 | RMSE Rat: 1.51x
+[OOD (ood)] RMSE: 4.90908 | Var: 45.99778 | NLL: 2.41722 | CalibErr: 0.09860
+[ood] AUROC: 0.6174 | AUPR: 0.7173 | RMSE Rat: 1.51x
+\n--- Results: Laplace (prior=1000.0) ---
+[VAL] RMSE: 1.40511 | Var: 3.68943 | NLL: 0.53252 | CalibErr: 0.10745
+[ID] RMSE: 1.29251 | Var: 3.41255 | NLL: 0.49756 | CalibErr: 0.11068
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.91949 | Var: 5.42823 | NLL: 3.30368 | CalibErr: 0.03732
+[ood_near] AUROC: 0.7594 | AUPR: 0.7855 | RMSE Rat: 2.26x
+[OOD (ood_mid)] RMSE: 4.54209 | Var: 6.77971 | NLL: 1.84035 | CalibErr: 0.02715
+[ood_mid] AUROC: 0.8817 | AUPR: 0.8940 | RMSE Rat: 3.51x
+[OOD (ood_far)] RMSE: 3.63333 | Var: 6.61363 | NLL: 1.65467 | CalibErr: 0.02108
+[ood_far] AUROC: 0.8964 | AUPR: 0.8967 | RMSE Rat: 2.81x
+[OOD (ood)] RMSE: 3.63020 | Var: 6.64911 | NLL: 1.65976 | CalibErr: 0.02047
+[ood] AUROC: 0.8999 | AUPR: 0.8996 | RMSE Rat: 2.81x
+\n--- Results: Laplace (prior=10000.0) ---
+[VAL] RMSE: 1.30045 | Var: 1.72886 | NLL: -0.10214 | CalibErr: 0.07264
+[ID] RMSE: 1.17954 | Var: 1.59009 | NLL: -0.14536 | CalibErr: 0.07297
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.91634 | Var: 2.96265 | NLL: 17.49347 | CalibErr: 0.02200
+[ood_near] AUROC: 0.7569 | AUPR: 0.7803 | RMSE Rat: 2.47x
+[OOD (ood_mid)] RMSE: 4.53391 | Var: 4.02790 | NLL: 2.38475 | CalibErr: 0.05087
+[ood_mid] AUROC: 0.9317 | AUPR: 0.9225 | RMSE Rat: 3.84x
+[OOD (ood_far)] RMSE: 3.65646 | Var: 4.28300 | NLL: 2.35587 | CalibErr: 0.05599
+[ood_far] AUROC: 0.9563 | AUPR: 0.9427 | RMSE Rat: 3.10x
+[OOD (ood)] RMSE: 3.65754 | Var: 4.29197 | NLL: 2.33022 | CalibErr: 0.05591
+[ood] AUROC: 0.9569 | AUPR: 0.9433 | RMSE Rat: 3.10x
+\n--- Results: Laplace (prior=100000.0) ---
+[VAL] RMSE: 1.29226 | Var: 1.35410 | NLL: -0.28210 | CalibErr: 0.03784
+[ID] RMSE: 1.17219 | Var: 1.20303 | NLL: -0.32690 | CalibErr: 0.03753
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.92535 | Var: 2.53176 | NLL: 50.10718 | CalibErr: 0.04937
+[ood_near] AUROC: 0.7697 | AUPR: 0.7879 | RMSE Rat: 2.50x
+[OOD (ood_mid)] RMSE: 4.54902 | Var: 3.64890 | NLL: 2.78106 | CalibErr: 0.05863
+[ood_mid] AUROC: 0.9452 | AUPR: 0.9314 | RMSE Rat: 3.88x
+[OOD (ood_far)] RMSE: 3.66637 | Var: 3.97801 | NLL: 3.38470 | CalibErr: 0.06597
+[ood_far] AUROC: 0.9690 | AUPR: 0.9539 | RMSE Rat: 3.13x
+[OOD (ood)] RMSE: 3.66529 | Var: 3.98180 | NLL: 3.38056 | CalibErr: 0.06591
+[ood] AUROC: 0.9691 | AUPR: 0.9540 | RMSE Rat: 3.13x
+[16:26:50] DONE lap_HalfCheetah-v5_0 rc=0
+  backed up results/HalfCheetah-v5/laplace_vcal_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed0.json
+[16:26:50] RUN lap_vcal_HalfCheetah-v5_0
+DEBUG: Checking if GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___65aa3481eb   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___65aa3481eb   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_0_9d400f7ea0   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 323011] Worker Worker(salt=7702914415, workers=1, host=EriiNoDesktop, username=elean, pid=323011) running   GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 323011] Worker Worker(salt=7702914415, workers=1, host=EriiNoDesktop, username=elean, pid=323011) running   GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 323011] Worker Worker(salt=7702914415, workers=1, host=EriiNoDesktop, username=elean, pid=323011) done      GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 323011] Worker Worker(salt=7702914415, workers=1, host=EriiNoDesktop, username=elean, pid=323011) done      GymLaplace(env=HalfCheetah-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___65aa3481eb   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_HalfCheetah_v5__200__200__200___65aa3481eb   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=7702914415, workers=1, host=EriiNoDesktop, username=elean, pid=323011) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=7702914415, workers=1, host=EriiNoDesktop, username=elean, pid=323011) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 5: Laplace (HalfCheetah-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -1.09817 | Val Loss -0.95395
+Step 5000: Train Loss -1.30217 | Val Loss -1.23010
+Final Train Loss: -1.30217 | Best Val Loss: -1.24240
+Computing KFAC Factors...
+Training + KFAC time: 28.77s
+\n--- Results: Laplace (prior=1.0) ---
+[posthoc] Learned variance scale on validation split: 0.027852
+[VAL] RMSE: 2350.47021 | Var: 4090359.25000 | NLL: 9.08353 | CalibErr: 0.02222
+[ID] RMSE: 2415.91650 | Var: 3969303.50000 | NLL: 9.04797 | CalibErr: 0.04599
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3005.27734 | Var: 7741536.50000 | NLL: 9.20986 | CalibErr: 0.04604
+[ood_near] AUROC: 0.7373 | AUPR: 0.7689 | RMSE Rat: 1.24x
+[OOD (ood_mid)] RMSE: 3250.06104 | Var: 9109000.00000 | NLL: 9.33246 | CalibErr: 0.03819
+[ood_mid] AUROC: 0.8692 | AUPR: 0.8927 | RMSE Rat: 1.35x
+[OOD (ood_far)] RMSE: 2740.25537 | Var: 7608439.00000 | NLL: 9.10624 | CalibErr: 0.06315
+[ood_far] AUROC: 0.8060 | AUPR: 0.8388 | RMSE Rat: 1.13x
+[OOD (ood)] RMSE: 3298.71216 | Var: 7349839.50000 | NLL: 9.39892 | CalibErr: 0.07259
+[ood] AUROC: 0.7896 | AUPR: 0.8259 | RMSE Rat: 1.37x
+\n--- Results: Laplace (prior=10.0) ---
+[posthoc] Learned variance scale on validation split: 0.203416
+[VAL] RMSE: 65.74090 | Var: 4705.30469 | NLL: 5.43450 | CalibErr: 0.12856
+[ID] RMSE: 66.00258 | Var: 4736.97656 | NLL: 5.44973 | CalibErr: 0.12582
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 74.11726 | Var: 5715.34521 | NLL: 5.51246 | CalibErr: 0.12596
+[ood_near] AUROC: 0.5794 | AUPR: 0.6500 | RMSE Rat: 1.12x
+[OOD (ood_mid)] RMSE: 83.93805 | Var: 7727.26270 | NLL: 5.60186 | CalibErr: 0.11802
+[ood_mid] AUROC: 0.7077 | AUPR: 0.8035 | RMSE Rat: 1.27x
+[OOD (ood_far)] RMSE: 72.80856 | Var: 5587.24268 | NLL: 5.42504 | CalibErr: 0.11875
+[ood_far] AUROC: 0.5387 | AUPR: 0.6550 | RMSE Rat: 1.10x
+[OOD (ood)] RMSE: 68.59332 | Var: 5661.41357 | NLL: 5.42012 | CalibErr: 0.12346
+[ood] AUROC: 0.5450 | AUPR: 0.6606 | RMSE Rat: 1.04x
+\n--- Results: Laplace (prior=100.0) ---
+[posthoc] Learned variance scale on validation split: 0.240073
+[VAL] RMSE: 3.38902 | Var: 9.12963 | NLL: 1.95502 | CalibErr: 0.07115
+[ID] RMSE: 3.05342 | Var: 8.78301 | NLL: 1.86580 | CalibErr: 0.08310
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 4.30304 | Var: 10.42576 | NLL: 2.34598 | CalibErr: 0.05832
+[ood_near] AUROC: 0.6192 | AUPR: 0.6552 | RMSE Rat: 1.41x
+[OOD (ood_mid)] RMSE: 5.70528 | Var: 12.36122 | NLL: 2.69264 | CalibErr: 0.04080
+[ood_mid] AUROC: 0.6638 | AUPR: 0.7626 | RMSE Rat: 1.87x
+[OOD (ood_far)] RMSE: 4.85317 | Var: 11.23453 | NLL: 2.58188 | CalibErr: 0.04544
+[ood_far] AUROC: 0.6116 | AUPR: 0.7042 | RMSE Rat: 1.59x
+[OOD (ood)] RMSE: 4.88984 | Var: 11.06131 | NLL: 2.56623 | CalibErr: 0.04069
+[ood] AUROC: 0.6055 | AUPR: 0.6970 | RMSE Rat: 1.60x
+\n--- Results: Laplace (prior=1000.0) ---
+[posthoc] Learned variance scale on validation split: 0.262569
+[VAL] RMSE: 1.41661 | Var: 0.97842 | NLL: 0.22544 | CalibErr: 0.03842
+[ID] RMSE: 1.28945 | Var: 0.92017 | NLL: 0.17529 | CalibErr: 0.03967
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.91966 | Var: 1.40627 | NLL: 11.74704 | CalibErr: 0.04698
+[ood_near] AUROC: 0.7346 | AUPR: 0.7634 | RMSE Rat: 2.26x
+[OOD (ood_mid)] RMSE: 4.53577 | Var: 1.77472 | NLL: 4.02907 | CalibErr: 0.09134
+[ood_mid] AUROC: 0.8765 | AUPR: 0.8890 | RMSE Rat: 3.52x
+[OOD (ood_far)] RMSE: 3.62274 | Var: 1.76074 | NLL: 3.52342 | CalibErr: 0.08975
+[ood_far] AUROC: 0.8909 | AUPR: 0.8929 | RMSE Rat: 2.81x
+[OOD (ood)] RMSE: 3.63304 | Var: 1.73892 | NLL: 3.56766 | CalibErr: 0.09074
+[ood] AUROC: 0.8888 | AUPR: 0.8903 | RMSE Rat: 2.82x
+\n--- Results: Laplace (prior=10000.0) ---
+[posthoc] Learned variance scale on validation split: 0.460559
+[VAL] RMSE: 1.29846 | Var: 0.78852 | NLL: -0.22378 | CalibErr: 0.02478
+[ID] RMSE: 1.18137 | Var: 0.73219 | NLL: -0.26449 | CalibErr: 0.02436
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.91179 | Var: 1.34575 | NLL: 38.09697 | CalibErr: 0.06520
+[ood_near] AUROC: 0.7470 | AUPR: 0.7704 | RMSE Rat: 2.46x
+[OOD (ood_mid)] RMSE: 4.54438 | Var: 1.86636 | NLL: 4.21135 | CalibErr: 0.08727
+[ood_mid] AUROC: 0.9326 | AUPR: 0.9228 | RMSE Rat: 3.85x
+[OOD (ood_far)] RMSE: 3.65480 | Var: 1.96555 | NLL: 4.24234 | CalibErr: 0.09203
+[ood_far] AUROC: 0.9547 | AUPR: 0.9407 | RMSE Rat: 3.09x
+[OOD (ood)] RMSE: 3.65592 | Var: 1.97983 | NLL: 4.25105 | CalibErr: 0.09233
+[ood] AUROC: 0.9552 | AUPR: 0.9417 | RMSE Rat: 3.09x
+\n--- Results: Laplace (prior=100000.0) ---
+[posthoc] Learned variance scale on validation split: 0.756461
+[VAL] RMSE: 1.29326 | Var: 1.02549 | NLL: -0.28983 | CalibErr: 0.02168
+[ID] RMSE: 1.17099 | Var: 0.91067 | NLL: -0.34713 | CalibErr: 0.02154
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.92486 | Var: 1.91031 | NLL: 66.25178 | CalibErr: 0.06414
+[ood_near] AUROC: 0.7687 | AUPR: 0.7864 | RMSE Rat: 2.50x
+[OOD (ood_mid)] RMSE: 4.54645 | Var: 2.75371 | NLL: 3.40396 | CalibErr: 0.07138
+[ood_mid] AUROC: 0.9446 | AUPR: 0.9306 | RMSE Rat: 3.88x
+[OOD (ood_far)] RMSE: 3.66493 | Var: 3.00731 | NLL: 4.25748 | CalibErr: 0.07898
+[ood_far] AUROC: 0.9686 | AUPR: 0.9534 | RMSE Rat: 3.13x
+[OOD (ood)] RMSE: 3.66433 | Var: 3.00993 | NLL: 4.17335 | CalibErr: 0.07879
+[ood] AUROC: 0.9687 | AUPR: 0.9536 | RMSE Rat: 3.13x
+[16:30:55] DONE lap_vcal_HalfCheetah-v5_0 rc=0
+  backed up results/Hopper-v5/swag_n100_h200-200-200-200_act-relu_seed0.json
+[16:30:55] RUN swag_Hopper-v5_0
+DEBUG: Checking if GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___d3d0d54d69   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___d3d0d54d69   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 324610] Worker Worker(salt=2751135583, workers=1, host=EriiNoDesktop, username=elean, pid=324610) running   GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 324610] Worker Worker(salt=2751135583, workers=1, host=EriiNoDesktop, username=elean, pid=324610) running   GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 324610] Worker Worker(salt=2751135583, workers=1, host=EriiNoDesktop, username=elean, pid=324610) done      GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 324610] Worker Worker(salt=2751135583, workers=1, host=EriiNoDesktop, username=elean, pid=324610) done      GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___d3d0d54d69   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___d3d0d54d69   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=2751135583, workers=1, host=EriiNoDesktop, username=elean, pid=324610) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2751135583, workers=1, host=EriiNoDesktop, username=elean, pid=324610) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 4: SWAG (Hopper-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.54513 | Val Loss -2.46587
+Early stopping at step 4800. Best Val Loss: -2.66659
+Final Train Loss: -2.72458 | Best Val Loss: -2.66659
+| SWAG steps collected: 3800
+Training time: 67.56s
+\n--- Results: SWAG ---
+[VAL] RMSE: 0.18194 | Var: 0.02707 | NLL: -1.57172 | CalibErr: 0.10012
+[ID] RMSE: 0.17261 | Var: 0.02610 | NLL: -1.58718 | CalibErr: 0.10203
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.31738 | Var: 0.02549 | NLL: 0.79410 | CalibErr: 0.10172
+[ood_near] AUROC: 0.6178 | AUPR: 0.5455 | RMSE Rat: 1.84x
+[OOD (ood_mid)] RMSE: 0.40529 | Var: 0.02080 | NLL: 4.72927 | CalibErr: 0.11034
+[ood_mid] AUROC: 0.6301 | AUPR: 0.5337 | RMSE Rat: 2.35x
+[OOD (ood_far)] RMSE: 0.39305 | Var: 0.03321 | NLL: 2.25936 | CalibErr: 0.07400
+[ood_far] AUROC: 0.7762 | AUPR: 0.6467 | RMSE Rat: 2.28x
+[OOD (ood)] RMSE: 0.39147 | Var: 0.03338 | NLL: 2.16753 | CalibErr: 0.07356
+[ood] AUROC: 0.7784 | AUPR: 0.6482 | RMSE Rat: 2.27x
+[16:32:17] DONE swag_Hopper-v5_0 rc=0
+  backed up results/Hopper-v5/swag_vcal_n100_h200-200-200-200_act-relu_seed0.json
+[16:32:17] RUN swag_vcal_Hopper-v5_0
+DEBUG: Checking if GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___addd3fb413   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___addd3fb413   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 325536] Worker Worker(salt=632616541, workers=1, host=EriiNoDesktop, username=elean, pid=325536) running   GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 325536] Worker Worker(salt=632616541, workers=1, host=EriiNoDesktop, username=elean, pid=325536) running   GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 325536] Worker Worker(salt=632616541, workers=1, host=EriiNoDesktop, username=elean, pid=325536) done      GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 325536] Worker Worker(salt=632616541, workers=1, host=EriiNoDesktop, username=elean, pid=325536) done      GymSWAG(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___addd3fb413   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Hopper_v5__200__200__200___addd3fb413   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=632616541, workers=1, host=EriiNoDesktop, username=elean, pid=325536) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=632616541, workers=1, host=EriiNoDesktop, username=elean, pid=325536) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 4: SWAG (Hopper-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.54513 | Val Loss -2.46587
+Early stopping at step 4800. Best Val Loss: -2.66659
+Final Train Loss: -2.72458 | Best Val Loss: -2.66659
+| SWAG steps collected: 3800
+Training time: 69.12s
+\n--- Results: SWAG ---
+[posthoc] Learned variance scale on validation split: 0.308945
+[VAL] RMSE: 0.18284 | Var: 0.00858 | NLL: -1.80382 | CalibErr: 0.03777
+[ID] RMSE: 0.17149 | Var: 0.00797 | NLL: -1.84724 | CalibErr: 0.03661
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.31702 | Var: 0.00780 | NLL: 5.53783 | CalibErr: 0.13751
+[ood_near] AUROC: 0.6204 | AUPR: 0.5466 | RMSE Rat: 1.85x
+[OOD (ood_mid)] RMSE: 0.40435 | Var: 0.00645 | NLL: 17.10198 | CalibErr: 0.14362
+[ood_mid] AUROC: 0.6355 | AUPR: 0.5366 | RMSE Rat: 2.36x
+[OOD (ood_far)] RMSE: 0.39147 | Var: 0.01031 | NLL: 8.92074 | CalibErr: 0.11778
+[ood_far] AUROC: 0.7801 | AUPR: 0.6497 | RMSE Rat: 2.28x
+[OOD (ood)] RMSE: 0.39200 | Var: 0.01039 | NLL: 8.99101 | CalibErr: 0.11836
+[ood] AUROC: 0.7829 | AUPR: 0.6517 | RMSE Rat: 2.29x
+[16:33:44] DONE swag_vcal_Hopper-v5_0 rc=0
+  backed up results/Hopper-v5/subspace_inference_n100_h200-200-200-200_act-relu_seed0_T0.0.json
+[16:33:44] RUN sub_Hopper-v5_0
+DEBUG: Checking if GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6fc42a70df   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6fc42a70df   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 326210] Worker Worker(salt=8586027774, workers=1, host=EriiNoDesktop, username=elean, pid=326210) running   GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 326210] Worker Worker(salt=8586027774, workers=1, host=EriiNoDesktop, username=elean, pid=326210) running   GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO: [pid 326210] Worker Worker(salt=8586027774, workers=1, host=EriiNoDesktop, username=elean, pid=326210) done      GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 326210] Worker Worker(salt=8586027774, workers=1, host=EriiNoDesktop, username=elean, pid=326210) done      GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6fc42a70df   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6fc42a70df   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=8586027774, workers=1, host=EriiNoDesktop, username=elean, pid=326210) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=8586027774, workers=1, host=EriiNoDesktop, username=elean, pid=326210) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP: Subspace Inference (Hopper-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.82431 | Val Loss -1.63887
+Step 1000: Train Loss -2.04640 | Val Loss -1.98874
+Step 1500: Train Loss -2.42819 | Val Loss -2.30859
+Step 2000: Train Loss -2.49774 | Val Loss -2.41136
+Final Train Loss: -2.49774 | Best Val Loss: -2.41136
+Training time: 18.38s
+\n--- Results: Subspace Inference ---
+[VAL] RMSE: 0.20348 | Var: 0.03431 | NLL: -1.43949 | CalibErr: 0.09674
+[ID] RMSE: 0.19425 | Var: 0.03324 | NLL: -1.46798 | CalibErr: 0.09987
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.33261 | Var: 0.03280 | NLL: 0.60047 | CalibErr: 0.09603
+[ood_near] AUROC: 0.6292 | AUPR: 0.5478 | RMSE Rat: 1.71x
+[OOD (ood_mid)] RMSE: 0.43065 | Var: 0.02777 | NLL: 3.92530 | CalibErr: 0.09901
+[ood_mid] AUROC: 0.6409 | AUPR: 0.5381 | RMSE Rat: 2.22x
+[OOD (ood_far)] RMSE: 0.38402 | Var: 0.04548 | NLL: 1.33304 | CalibErr: 0.05474
+[ood_far] AUROC: 0.7839 | AUPR: 0.6534 | RMSE Rat: 1.98x
+[OOD (ood)] RMSE: 0.38402 | Var: 0.04548 | NLL: 1.33304 | CalibErr: 0.05474
+[ood] AUROC: 0.7839 | AUPR: 0.6534 | RMSE Rat: 1.98x
+[16:34:20] DONE sub_Hopper-v5_0 rc=0
+  backed up results/Hopper-v5/subspace_inference_vcal_n100_h200-200-200-200_act-relu_seed0_T0.0.json
+[16:34:20] RUN sub_vcal_Hopper-v5_0
+DEBUG: Checking if GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6905e5815d   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6905e5815d   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 326780] Worker Worker(salt=9854524802, workers=1, host=EriiNoDesktop, username=elean, pid=326780) running   GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 326780] Worker Worker(salt=9854524802, workers=1, host=EriiNoDesktop, username=elean, pid=326780) running   GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO: [pid 326780] Worker Worker(salt=9854524802, workers=1, host=EriiNoDesktop, username=elean, pid=326780) done      GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 326780] Worker Worker(salt=9854524802, workers=1, host=EriiNoDesktop, username=elean, pid=326780) done      GymSubspaceInference(env=Hopper-v5, steps=10000, n_perturbations=100, seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6905e5815d   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Hopper_v5__200__200__200___6905e5815d   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9854524802, workers=1, host=EriiNoDesktop, username=elean, pid=326780) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9854524802, workers=1, host=EriiNoDesktop, username=elean, pid=326780) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP: Subspace Inference (Hopper-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss -2.06837 | Val Loss -1.85901
+Step 1000: Train Loss -2.09318 | Val Loss -1.98119
+Step 1500: Train Loss -2.41409 | Val Loss -2.29989
+Step 2000: Train Loss -2.29672 | Val Loss -2.27569
+Final Train Loss: -2.29672 | Best Val Loss: -2.37533
+Training time: 17.51s
+\n--- Results: Subspace Inference ---
+[posthoc] Learned variance scale on validation split: 0.320632
+[VAL] RMSE: 0.20565 | Var: 0.01217 | NLL: -1.64733 | CalibErr: 0.03290
+[ID] RMSE: 0.19631 | Var: 0.01183 | NLL: -1.69884 | CalibErr: 0.03712
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.33269 | Var: 0.01102 | NLL: 4.27062 | CalibErr: 0.12834
+[ood_near] AUROC: 0.6038 | AUPR: 0.5343 | RMSE Rat: 1.69x
+[OOD (ood_mid)] RMSE: 0.40565 | Var: 0.00946 | NLL: 14.14885 | CalibErr: 0.13722
+[ood_mid] AUROC: 0.6255 | AUPR: 0.5267 | RMSE Rat: 2.07x
+[OOD (ood_far)] RMSE: 0.39339 | Var: 0.01502 | NLL: 5.43417 | CalibErr: 0.10418
+[ood_far] AUROC: 0.7706 | AUPR: 0.6449 | RMSE Rat: 2.00x
+[OOD (ood)] RMSE: 0.39339 | Var: 0.01502 | NLL: 5.43417 | CalibErr: 0.10418
+[ood] AUROC: 0.7706 | AUPR: 0.6449 | RMSE Rat: 2.00x
+[16:34:56] DONE sub_vcal_Hopper-v5_0 rc=0
+  backed up results/Hopper-v5/laplace_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed0.json
+[16:34:56] RUN lap_Hopper-v5_0
+DEBUG: Checking if GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___f8f5ea2b32   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___f8f5ea2b32   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 327348] Worker Worker(salt=9805156624, workers=1, host=EriiNoDesktop, username=elean, pid=327348) running   GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 327348] Worker Worker(salt=9805156624, workers=1, host=EriiNoDesktop, username=elean, pid=327348) running   GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 327348] Worker Worker(salt=9805156624, workers=1, host=EriiNoDesktop, username=elean, pid=327348) done      GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 327348] Worker Worker(salt=9805156624, workers=1, host=EriiNoDesktop, username=elean, pid=327348) done      GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___f8f5ea2b32   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___f8f5ea2b32   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9805156624, workers=1, host=EriiNoDesktop, username=elean, pid=327348) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9805156624, workers=1, host=EriiNoDesktop, username=elean, pid=327348) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 5: Laplace (Hopper-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.54513 | Val Loss -2.46587
+Early stopping at step 4800. Best Val Loss: -2.66659
+Final Train Loss: -2.72458 | Best Val Loss: -2.66659
+Computing KFAC Factors...
+Training + KFAC time: 29.06s
+\n--- Results: Laplace (prior=1.0) ---
+[VAL] RMSE: 385.69244 | Var: 12633717.00000 | NLL: 9.01359 | CalibErr: 0.18532
+[ID] RMSE: 375.41580 | Var: 13424773.00000 | NLL: 9.04941 | CalibErr: 0.19125
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 474.34537 | Var: 10764297.00000 | NLL: 8.93741 | CalibErr: 0.17666
+[ood_near] AUROC: 0.3755 | AUPR: 0.4229 | RMSE Rat: 1.26x
+[OOD (ood_mid)] RMSE: 413.83411 | Var: 9289149.00000 | NLL: 8.89421 | CalibErr: 0.18839
+[ood_mid] AUROC: 0.3231 | AUPR: 0.3837 | RMSE Rat: 1.10x
+[OOD (ood_far)] RMSE: 377.07034 | Var: 8975558.00000 | NLL: 8.88995 | CalibErr: 0.18299
+[ood_far] AUROC: 0.3095 | AUPR: 0.3747 | RMSE Rat: 1.00x
+[OOD (ood)] RMSE: 483.08966 | Var: 9484884.00000 | NLL: 8.92386 | CalibErr: 0.17317
+[ood] AUROC: 0.3364 | AUPR: 0.3841 | RMSE Rat: 1.29x
+\n--- Results: Laplace (prior=10.0) ---
+[VAL] RMSE: 7.66877 | Var: 1148.75537 | NLL: 4.36480 | CalibErr: 0.16263
+[ID] RMSE: 7.96667 | Var: 1255.84741 | NLL: 4.37968 | CalibErr: 0.16199
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 6.80675 | Var: 956.90747 | NLL: 4.26661 | CalibErr: 0.15892
+[ood_near] AUROC: 0.3883 | AUPR: 0.4168 | RMSE Rat: 0.85x
+[OOD (ood_mid)] RMSE: 7.10837 | Var: 834.12738 | NLL: 4.21297 | CalibErr: 0.16400
+[ood_mid] AUROC: 0.3378 | AUPR: 0.3910 | RMSE Rat: 0.89x
+[OOD (ood_far)] RMSE: 5.89602 | Var: 605.98767 | NLL: 4.05689 | CalibErr: 0.16268
+[ood_far] AUROC: 0.2153 | AUPR: 0.3465 | RMSE Rat: 0.74x
+[OOD (ood)] RMSE: 7.13541 | Var: 590.90387 | NLL: 4.06810 | CalibErr: 0.15243
+[ood] AUROC: 0.2053 | AUPR: 0.3438 | RMSE Rat: 0.90x
+\n--- Results: Laplace (prior=100.0) ---
+[VAL] RMSE: 0.37886 | Var: 0.69898 | NLL: 0.49830 | CalibErr: 0.12854
+[ID] RMSE: 0.38159 | Var: 0.68111 | NLL: 0.48678 | CalibErr: 0.13214
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.43455 | Var: 0.62319 | NLL: 0.46498 | CalibErr: 0.11201
+[ood_near] AUROC: 0.4481 | AUPR: 0.4657 | RMSE Rat: 1.14x
+[OOD (ood_mid)] RMSE: 0.48843 | Var: 0.62466 | NLL: 0.51761 | CalibErr: 0.08389
+[ood_mid] AUROC: 0.4346 | AUPR: 0.4695 | RMSE Rat: 1.28x
+[OOD (ood_far)] RMSE: 0.52226 | Var: 0.47731 | NLL: 0.60273 | CalibErr: 0.06452
+[ood_far] AUROC: 0.3287 | AUPR: 0.3911 | RMSE Rat: 1.37x
+[OOD (ood)] RMSE: 0.54119 | Var: 0.47316 | NLL: 0.63600 | CalibErr: 0.06160
+[ood] AUROC: 0.3272 | AUPR: 0.3891 | RMSE Rat: 1.42x
+\n--- Results: Laplace (prior=1000.0) ---
+[VAL] RMSE: 0.19358 | Var: 0.06105 | NLL: -0.98649 | CalibErr: 0.10689
+[ID] RMSE: 0.19367 | Var: 0.05902 | NLL: -1.02296 | CalibErr: 0.10704
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.32382 | Var: 0.05987 | NLL: -0.25032 | CalibErr: 0.06822
+[ood_near] AUROC: 0.5767 | AUPR: 0.5258 | RMSE Rat: 1.67x
+[OOD (ood_mid)] RMSE: 0.39588 | Var: 0.05920 | NLL: 0.37108 | CalibErr: 0.06738
+[ood_mid] AUROC: 0.6058 | AUPR: 0.5277 | RMSE Rat: 2.04x
+[OOD (ood_far)] RMSE: 0.42398 | Var: 0.05914 | NLL: 1.13217 | CalibErr: 0.05935
+[ood_far] AUROC: 0.6367 | AUPR: 0.5374 | RMSE Rat: 2.19x
+[OOD (ood)] RMSE: 0.42285 | Var: 0.06054 | NLL: 1.06949 | CalibErr: 0.06122
+[ood] AUROC: 0.6483 | AUPR: 0.5455 | RMSE Rat: 2.18x
+\n--- Results: Laplace (prior=10000.0) ---
+[VAL] RMSE: 0.18024 | Var: 0.02627 | NLL: -1.52862 | CalibErr: 0.06674
+[ID] RMSE: 0.17219 | Var: 0.02484 | NLL: -1.54406 | CalibErr: 0.06661
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.31904 | Var: 0.02455 | NLL: 0.83741 | CalibErr: 0.10344
+[ood_near] AUROC: 0.6006 | AUPR: 0.5390 | RMSE Rat: 1.85x
+[OOD (ood_mid)] RMSE: 0.39641 | Var: 0.02108 | NLL: 3.09646 | CalibErr: 0.11394
+[ood_mid] AUROC: 0.6204 | AUPR: 0.5267 | RMSE Rat: 2.30x
+[OOD (ood_far)] RMSE: 0.42033 | Var: 0.02762 | NLL: 2.97869 | CalibErr: 0.09452
+[ood_far] AUROC: 0.7392 | AUPR: 0.6171 | RMSE Rat: 2.44x
+[OOD (ood)] RMSE: 0.41686 | Var: 0.02870 | NLL: 2.78523 | CalibErr: 0.09413
+[ood] AUROC: 0.7513 | AUPR: 0.6274 | RMSE Rat: 2.42x
+\n--- Results: Laplace (prior=100000.0) ---
+[VAL] RMSE: 0.17755 | Var: 0.01757 | NLL: -1.68946 | CalibErr: 0.02688
+[ID] RMSE: 0.17026 | Var: 0.01650 | NLL: -1.72249 | CalibErr: 0.02991
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.32091 | Var: 0.01614 | NLL: 2.65777 | CalibErr: 0.12384
+[ood_near] AUROC: 0.6426 | AUPR: 0.5654 | RMSE Rat: 1.88x
+[OOD (ood_mid)] RMSE: 0.39716 | Var: 0.01316 | NLL: 9.18795 | CalibErr: 0.12915
+[ood_mid] AUROC: 0.6470 | AUPR: 0.5498 | RMSE Rat: 2.33x
+[OOD (ood_far)] RMSE: 0.41880 | Var: 0.02311 | NLL: 4.56913 | CalibErr: 0.10273
+[ood_far] AUROC: 0.8152 | AUPR: 0.6889 | RMSE Rat: 2.46x
+[OOD (ood)] RMSE: 0.41874 | Var: 0.02308 | NLL: 4.58311 | CalibErr: 0.10246
+[ood] AUROC: 0.8141 | AUPR: 0.6883 | RMSE Rat: 2.46x
+[16:38:35] DONE lap_Hopper-v5_0 rc=0
+  backed up results/Hopper-v5/laplace_vcal_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed0.json
+[16:38:35] RUN lap_vcal_Hopper-v5_0
+DEBUG: Checking if GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___fcf3d93635   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___fcf3d93635   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_0_839504fda9   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 330627] Worker Worker(salt=2636883374, workers=1, host=EriiNoDesktop, username=elean, pid=330627) running   GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 330627] Worker Worker(salt=2636883374, workers=1, host=EriiNoDesktop, username=elean, pid=330627) running   GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 330627] Worker Worker(salt=2636883374, workers=1, host=EriiNoDesktop, username=elean, pid=330627) done      GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 330627] Worker Worker(salt=2636883374, workers=1, host=EriiNoDesktop, username=elean, pid=330627) done      GymLaplace(env=Hopper-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=0, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___fcf3d93635   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Hopper_v5__200__200__200___fcf3d93635   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=2636883374, workers=1, host=EriiNoDesktop, username=elean, pid=330627) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2636883374, workers=1, host=EriiNoDesktop, username=elean, pid=330627) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== EXP 5: Laplace (Hopper-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.54513 | Val Loss -2.46587
+Early stopping at step 4800. Best Val Loss: -2.66659
+Final Train Loss: -2.72458 | Best Val Loss: -2.66659
+Computing KFAC Factors...
+Training + KFAC time: 28.54s
+\n--- Results: Laplace (prior=1.0) ---
+[posthoc] Learned variance scale on validation split: 0.012408
+[VAL] RMSE: 383.74988 | Var: 171925.20312 | NLL: 7.30404 | CalibErr: 0.04898
+[ID] RMSE: 514.08551 | Var: 156422.37500 | NLL: 7.76195 | CalibErr: 0.04001
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 403.58716 | Var: 118438.46094 | NLL: 7.42939 | CalibErr: 0.08051
+[ood_near] AUROC: 0.3675 | AUPR: 0.4070 | RMSE Rat: 0.79x
+[OOD (ood_mid)] RMSE: 433.83768 | Var: 116218.44531 | NLL: 7.49968 | CalibErr: 0.05419
+[ood_mid] AUROC: 0.3561 | AUPR: 0.4003 | RMSE Rat: 0.84x
+[OOD (ood_far)] RMSE: 483.08966 | Var: 117687.03125 | NLL: 7.73866 | CalibErr: 0.05284
+[ood_far] AUROC: 0.3778 | AUPR: 0.3992 | RMSE Rat: 0.94x
+[OOD (ood)] RMSE: 302.64120 | Var: 117453.31250 | NLL: 7.13125 | CalibErr: 0.07125
+[ood] AUROC: 0.3780 | AUPR: 0.3984 | RMSE Rat: 0.59x
+\n--- Results: Laplace (prior=10.0) ---
+[posthoc] Learned variance scale on validation split: 0.051350
+[VAL] RMSE: 7.67975 | Var: 61.97464 | NLL: 3.41714 | CalibErr: 0.04193
+[ID] RMSE: 8.66902 | Var: 61.58891 | NLL: 3.46528 | CalibErr: 0.09919
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 6.97363 | Var: 51.87125 | NLL: 3.23686 | CalibErr: 0.07359
+[ood_near] AUROC: 0.4264 | AUPR: 0.4430 | RMSE Rat: 0.80x
+[OOD (ood_mid)] RMSE: 8.19247 | Var: 42.09333 | NLL: 3.49967 | CalibErr: 0.11631
+[ood_mid] AUROC: 0.3548 | AUPR: 0.3941 | RMSE Rat: 0.95x
+[OOD (ood_far)] RMSE: 6.87280 | Var: 30.34059 | NLL: 3.35835 | CalibErr: 0.11066
+[ood_far] AUROC: 0.2252 | AUPR: 0.3492 | RMSE Rat: 0.79x
+[OOD (ood)] RMSE: 5.96916 | Var: 29.59630 | NLL: 3.07070 | CalibErr: 0.07067
+[ood] AUROC: 0.2189 | AUPR: 0.3475 | RMSE Rat: 0.69x
+\n--- Results: Laplace (prior=100.0) ---
+[posthoc] Learned variance scale on validation split: 0.120348
+[VAL] RMSE: 0.38180 | Var: 0.08609 | NLL: -0.03921 | CalibErr: 0.03655
+[ID] RMSE: 0.37168 | Var: 0.08176 | NLL: -0.10461 | CalibErr: 0.01688
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.48345 | Var: 0.07422 | NLL: 0.26393 | CalibErr: 0.04526
+[ood_near] AUROC: 0.4695 | AUPR: 0.4638 | RMSE Rat: 1.30x
+[OOD (ood_mid)] RMSE: 0.50544 | Var: 0.07262 | NLL: 0.63096 | CalibErr: 0.06229
+[ood_mid] AUROC: 0.4613 | AUPR: 0.4574 | RMSE Rat: 1.36x
+[OOD (ood_far)] RMSE: 0.53365 | Var: 0.05565 | NLL: 2.22367 | CalibErr: 0.07693
+[ood_far] AUROC: 0.3434 | AUPR: 0.3925 | RMSE Rat: 1.44x
+[OOD (ood)] RMSE: 0.54248 | Var: 0.05894 | NLL: 2.21523 | CalibErr: 0.07106
+[ood] AUROC: 0.3729 | AUPR: 0.4046 | RMSE Rat: 1.46x
+\n--- Results: Laplace (prior=1000.0) ---
+[posthoc] Learned variance scale on validation split: 0.203049
+[VAL] RMSE: 0.19392 | Var: 0.01251 | NLL: -1.36267 | CalibErr: 0.01313
+[ID] RMSE: 0.19113 | Var: 0.01171 | NLL: -1.38312 | CalibErr: 0.01086
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.32585 | Var: 0.01231 | NLL: 2.09600 | CalibErr: 0.12019
+[ood_near] AUROC: 0.5863 | AUPR: 0.5346 | RMSE Rat: 1.70x
+[OOD (ood_mid)] RMSE: 0.39392 | Var: 0.01184 | NLL: 4.63716 | CalibErr: 0.13087
+[ood_mid] AUROC: 0.6004 | AUPR: 0.5279 | RMSE Rat: 2.06x
+[OOD (ood_far)] RMSE: 0.42206 | Var: 0.01226 | NLL: 8.10765 | CalibErr: 0.12397
+[ood_far] AUROC: 0.6441 | AUPR: 0.5472 | RMSE Rat: 2.21x
+[OOD (ood)] RMSE: 0.42293 | Var: 0.01203 | NLL: 7.79699 | CalibErr: 0.12538
+[ood] AUROC: 0.6381 | AUPR: 0.5420 | RMSE Rat: 2.21x
+\n--- Results: Laplace (prior=10000.0) ---
+[posthoc] Learned variance scale on validation split: 0.437282
+[VAL] RMSE: 0.17812 | Var: 0.01163 | NLL: -1.67891 | CalibErr: 0.01517
+[ID] RMSE: 0.17425 | Var: 0.01087 | NLL: -1.69812 | CalibErr: 0.01426
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.32246 | Var: 0.01050 | NLL: 3.69285 | CalibErr: 0.13338
+[ood_near] AUROC: 0.5938 | AUPR: 0.5342 | RMSE Rat: 1.85x
+[OOD (ood_mid)] RMSE: 0.39655 | Var: 0.00919 | NLL: 8.48517 | CalibErr: 0.13848
+[ood_mid] AUROC: 0.6258 | AUPR: 0.5293 | RMSE Rat: 2.28x
+[OOD (ood_far)] RMSE: 0.41914 | Var: 0.01229 | NLL: 8.02599 | CalibErr: 0.12218
+[ood_far] AUROC: 0.7471 | AUPR: 0.6237 | RMSE Rat: 2.41x
+[OOD (ood)] RMSE: 0.41990 | Var: 0.01231 | NLL: 7.94068 | CalibErr: 0.12174
+[ood] AUROC: 0.7464 | AUPR: 0.6235 | RMSE Rat: 2.41x
+\n--- Results: Laplace (prior=100000.0) ---
+[posthoc] Learned variance scale on validation split: 0.785856
+[VAL] RMSE: 0.17668 | Var: 0.01392 | NLL: -1.71274 | CalibErr: 0.01894
+[ID] RMSE: 0.16955 | Var: 0.01294 | NLL: -1.73629 | CalibErr: 0.01986
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.32122 | Var: 0.01274 | NLL: 3.78406 | CalibErr: 0.13234
+[ood_near] AUROC: 0.6412 | AUPR: 0.5653 | RMSE Rat: 1.89x
+[OOD (ood_mid)] RMSE: 0.39796 | Var: 0.01034 | NLL: 12.64385 | CalibErr: 0.13561
+[ood_mid] AUROC: 0.6448 | AUPR: 0.5484 | RMSE Rat: 2.35x
+[OOD (ood_far)] RMSE: 0.41822 | Var: 0.01815 | NLL: 6.11998 | CalibErr: 0.11086
+[ood_far] AUROC: 0.8140 | AUPR: 0.6886 | RMSE Rat: 2.47x
+[OOD (ood)] RMSE: 0.41782 | Var: 0.01819 | NLL: 6.08986 | CalibErr: 0.11085
+[ood] AUROC: 0.8147 | AUPR: 0.6891 | RMSE Rat: 2.46x
+[16:42:46] DONE lap_vcal_Hopper-v5_0 rc=0
+  backed up results/Ant-v5/swag_n100_h200-200-200-200_act-relu_seed10.json
+[16:42:46] RUN swag_Ant-v5_10
+DEBUG: Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___85beaa691b   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___85beaa691b   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 334267] Worker Worker(salt=5829929484, workers=1, host=EriiNoDesktop, username=elean, pid=334267) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 334267] Worker Worker(salt=5829929484, workers=1, host=EriiNoDesktop, username=elean, pid=334267) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 334267] Worker Worker(salt=5829929484, workers=1, host=EriiNoDesktop, username=elean, pid=334267) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 334267] Worker Worker(salt=5829929484, workers=1, host=EriiNoDesktop, username=elean, pid=334267) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___85beaa691b   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___85beaa691b   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=5829929484, workers=1, host=EriiNoDesktop, username=elean, pid=334267) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=5829929484, workers=1, host=EriiNoDesktop, username=elean, pid=334267) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== EXP 4: SWAG (Ant-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.78194 | Val Loss -2.74213
+Step 5000: Train Loss -3.49471 | Val Loss -3.49550
+Final Train Loss: -3.49471 | Best Val Loss: -3.49987
+| SWAG steps collected: 4000
+Training time: 203.98s
+\n--- Results: SWAG ---
+[VAL] RMSE: 0.59960 | Var: 0.24105 | NLL: -1.21136 | CalibErr: 0.12082
+[ID] RMSE: 0.62089 | Var: 0.25267 | NLL: -1.18539 | CalibErr: 0.12517
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.76293 | Var: 0.26653 | NLL: -0.61236 | CalibErr: 0.11759
+[ood_near] AUROC: 0.5466 | AUPR: 0.5589 | RMSE Rat: 1.23x
+[OOD (ood_mid)] RMSE: 0.81370 | Var: 0.25390 | NLL: -0.51045 | CalibErr: 0.11965
+[ood_mid] AUROC: 0.5398 | AUPR: 0.5021 | RMSE Rat: 1.31x
+[OOD (ood_far)] RMSE: 1.27361 | Var: 0.18898 | NLL: 0.81916 | CalibErr: 0.10041
+[ood_far] AUROC: 0.2581 | AUPR: 0.3640 | RMSE Rat: 2.05x
+[OOD (ood)] RMSE: 1.27325 | Var: 0.18818 | NLL: 0.83535 | CalibErr: 0.09948
+[ood] AUROC: 0.2533 | AUPR: 0.3624 | RMSE Rat: 2.05x
+[16:47:41] DONE swag_Ant-v5_10 rc=0
+  backed up results/Ant-v5/swag_vcal_n100_h200-200-200-200_act-relu_seed10.json
+[16:47:41] RUN swag_vcal_Ant-v5_10
+DEBUG: Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___0960ee713c   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___0960ee713c   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 338947] Worker Worker(salt=9957062588, workers=1, host=EriiNoDesktop, username=elean, pid=338947) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 338947] Worker Worker(salt=9957062588, workers=1, host=EriiNoDesktop, username=elean, pid=338947) running   GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO: [pid 338947] Worker Worker(salt=9957062588, workers=1, host=EriiNoDesktop, username=elean, pid=338947) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 338947] Worker Worker(salt=9957062588, workers=1, host=EriiNoDesktop, username=elean, pid=338947) done      GymSWAG(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___0960ee713c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSWAG_relu_Ant_v5__200__200__200___0960ee713c   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9957062588, workers=1, host=EriiNoDesktop, username=elean, pid=338947) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9957062588, workers=1, host=EriiNoDesktop, username=elean, pid=338947) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSWAG(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== EXP 4: SWAG (Ant-v5, n=100, act=relu) ===
+Training (SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.88962 | Val Loss -2.87102
+Step 5000: Train Loss -1.92607 | Val Loss -1.94919
+Final Train Loss: -1.92607 | Best Val Loss: -3.50268
+| SWAG steps collected: 4000
+Training time: 341.36s
+\n--- Results: SWAG ---
+[posthoc] Learned variance scale on validation split: 0.308117
+[VAL] RMSE: 0.62112 | Var: 0.07697 | NLL: -1.07205 | CalibErr: 0.07375
+[ID] RMSE: 0.64413 | Var: 0.08102 | NLL: -1.03692 | CalibErr: 0.07322
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.79329 | Var: 0.08664 | NLL: 0.14566 | CalibErr: 0.07639
+[ood_near] AUROC: 0.5587 | AUPR: 0.5733 | RMSE Rat: 1.23x
+[OOD (ood_mid)] RMSE: 0.82080 | Var: 0.08371 | NLL: 0.13273 | CalibErr: 0.08392
+[ood_mid] AUROC: 0.5509 | AUPR: 0.5275 | RMSE Rat: 1.27x
+[OOD (ood_far)] RMSE: 1.26336 | Var: 0.07054 | NLL: 3.04602 | CalibErr: 0.07002
+[ood_far] AUROC: 0.4615 | AUPR: 0.4395 | RMSE Rat: 1.96x
+[OOD (ood)] RMSE: 1.26368 | Var: 0.07054 | NLL: 3.02350 | CalibErr: 0.06956
+[ood] AUROC: 0.4616 | AUPR: 0.4394 | RMSE Rat: 1.96x
+[16:53:44] DONE swag_vcal_Ant-v5_10 rc=0
+  backed up results/Ant-v5/subspace_inference_n100_h200-200-200-200_act-relu_seed10_T0.0.json
+[16:53:44] RUN sub_Ant-v5_10
+DEBUG: Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___ea9da8f45a   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___ea9da8f45a   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 344740] Worker Worker(salt=9727290095, workers=1, host=EriiNoDesktop, username=elean, pid=344740) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 344740] Worker Worker(salt=9727290095, workers=1, host=EriiNoDesktop, username=elean, pid=344740) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO: [pid 344740] Worker Worker(salt=9727290095, workers=1, host=EriiNoDesktop, username=elean, pid=344740) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+INFO:luigi-interface:[pid 344740] Worker Worker(salt=9727290095, workers=1, host=EriiNoDesktop, username=elean, pid=344740) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___ea9da8f45a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___ea9da8f45a   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9727290095, workers=1, host=EriiNoDesktop, username=elean, pid=344740) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9727290095, workers=1, host=EriiNoDesktop, username=elean, pid=344740) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== EXP: Subspace Inference (Ant-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.96745 | Val Loss -2.09663
+Step 1000: Train Loss -2.28525 | Val Loss -2.52522
+Step 1500: Train Loss -2.14114 | Val Loss -2.41571
+Step 2000: Train Loss -2.17288 | Val Loss -2.16973
+Final Train Loss: -2.17288 | Best Val Loss: -2.79674
+Training time: 27.07s
+\n--- Results: Subspace Inference ---
+[VAL] RMSE: 0.54175 | Var: 0.28536 | NLL: -1.65839 | CalibErr: 0.07401
+[ID] RMSE: 0.55559 | Var: 0.29747 | NLL: -1.66248 | CalibErr: 0.07506
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.72784 | Var: 0.30668 | NLL: 0.10206 | CalibErr: 0.06040
+[ood_near] AUROC: 0.5492 | AUPR: 0.5311 | RMSE Rat: 1.31x
+[OOD (ood_mid)] RMSE: 0.79411 | Var: 0.29043 | NLL: 0.13752 | CalibErr: 0.07514
+[ood_mid] AUROC: 0.4971 | AUPR: 0.4794 | RMSE Rat: 1.43x
+[OOD (ood_far)] RMSE: 1.29360 | Var: 0.23106 | NLL: 4.28769 | CalibErr: 0.03167
+[ood_far] AUROC: 0.2391 | AUPR: 0.3594 | RMSE Rat: 2.33x
+[OOD (ood)] RMSE: 1.29360 | Var: 0.23106 | NLL: 4.28769 | CalibErr: 0.03167
+[ood] AUROC: 0.2391 | AUPR: 0.3594 | RMSE Rat: 2.33x
+[16:54:28] DONE sub_Ant-v5_10 rc=0
+  backed up results/Ant-v5/subspace_inference_vcal_n100_h200-200-200-200_act-relu_seed10_T0.0.json
+[16:54:28] RUN sub_vcal_Ant-v5_10
+DEBUG: Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___4274850e68   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___4274850e68   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 345489] Worker Worker(salt=9350202504, workers=1, host=EriiNoDesktop, username=elean, pid=345489) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 345489] Worker Worker(salt=9350202504, workers=1, host=EriiNoDesktop, username=elean, pid=345489) running   GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO: [pid 345489] Worker Worker(salt=9350202504, workers=1, host=EriiNoDesktop, username=elean, pid=345489) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+INFO:luigi-interface:[pid 345489] Worker Worker(salt=9350202504, workers=1, host=EriiNoDesktop, username=elean, pid=345489) done      GymSubspaceInference(env=Ant-v5, steps=10000, n_perturbations=100, seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], temperature=0.0, posthoc_calibrate=True)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___4274850e68   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymSubspaceInference_relu_Ant_v5__200__200__200___4274850e68   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9350202504, workers=1, host=EriiNoDesktop, username=elean, pid=345489) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9350202504, workers=1, host=EriiNoDesktop, username=elean, pid=345489) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymSubspaceInference(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== EXP: Subspace Inference (Ant-v5, n=100, act=relu) ===
+Training Subspace (rank 20, SWAG after 1000) on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.96745 | Val Loss -2.09663
+Step 1000: Train Loss -2.28525 | Val Loss -2.52522
+Step 1500: Train Loss -2.14114 | Val Loss -2.41571
+Step 2000: Train Loss -2.17288 | Val Loss -2.16973
+Final Train Loss: -2.17288 | Best Val Loss: -2.79674
+Training time: 23.76s
+\n--- Results: Subspace Inference ---
+[posthoc] Learned variance scale on validation split: 0.645748
+[VAL] RMSE: 0.54175 | Var: 0.18427 | NLL: -1.69984 | CalibErr: 0.04910
+[ID] RMSE: 0.55559 | Var: 0.19209 | NLL: -1.71310 | CalibErr: 0.04999
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.72784 | Var: 0.19804 | NLL: 0.97324 | CalibErr: 0.03651
+[ood_near] AUROC: 0.5492 | AUPR: 0.5311 | RMSE Rat: 1.31x
+[OOD (ood_mid)] RMSE: 0.79411 | Var: 0.18755 | NLL: 0.91343 | CalibErr: 0.05325
+[ood_mid] AUROC: 0.4971 | AUPR: 0.4794 | RMSE Rat: 1.43x
+[OOD (ood_far)] RMSE: 1.29360 | Var: 0.14921 | NLL: 7.12053 | CalibErr: 0.02445
+[ood_far] AUROC: 0.2391 | AUPR: 0.3594 | RMSE Rat: 2.33x
+[OOD (ood)] RMSE: 1.29360 | Var: 0.14921 | NLL: 7.12053 | CalibErr: 0.02445
+[ood] AUROC: 0.2391 | AUPR: 0.3594 | RMSE Rat: 2.33x
+[16:55:10] DONE sub_vcal_Ant-v5_10 rc=0
+  backed up results/Ant-v5/laplace_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed10.json
+[16:55:10] RUN lap_Ant-v5_10
+DEBUG: Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___61d1cb4a0c   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___61d1cb4a0c   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 346271] Worker Worker(salt=9400695450, workers=1, host=EriiNoDesktop, username=elean, pid=346271) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 346271] Worker Worker(salt=9400695450, workers=1, host=EriiNoDesktop, username=elean, pid=346271) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO: [pid 346271] Worker Worker(salt=9400695450, workers=1, host=EriiNoDesktop, username=elean, pid=346271) done      GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+INFO:luigi-interface:[pid 346271] Worker Worker(salt=9400695450, workers=1, host=EriiNoDesktop, username=elean, pid=346271) done      GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=False)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___61d1cb4a0c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___61d1cb4a0c   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9400695450, workers=1, host=EriiNoDesktop, username=elean, pid=346271) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9400695450, workers=1, host=EriiNoDesktop, username=elean, pid=346271) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymLaplace(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== EXP 5: Laplace (Ant-v5, n=100, act=relu) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 2500: Train Loss -2.88962 | Val Loss -2.87102
+Step 5000: Train Loss -1.92607 | Val Loss -1.94919
+Final Train Loss: -1.92607 | Best Val Loss: -3.50268
+Computing KFAC Factors...
+Training + KFAC time: 28.69s
+\n--- Results: Laplace (prior=1.0) ---
+[VAL] RMSE: 9384.56152 | Var: 3747206400.00000 | NLL: 11.80714 | CalibErr: 0.17452
+[ID] RMSE: 8949.69727 | Var: 4090395392.00000 | NLL: 11.87802 | CalibErr: 0.17692
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 10183.04688 | Var: 4690431488.00000 | NLL: 11.95682 | CalibErr: 0.18290
+[ood_near] AUROC: 0.5912 | AUPR: 0.5562 | RMSE Rat: 1.14x
+[OOD (ood_mid)] RMSE: 9012.62109 | Var: 4294918656.00000 | NLL: 11.88118 | CalibErr: 0.17949
+[ood_mid] AUROC: 0.5163 | AUPR: 0.5215 | RMSE Rat: 1.01x
+[OOD (ood_far)] RMSE: 12131.66797 | Var: 7239430144.00000 | NLL: 12.18984 | CalibErr: 0.17800
+[ood_far] AUROC: 0.7764 | AUPR: 0.7223 | RMSE Rat: 1.36x
+[OOD (ood)] RMSE: 11377.03125 | Var: 7407562752.00000 | NLL: 12.20015 | CalibErr: 0.18282
+[ood] AUROC: 0.7835 | AUPR: 0.7311 | RMSE Rat: 1.27x
+\n--- Results: Laplace (prior=10.0) ---
+[VAL] RMSE: 46.62400 | Var: 21496.54297 | NLL: 5.74604 | CalibErr: 0.16933
+[ID] RMSE: 46.80672 | Var: 22397.15625 | NLL: 5.80536 | CalibErr: 0.17050
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 50.73743 | Var: 26014.60156 | NLL: 5.89268 | CalibErr: 0.16812
+[ood_near] AUROC: 0.5911 | AUPR: 0.5616 | RMSE Rat: 1.08x
+[OOD (ood_mid)] RMSE: 47.44963 | Var: 23488.92773 | NLL: 5.80648 | CalibErr: 0.17138
+[ood_mid] AUROC: 0.5123 | AUPR: 0.5174 | RMSE Rat: 1.01x
+[OOD (ood_far)] RMSE: 62.01993 | Var: 36889.93750 | NLL: 6.10140 | CalibErr: 0.16550
+[ood_far] AUROC: 0.7538 | AUPR: 0.6824 | RMSE Rat: 1.33x
+[OOD (ood)] RMSE: 60.36016 | Var: 35970.32812 | NLL: 6.08787 | CalibErr: 0.17128
+[ood] AUROC: 0.7472 | AUPR: 0.6738 | RMSE Rat: 1.29x
+\n--- Results: Laplace (prior=100.0) ---
+[VAL] RMSE: 0.87884 | Var: 0.72954 | NLL: 0.29602 | CalibErr: 0.14541
+[ID] RMSE: 0.90484 | Var: 0.81664 | NLL: 0.32930 | CalibErr: 0.14455
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.97711 | Var: 0.84848 | NLL: 0.49848 | CalibErr: 0.13542
+[ood_near] AUROC: 0.5649 | AUPR: 0.5248 | RMSE Rat: 1.08x
+[OOD (ood_mid)] RMSE: 0.94981 | Var: 0.82199 | NLL: 0.44731 | CalibErr: 0.13410
+[ood_mid] AUROC: 0.5480 | AUPR: 0.5129 | RMSE Rat: 1.05x
+[OOD (ood_far)] RMSE: 1.36082 | Var: 1.20417 | NLL: 0.94703 | CalibErr: 0.12313
+[ood_far] AUROC: 0.7676 | AUPR: 0.7189 | RMSE Rat: 1.50x
+[OOD (ood)] RMSE: 1.36069 | Var: 1.16045 | NLL: 0.94011 | CalibErr: 0.12283
+[ood] AUROC: 0.7542 | AUPR: 0.6996 | RMSE Rat: 1.50x
+\n--- Results: Laplace (prior=1000.0) ---
+[VAL] RMSE: 0.80193 | Var: 0.27829 | NLL: -0.72813 | CalibErr: 0.11452
+[ID] RMSE: 0.83688 | Var: 0.28737 | NLL: -0.71892 | CalibErr: 0.11135
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.92223 | Var: 0.30142 | NLL: -0.33913 | CalibErr: 0.10939
+[ood_near] AUROC: 0.5544 | AUPR: 0.5823 | RMSE Rat: 1.10x
+[OOD (ood_mid)] RMSE: 0.88712 | Var: 0.30457 | NLL: -0.32727 | CalibErr: 0.11366
+[ood_mid] AUROC: 0.5809 | AUPR: 0.6024 | RMSE Rat: 1.06x
+[OOD (ood_far)] RMSE: 1.28410 | Var: 0.30773 | NLL: 0.37215 | CalibErr: 0.10075
+[ood_far] AUROC: 0.6287 | AUPR: 0.6187 | RMSE Rat: 1.53x
+[OOD (ood)] RMSE: 1.28024 | Var: 0.30355 | NLL: 0.37987 | CalibErr: 0.10272
+[ood] AUROC: 0.6097 | AUPR: 0.6000 | RMSE Rat: 1.53x
+\n--- Results: Laplace (prior=10000.0) ---
+[VAL] RMSE: 0.82093 | Var: 0.24691 | NLL: -0.96294 | CalibErr: 0.08633
+[ID] RMSE: 0.84802 | Var: 0.26316 | NLL: -0.93698 | CalibErr: 0.08644
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.90269 | Var: 0.27366 | NLL: -0.45106 | CalibErr: 0.08865
+[ood_near] AUROC: 0.5269 | AUPR: 0.5895 | RMSE Rat: 1.06x
+[OOD (ood_mid)] RMSE: 0.88212 | Var: 0.27371 | NLL: -0.35672 | CalibErr: 0.09084
+[ood_mid] AUROC: 0.5453 | AUPR: 0.6045 | RMSE Rat: 1.04x
+[OOD (ood_far)] RMSE: 1.28630 | Var: 0.27757 | NLL: 0.60912 | CalibErr: 0.08691
+[ood_far] AUROC: 0.6106 | AUPR: 0.6475 | RMSE Rat: 1.52x
+[OOD (ood)] RMSE: 1.28620 | Var: 0.27889 | NLL: 0.60129 | CalibErr: 0.08633
+[ood] AUROC: 0.6192 | AUPR: 0.6544 | RMSE Rat: 1.52x
+\n--- Results: Laplace (prior=100000.0) ---
+[VAL] RMSE: 0.82432 | Var: 0.24244 | NLL: -1.02290 | CalibErr: 0.07219
+[ID] RMSE: 0.85483 | Var: 0.25596 | NLL: -0.98992 | CalibErr: 0.07333
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.90258 | Var: 0.26756 | NLL: -0.48302 | CalibErr: 0.07803
+[ood_near] AUROC: 0.5487 | AUPR: 0.6029 | RMSE Rat: 1.06x
+[OOD (ood_mid)] RMSE: 0.88239 | Var: 0.26854 | NLL: -0.37342 | CalibErr: 0.08259
+[ood_mid] AUROC: 0.5670 | AUPR: 0.6267 | RMSE Rat: 1.03x
+[OOD (ood_far)] RMSE: 1.28716 | Var: 0.27538 | NLL: 0.96492 | CalibErr: 0.07824
+[ood_far] AUROC: 0.6460 | AUPR: 0.6926 | RMSE Rat: 1.51x
+[OOD (ood)] RMSE: 1.28717 | Var: 0.27514 | NLL: 0.96900 | CalibErr: 0.07855
+[ood] AUROC: 0.6443 | AUPR: 0.6913 | RMSE Rat: 1.51x
+[16:58:53] DONE lap_Ant-v5_10 rc=0
+  backed up results/Ant-v5/laplace_vcal_priors1.0-10.0-100.0-1000.0-10000.0-100000.0_n100_h200-200-200-200_act-relu_seed10.json
+[16:58:53] RUN lap_vcal_Ant-v5_10
+DEBUG: Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG:luigi-interface:Checking if GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___8fd7c42ca5   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymLaplace_relu_Ant_v5__200__200__200___8fd7c42ca5   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 348683] Worker Worker(salt=6423404668, workers=1, host=EriiNoDesktop, username=elean, pid=348683) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
+INFO:luigi-interface:[pid 348683] Worker Worker(salt=6423404668, workers=1, host=EriiNoDesktop, username=elean, pid=348683) running   GymLaplace(env=Ant-v5, steps=10000, n_perturbations=100, subset_size=4096, laplace_priors=[1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0], seed=10, policy_preset=neurips_minari, activation=relu, hidden_dims=[200, 200, 200, 200], posthoc_calibrate=True)
