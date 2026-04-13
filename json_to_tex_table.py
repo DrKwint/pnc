@@ -155,12 +155,22 @@ def is_higher_better(metric: str) -> bool:
 
 
 def best_metric_indices(
-    rows: list[tuple[str, dict[str, list[float]]]], metrics, bold_pct: float
+    rows: list[tuple[str, dict[str, list[float]]]],
+    metrics,
+    bold_pct: float,
+    ignore_for_bolding: set[str] | None = None,
 ) -> dict[str, set[int]]:
+    ignore_for_bolding = ignore_for_bolding or set()
+
+    def is_ignored(label: str) -> bool:
+        return any(label == name or label.startswith(f"{name} (") for name in ignore_for_bolding)
+
     winners: dict[str, set[int]] = {}
     for metric, _ in metrics:
         scored = []
-        for idx, (_, metrics) in enumerate(rows):
+        for idx, (label, metrics) in enumerate(rows):
+            if is_ignored(label):
+                continue
             mu, _ = mean_std(metrics.get(metric, []))
             if not math.isnan(mu):
                 scored.append((idx, mu))
@@ -623,9 +633,10 @@ def render_env_table(
     caption: str,
     include_std: bool,
     bold_pct: float,
+    ignore_for_bolding: set[str] | None = None,
     stat_mode: str = "mean_std",
 ) -> str:
-    winners = best_metric_indices(rows, metric_specs, bold_pct)
+    winners = best_metric_indices(rows, metric_specs, bold_pct, ignore_for_bolding)
     lines = [
         r"\begin{table}[t]",
         r"\centering",
@@ -663,9 +674,10 @@ def render_env_table_text(
     include_std: bool,
     bold_pct: float,
     max_over: set[str],
+    ignore_for_bolding: set[str] | None = None,
     stat_mode: str = "mean_std",
 ) -> str:
-    winners = best_metric_indices(rows, metric_specs, bold_pct)
+    winners = best_metric_indices(rows, metric_specs, bold_pct, ignore_for_bolding)
     headers = ["Method"] + [header.replace(r" $\downarrow$", " down").replace(r" $\uparrow$", " up") for _, header in metric_specs]
     body = []
     for row_idx, (label, row_metrics) in enumerate(rows):
@@ -709,6 +721,7 @@ def build_tables(
     fmt: str,
     include_std: bool,
     bold_pct: float,
+    ignore_deep_ensemble_for_bolding: bool,
     max_over: set[str],
     stat_mode: str = "mean_std",
     seed_filter: set[int] | None = None,
@@ -723,6 +736,7 @@ def build_tables(
         profile_cfg = PROFILES[profile]
         groups = load_env_results(env_dir, profile, seed_filter=seed_filter)
         rows = method_rows(groups, profile, max_over if profile == "gym" else set())
+        ignore_for_bolding = {"Deep Ensemble"} if ignore_deep_ensemble_for_bolding else set()
         if rows:
             if fmt == "tex":
                 tables.append(
@@ -733,6 +747,7 @@ def build_tables(
                         profile_cfg["caption"],
                         include_std,
                         bold_pct,
+                        ignore_for_bolding=ignore_for_bolding,
                         stat_mode=stat_mode,
                     )
                 )
@@ -745,6 +760,7 @@ def build_tables(
                         include_std,
                         bold_pct,
                         max_over if profile == "gym" else set(),
+                        ignore_for_bolding=ignore_for_bolding,
                         stat_mode=stat_mode,
                     )
                 )
@@ -773,6 +789,11 @@ def main() -> None:
         default=0.0,
         metavar="K",
         help="Bold values within K percent of the best value in each column. Default: 0.",
+    )
+    parser.add_argument(
+        "--bold-ignore-deep-ensemble",
+        action="store_true",
+        help="Exclude the 'Deep Ensemble' row when determining which values get bolded.",
     )
     parser.add_argument(
         "--max-over",
@@ -821,6 +842,7 @@ def main() -> None:
         fmt,
         args.include_std,
         args.bold,
+        args.bold_ignore_deep_ensemble,
         max_over,
         stat_mode=args.stat_mode,
         seed_filter=seed_filter,
