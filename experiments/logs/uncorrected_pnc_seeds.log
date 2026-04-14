@@ -1,0 +1,2155 @@
+=== START Sun Apr 12 15:58:04 PDT 2026 ===
+[15:58:04] RUN pnc_none_Ant-v5_10
+DEBUG: Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_318aaf2d3f   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_318aaf2d3f   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_10_697333d70a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 306154] Worker Worker(salt=1813541722, workers=1, host=EriiNoDesktop, username=elean, pid=306154) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 306154] Worker Worker(salt=1813541722, workers=1, host=EriiNoDesktop, username=elean, pid=306154) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 306154] Worker Worker(salt=1813541722, workers=1, host=EriiNoDesktop, username=elean, pid=306154) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 306154] Worker Worker(salt=1813541722, workers=1, host=EriiNoDesktop, username=elean, pid=306154) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_318aaf2d3f   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_318aaf2d3f   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=1813541722, workers=1, host=EriiNoDesktop, username=elean, pid=306154) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=1813541722, workers=1, host=EriiNoDesktop, username=elean, pid=306154) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== Gym PJSVD (Ant-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.96745 | Val Loss -2.09663
+Step 1000: Train Loss -2.28525 | Val Loss -2.52522
+Step 1500: Train Loss -2.14114 | Val Loss -2.41571
+Step 2000: Train Loss -2.17288 | Val Loss -2.16973
+Final Train Loss: -2.17288 | Best Val Loss: -2.79674
+Base model training time: 11.07s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.64475 | Var: 0.25914 | NLL: -1.16222 | CalibErr: 0.11778
+[ID] RMSE: 0.66185 | Var: 0.27094 | NLL: -1.14089 | CalibErr: 0.12032
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.79000 | Var: 0.28198 | NLL: -0.46824 | CalibErr: 0.11174
+[ood_near] AUROC: 0.5661 | AUPR: 0.5646 | RMSE Rat: 1.19x
+[OOD (ood_mid)] RMSE: 0.81130 | Var: 0.26979 | NLL: -0.37334 | CalibErr: 0.11667
+[ood_mid] AUROC: 0.5107 | AUPR: 0.4898 | RMSE Rat: 1.23x
+[OOD (ood_far)] RMSE: 1.27551 | Var: 0.24574 | NLL: 0.99429 | CalibErr: 0.08017
+[ood_far] AUROC: 0.3629 | AUPR: 0.4308 | RMSE Rat: 1.93x
+[OOD (ood)] RMSE: 1.27551 | Var: 0.24574 | NLL: 0.99429 | CalibErr: 0.08017
+[ood] AUROC: 0.3629 | AUPR: 0.4308 | RMSE Rat: 1.93x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.67004 | Var: 0.34266 | NLL: -1.03068 | CalibErr: 0.11952
+[ID] RMSE: 0.68851 | Var: 0.36134 | NLL: -1.01317 | CalibErr: 0.12079
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.82096 | Var: 0.37484 | NLL: -0.42628 | CalibErr: 0.10979
+[ood_near] AUROC: 0.5517 | AUPR: 0.5312 | RMSE Rat: 1.19x
+[OOD (ood_mid)] RMSE: 0.83479 | Var: 0.35056 | NLL: -0.39311 | CalibErr: 0.11452
+[ood_mid] AUROC: 0.4712 | AUPR: 0.4640 | RMSE Rat: 1.21x
+[OOD (ood_far)] RMSE: 1.29605 | Var: 0.32441 | NLL: 0.87855 | CalibErr: 0.08264
+[ood_far] AUROC: 0.3490 | AUPR: 0.4444 | RMSE Rat: 1.88x
+[OOD (ood)] RMSE: 1.29605 | Var: 0.32441 | NLL: 0.87855 | CalibErr: 0.08264
+[ood] AUROC: 0.3490 | AUPR: 0.4444 | RMSE Rat: 1.88x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 0.75941 | Var: 0.69115 | NLL: -0.54659 | CalibErr: 0.10747
+[ID] RMSE: 0.78534 | Var: 0.73752 | NLL: -0.52002 | CalibErr: 0.10771
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.92852 | Var: 0.75939 | NLL: -0.05169 | CalibErr: 0.09691
+[ood_near] AUROC: 0.5279 | AUPR: 0.5224 | RMSE Rat: 1.18x
+[OOD (ood_mid)] RMSE: 0.94834 | Var: 0.68319 | NLL: -0.16777 | CalibErr: 0.10100
+[ood_mid] AUROC: 0.4323 | AUPR: 0.4650 | RMSE Rat: 1.21x
+[OOD (ood_far)] RMSE: 1.41585 | Var: 0.66448 | NLL: 1.07217 | CalibErr: 0.07164
+[ood_far] AUROC: 0.4323 | AUPR: 0.4591 | RMSE Rat: 1.80x
+[OOD (ood)] RMSE: 1.41585 | Var: 0.66448 | NLL: 1.07217 | CalibErr: 0.07164
+[ood] AUROC: 0.4323 | AUPR: 0.4591 | RMSE Rat: 1.80x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 1.95182 | Var: 5.08936 | NLL: 0.81977 | CalibErr: 0.07491
+[ID] RMSE: 2.03699 | Var: 5.50388 | NLL: 0.89114 | CalibErr: 0.07487
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.21384 | Var: 5.84597 | NLL: 1.02712 | CalibErr: 0.06887
+[ood_near] AUROC: 0.5333 | AUPR: 0.5317 | RMSE Rat: 1.09x
+[OOD (ood_mid)] RMSE: 2.17617 | Var: 5.12326 | NLL: 0.92870 | CalibErr: 0.06947
+[ood_mid] AUROC: 0.4490 | AUPR: 0.4825 | RMSE Rat: 1.07x
+[OOD (ood_far)] RMSE: 2.70789 | Var: 5.33516 | NLL: 1.37974 | CalibErr: 0.05798
+[ood_far] AUROC: 0.5609 | AUPR: 0.5169 | RMSE Rat: 1.33x
+[OOD (ood)] RMSE: 2.70789 | Var: 5.33516 | NLL: 1.37974 | CalibErr: 0.05798
+[ood] AUROC: 0.5609 | AUPR: 0.5169 | RMSE Rat: 1.33x
+[15:58:43] DONE pnc_none_Ant-v5_10 rc=0
+[15:58:43] RUN pnc_none_Ant-v5_42
+DEBUG: Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_af8a8040b2   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_af8a8040b2   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_42_70b8dbc6fd   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_42_70b8dbc6fd   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 306811] Worker Worker(salt=6815864170, workers=1, host=EriiNoDesktop, username=elean, pid=306811) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 306811] Worker Worker(salt=6815864170, workers=1, host=EriiNoDesktop, username=elean, pid=306811) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 306811] Worker Worker(salt=6815864170, workers=1, host=EriiNoDesktop, username=elean, pid=306811) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 306811] Worker Worker(salt=6815864170, workers=1, host=EriiNoDesktop, username=elean, pid=306811) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_af8a8040b2   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_af8a8040b2   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=6815864170, workers=1, host=EriiNoDesktop, username=elean, pid=306811) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=6815864170, workers=1, host=EriiNoDesktop, username=elean, pid=306811) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=42
+
+=== Gym PJSVD (Ant-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -2.29490 | Val Loss -2.22746
+Step 1000: Train Loss -2.71807 | Val Loss -2.66696
+Step 1500: Train Loss -2.11002 | Val Loss -2.11558
+Step 2000: Train Loss -2.37512 | Val Loss -2.31116
+Final Train Loss: -2.37512 | Best Val Loss: -2.85991
+Base model training time: 10.84s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.78467 | Var: 0.29819 | NLL: -1.26025 | CalibErr: 0.12341
+[ID] RMSE: 0.77657 | Var: 0.29942 | NLL: -1.25143 | CalibErr: 0.12327
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.89225 | Var: 0.30392 | NLL: -0.62928 | CalibErr: 0.11341
+[ood_near] AUROC: 0.5308 | AUPR: 0.5457 | RMSE Rat: 1.15x
+[OOD (ood_mid)] RMSE: 0.91871 | Var: 0.29765 | NLL: -0.48365 | CalibErr: 0.11426
+[ood_mid] AUROC: 0.4775 | AUPR: 0.5030 | RMSE Rat: 1.18x
+[OOD (ood_far)] RMSE: 1.38995 | Var: 0.30992 | NLL: 4.16656 | CalibErr: 0.06128
+[ood_far] AUROC: 0.4951 | AUPR: 0.5915 | RMSE Rat: 1.79x
+[OOD (ood)] RMSE: 1.38995 | Var: 0.30992 | NLL: 4.16656 | CalibErr: 0.06128
+[ood] AUROC: 0.4951 | AUPR: 0.5915 | RMSE Rat: 1.79x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.81041 | Var: 0.35855 | NLL: -1.07812 | CalibErr: 0.12664
+[ID] RMSE: 0.80207 | Var: 0.36154 | NLL: -1.06909 | CalibErr: 0.12620
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.90730 | Var: 0.37364 | NLL: -0.56669 | CalibErr: 0.11396
+[ood_near] AUROC: 0.5797 | AUPR: 0.5483 | RMSE Rat: 1.13x
+[OOD (ood_mid)] RMSE: 0.93391 | Var: 0.36368 | NLL: -0.47381 | CalibErr: 0.11174
+[ood_mid] AUROC: 0.5234 | AUPR: 0.5046 | RMSE Rat: 1.16x
+[OOD (ood_far)] RMSE: 1.40988 | Var: 0.40731 | NLL: 2.53993 | CalibErr: 0.07124
+[ood_far] AUROC: 0.6094 | AUPR: 0.6801 | RMSE Rat: 1.76x
+[OOD (ood)] RMSE: 1.40988 | Var: 0.40731 | NLL: 2.53993 | CalibErr: 0.07124
+[ood] AUROC: 0.6094 | AUPR: 0.6801 | RMSE Rat: 1.76x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 0.85096 | Var: 0.61229 | NLL: -0.68283 | CalibErr: 0.11077
+[ID] RMSE: 0.84067 | Var: 0.61972 | NLL: -0.66958 | CalibErr: 0.11050
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.94542 | Var: 0.64590 | NLL: -0.19760 | CalibErr: 0.09753
+[ood_near] AUROC: 0.5418 | AUPR: 0.5455 | RMSE Rat: 1.12x
+[OOD (ood_mid)] RMSE: 0.99735 | Var: 0.61937 | NLL: -0.23953 | CalibErr: 0.09680
+[ood_mid] AUROC: 0.4758 | AUPR: 0.5128 | RMSE Rat: 1.19x
+[OOD (ood_far)] RMSE: 1.52786 | Var: 0.74713 | NLL: 1.52095 | CalibErr: 0.06537
+[ood_far] AUROC: 0.6499 | AUPR: 0.6677 | RMSE Rat: 1.82x
+[OOD (ood)] RMSE: 1.52786 | Var: 0.74713 | NLL: 1.52095 | CalibErr: 0.06537
+[ood] AUROC: 0.6499 | AUPR: 0.6677 | RMSE Rat: 1.82x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 1.78559 | Var: 3.73181 | NLL: 0.64070 | CalibErr: 0.08050
+[ID] RMSE: 1.79743 | Var: 3.78980 | NLL: 0.64581 | CalibErr: 0.08069
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.96460 | Var: 3.97862 | NLL: 0.85011 | CalibErr: 0.07433
+[ood_near] AUROC: 0.5308 | AUPR: 0.5293 | RMSE Rat: 1.09x
+[OOD (ood_mid)] RMSE: 2.04448 | Var: 3.67758 | NLL: 0.73614 | CalibErr: 0.07320
+[ood_mid] AUROC: 0.4739 | AUPR: 0.4948 | RMSE Rat: 1.14x
+[OOD (ood_far)] RMSE: 2.78020 | Var: 4.62675 | NLL: 1.39010 | CalibErr: 0.06336
+[ood_far] AUROC: 0.6506 | AUPR: 0.5966 | RMSE Rat: 1.55x
+[OOD (ood)] RMSE: 2.78020 | Var: 4.62675 | NLL: 1.39010 | CalibErr: 0.06336
+[ood] AUROC: 0.6506 | AUPR: 0.5966 | RMSE Rat: 1.55x
+[15:59:20] DONE pnc_none_Ant-v5_42 rc=0
+[15:59:20] RUN pnc_none_Ant-v5_100
+DEBUG: Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_e36ae1fef9   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_e36ae1fef9   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_100_8283106ede   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_100_8283106ede   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 307388] Worker Worker(salt=9705413327, workers=1, host=EriiNoDesktop, username=elean, pid=307388) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 307388] Worker Worker(salt=9705413327, workers=1, host=EriiNoDesktop, username=elean, pid=307388) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 307388] Worker Worker(salt=9705413327, workers=1, host=EriiNoDesktop, username=elean, pid=307388) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 307388] Worker Worker(salt=9705413327, workers=1, host=EriiNoDesktop, username=elean, pid=307388) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_e36ae1fef9   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_e36ae1fef9   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9705413327, workers=1, host=EriiNoDesktop, username=elean, pid=307388) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9705413327, workers=1, host=EriiNoDesktop, username=elean, pid=307388) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=100
+
+=== Gym PJSVD (Ant-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -2.12944 | Val Loss -2.12896
+Step 1000: Train Loss -1.65938 | Val Loss -1.65499
+Step 1500: Train Loss -2.41291 | Val Loss -2.41199
+Step 2000: Train Loss -2.81749 | Val Loss -3.03437
+Final Train Loss: -2.81749 | Best Val Loss: -3.03437
+Base model training time: 10.66s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.56164 | Var: 0.38530 | NLL: -1.80220 | CalibErr: 0.12285
+[ID] RMSE: 0.58418 | Var: 0.38886 | NLL: -1.57135 | CalibErr: 0.12072
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.75770 | Var: 0.38831 | NLL: -0.39845 | CalibErr: 0.10385
+[ood_near] AUROC: 0.5111 | AUPR: 0.5076 | RMSE Rat: 1.30x
+[OOD (ood_mid)] RMSE: 0.82965 | Var: 0.36955 | NLL: 0.39958 | CalibErr: 0.09981
+[ood_mid] AUROC: 0.4521 | AUPR: 0.4568 | RMSE Rat: 1.42x
+[OOD (ood_far)] RMSE: 1.40841 | Var: 0.34963 | NLL: 4.86226 | CalibErr: 0.06754
+[ood_far] AUROC: 0.3639 | AUPR: 0.4221 | RMSE Rat: 2.41x
+[OOD (ood)] RMSE: 1.40841 | Var: 0.34963 | NLL: 4.86226 | CalibErr: 0.06754
+[ood] AUROC: 0.3639 | AUPR: 0.4221 | RMSE Rat: 2.41x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.63408 | Var: 0.48104 | NLL: -1.40276 | CalibErr: 0.12666
+[ID] RMSE: 0.65852 | Var: 0.48620 | NLL: -1.24783 | CalibErr: 0.12495
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.82442 | Var: 0.49662 | NLL: -0.56543 | CalibErr: 0.11401
+[ood_near] AUROC: 0.5451 | AUPR: 0.5188 | RMSE Rat: 1.25x
+[OOD (ood_mid)] RMSE: 0.87329 | Var: 0.46574 | NLL: -0.05862 | CalibErr: 0.10836
+[ood_mid] AUROC: 0.4945 | AUPR: 0.4705 | RMSE Rat: 1.33x
+[OOD (ood_far)] RMSE: 1.43531 | Var: 0.46816 | NLL: 2.86447 | CalibErr: 0.07866
+[ood_far] AUROC: 0.4674 | AUPR: 0.4794 | RMSE Rat: 2.18x
+[OOD (ood)] RMSE: 1.43531 | Var: 0.46816 | NLL: 2.86447 | CalibErr: 0.07866
+[ood] AUROC: 0.4674 | AUPR: 0.4794 | RMSE Rat: 2.18x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 0.81323 | Var: 0.78907 | NLL: -0.77667 | CalibErr: 0.11075
+[ID] RMSE: 0.83008 | Var: 0.79538 | NLL: -0.68517 | CalibErr: 0.10908
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.99109 | Var: 0.82945 | NLL: -0.25002 | CalibErr: 0.10036
+[ood_near] AUROC: 0.5522 | AUPR: 0.5298 | RMSE Rat: 1.19x
+[OOD (ood_mid)] RMSE: 1.02580 | Var: 0.76962 | NLL: -0.06754 | CalibErr: 0.09778
+[ood_mid] AUROC: 0.4973 | AUPR: 0.4742 | RMSE Rat: 1.24x
+[OOD (ood_far)] RMSE: 1.58699 | Var: 0.85407 | NLL: 1.69875 | CalibErr: 0.06992
+[ood_far] AUROC: 0.5570 | AUPR: 0.5648 | RMSE Rat: 1.91x
+[OOD (ood)] RMSE: 1.58699 | Var: 0.85407 | NLL: 1.69875 | CalibErr: 0.06992
+[ood] AUROC: 0.5570 | AUPR: 0.5648 | RMSE Rat: 1.91x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 1.99194 | Var: 3.75397 | NLL: 0.53445 | CalibErr: 0.06961
+[ID] RMSE: 2.00015 | Var: 3.77880 | NLL: 0.55302 | CalibErr: 0.06895
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.20924 | Var: 4.15160 | NLL: 0.71868 | CalibErr: 0.06294
+[ood_near] AUROC: 0.5591 | AUPR: 0.5526 | RMSE Rat: 1.10x
+[OOD (ood_mid)] RMSE: 2.22169 | Var: 3.69709 | NLL: 0.64937 | CalibErr: 0.06345
+[ood_mid] AUROC: 0.4753 | AUPR: 0.5021 | RMSE Rat: 1.11x
+[OOD (ood_far)] RMSE: 3.02822 | Var: 4.92161 | NLL: 1.26236 | CalibErr: 0.05765
+[ood_far] AUROC: 0.6555 | AUPR: 0.6542 | RMSE Rat: 1.51x
+[OOD (ood)] RMSE: 3.02822 | Var: 4.92161 | NLL: 1.26236 | CalibErr: 0.05765
+[ood] AUROC: 0.6555 | AUPR: 0.6542 | RMSE Rat: 1.51x
+[15:59:56] DONE pnc_none_Ant-v5_100 rc=0
+[15:59:56] RUN pnc_none_Ant-v5_200
+DEBUG: Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Ant-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Ant-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_d51c20a18a   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_d51c20a18a   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_200_e86ca07a21   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Ant_v5_neurips_minari_200_e86ca07a21   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 307874] Worker Worker(salt=5882692661, workers=1, host=EriiNoDesktop, username=elean, pid=307874) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 307874] Worker Worker(salt=5882692661, workers=1, host=EriiNoDesktop, username=elean, pid=307874) running   GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 307874] Worker Worker(salt=5882692661, workers=1, host=EriiNoDesktop, username=elean, pid=307874) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 307874] Worker Worker(salt=5882692661, workers=1, host=EriiNoDesktop, username=elean, pid=307874) done      GymPJSVD(env=Ant-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_d51c20a18a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_d51c20a18a   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=5882692661, workers=1, host=EriiNoDesktop, username=elean, pid=307874) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=5882692661, workers=1, host=EriiNoDesktop, username=elean, pid=307874) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Ant-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=200
+
+=== Gym PJSVD (Ant-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -0.49916 | Val Loss -0.21169
+Step 1000: Train Loss -2.47059 | Val Loss -2.21334
+Step 1500: Train Loss -2.93495 | Val Loss -2.84740
+Step 2000: Train Loss -3.01823 | Val Loss -2.63135
+Final Train Loss: -3.01823 | Best Val Loss: -2.84740
+Base model training time: 10.77s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.58939 | Var: 0.41895 | NLL: -1.64162 | CalibErr: 0.11993
+[ID] RMSE: 0.57586 | Var: 0.42139 | NLL: -1.68314 | CalibErr: 0.12004
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.76489 | Var: 0.42908 | NLL: -0.55867 | CalibErr: 0.10204
+[ood_near] AUROC: 0.4950 | AUPR: 0.5101 | RMSE Rat: 1.33x
+[OOD (ood_mid)] RMSE: 0.85952 | Var: 0.41173 | NLL: 0.43252 | CalibErr: 0.09711
+[ood_mid] AUROC: 0.4610 | AUPR: 0.4696 | RMSE Rat: 1.49x
+[OOD (ood_far)] RMSE: 1.41694 | Var: 0.37537 | NLL: 5.45643 | CalibErr: 0.06240
+[ood_far] AUROC: 0.4458 | AUPR: 0.4347 | RMSE Rat: 2.46x
+[OOD (ood)] RMSE: 1.41694 | Var: 0.37537 | NLL: 5.45643 | CalibErr: 0.06240
+[ood] AUROC: 0.4458 | AUPR: 0.4347 | RMSE Rat: 2.46x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.67750 | Var: 0.57252 | NLL: -1.24927 | CalibErr: 0.12277
+[ID] RMSE: 0.66365 | Var: 0.57024 | NLL: -1.27042 | CalibErr: 0.12298
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.83733 | Var: 0.58606 | NLL: -0.56424 | CalibErr: 0.11121
+[ood_near] AUROC: 0.5485 | AUPR: 0.5163 | RMSE Rat: 1.26x
+[OOD (ood_mid)] RMSE: 0.90982 | Var: 0.54063 | NLL: -0.01062 | CalibErr: 0.10754
+[ood_mid] AUROC: 0.5000 | AUPR: 0.4709 | RMSE Rat: 1.37x
+[OOD (ood_far)] RMSE: 1.44427 | Var: 0.50686 | NLL: 2.73384 | CalibErr: 0.07976
+[ood_far] AUROC: 0.4957 | AUPR: 0.4559 | RMSE Rat: 2.18x
+[OOD (ood)] RMSE: 1.44427 | Var: 0.50686 | NLL: 2.73384 | CalibErr: 0.07976
+[ood] AUROC: 0.4957 | AUPR: 0.4559 | RMSE Rat: 2.18x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 0.91838 | Var: 1.04612 | NLL: -0.60290 | CalibErr: 0.10944
+[ID] RMSE: 0.90010 | Var: 1.03243 | NLL: -0.61842 | CalibErr: 0.10989
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.03050 | Var: 1.04967 | NLL: -0.19572 | CalibErr: 0.10053
+[ood_near] AUROC: 0.5540 | AUPR: 0.5117 | RMSE Rat: 1.14x
+[OOD (ood_mid)] RMSE: 1.07103 | Var: 0.92241 | NLL: -0.00724 | CalibErr: 0.09783
+[ood_mid] AUROC: 0.4918 | AUPR: 0.4650 | RMSE Rat: 1.19x
+[OOD (ood_far)] RMSE: 1.58682 | Var: 0.89502 | NLL: 1.27530 | CalibErr: 0.07552
+[ood_far] AUROC: 0.5082 | AUPR: 0.4681 | RMSE Rat: 1.76x
+[OOD (ood)] RMSE: 1.58682 | Var: 0.89502 | NLL: 1.27530 | CalibErr: 0.07552
+[ood] AUROC: 0.5082 | AUPR: 0.4681 | RMSE Rat: 1.76x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 2.27847 | Var: 4.66027 | NLL: 0.74594 | CalibErr: 0.08301
+[ID] RMSE: 2.22101 | Var: 4.51408 | NLL: 0.73088 | CalibErr: 0.08340
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 2.30677 | Var: 4.65908 | NLL: 0.84473 | CalibErr: 0.07761
+[ood_near] AUROC: 0.5601 | AUPR: 0.5265 | RMSE Rat: 1.04x
+[OOD (ood_mid)] RMSE: 2.21132 | Var: 3.88454 | NLL: 0.76727 | CalibErr: 0.07558
+[ood_mid] AUROC: 0.4611 | AUPR: 0.4655 | RMSE Rat: 1.00x
+[OOD (ood_far)] RMSE: 2.74599 | Var: 4.23630 | NLL: 1.22115 | CalibErr: 0.06605
+[ood_far] AUROC: 0.5655 | AUPR: 0.5158 | RMSE Rat: 1.24x
+[OOD (ood)] RMSE: 2.74599 | Var: 4.23630 | NLL: 1.22115 | CalibErr: 0.06605
+[ood] AUROC: 0.5655 | AUPR: 0.5158 | RMSE Rat: 1.24x
+[16:00:33] DONE pnc_none_Ant-v5_200 rc=0
+[16:00:33] RUN pnc_none_HalfCheetah-v5_10
+DEBUG: Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_c6c13d746b   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_c6c13d746b   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_10_ef3fa680dc   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_10_ef3fa680dc   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 308346] Worker Worker(salt=9356597611, workers=1, host=EriiNoDesktop, username=elean, pid=308346) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 308346] Worker Worker(salt=9356597611, workers=1, host=EriiNoDesktop, username=elean, pid=308346) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 308346] Worker Worker(salt=9356597611, workers=1, host=EriiNoDesktop, username=elean, pid=308346) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 308346] Worker Worker(salt=9356597611, workers=1, host=EriiNoDesktop, username=elean, pid=308346) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_c6c13d746b   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_c6c13d746b   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9356597611, workers=1, host=EriiNoDesktop, username=elean, pid=308346) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9356597611, workers=1, host=EriiNoDesktop, username=elean, pid=308346) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== Gym PJSVD (HalfCheetah-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 0.12386 | Val Loss 0.09215
+Step 1000: Train Loss -0.52729 | Val Loss -0.50845
+Step 1500: Train Loss -0.87099 | Val Loss -0.70358
+Step 2000: Train Loss -0.86053 | Val Loss -0.76066
+Final Train Loss: -0.86053 | Best Val Loss: -0.80323
+Base model training time: 10.82s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 1.97834 | Var: 6.38968 | NLL: 0.97218 | CalibErr: 0.09617
+[ID] RMSE: 2.08742 | Var: 6.45885 | NLL: 1.68328 | CalibErr: 0.09184
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.39011 | Var: 6.68410 | NLL: 4.56016 | CalibErr: 0.03250
+[ood_near] AUROC: 0.4843 | AUPR: 0.5774 | RMSE Rat: 1.62x
+[OOD (ood_mid)] RMSE: 5.12669 | Var: 6.87666 | NLL: 2.12612 | CalibErr: 0.02531
+[ood_mid] AUROC: 0.5393 | AUPR: 0.6539 | RMSE Rat: 2.46x
+[OOD (ood_far)] RMSE: 4.07591 | Var: 8.84503 | NLL: 2.95405 | CalibErr: 0.01851
+[ood_far] AUROC: 0.7633 | AUPR: 0.8126 | RMSE Rat: 1.95x
+[OOD (ood)] RMSE: 4.07591 | Var: 8.84503 | NLL: 2.95405 | CalibErr: 0.01851
+[ood] AUROC: 0.7633 | AUPR: 0.8126 | RMSE Rat: 1.95x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 3.13444 | Var: 20.07155 | NLL: 1.61445 | CalibErr: 0.09376
+[ID] RMSE: 3.18318 | Var: 20.05806 | NLL: 1.92966 | CalibErr: 0.09155
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.78550 | Var: 17.85993 | NLL: 3.06571 | CalibErr: 0.05992
+[ood_near] AUROC: 0.3628 | AUPR: 0.4623 | RMSE Rat: 1.19x
+[OOD (ood_mid)] RMSE: 5.17789 | Var: 14.74906 | NLL: 1.90295 | CalibErr: 0.01907
+[ood_mid] AUROC: 0.2740 | AUPR: 0.3809 | RMSE Rat: 1.63x
+[OOD (ood_far)] RMSE: 4.07951 | Var: 13.64994 | NLL: 2.15947 | CalibErr: 0.01502
+[ood_far] AUROC: 0.1777 | AUPR: 0.3397 | RMSE Rat: 1.28x
+[OOD (ood)] RMSE: 4.07951 | Var: 13.64994 | NLL: 2.15947 | CalibErr: 0.01502
+[ood] AUROC: 0.1777 | AUPR: 0.3397 | RMSE Rat: 1.28x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 5.27098 | Var: 93.50491 | NLL: 2.46673 | CalibErr: 0.10268
+[ID] RMSE: 5.26461 | Var: 93.16539 | NLL: 2.52466 | CalibErr: 0.10198
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 5.14908 | Var: 76.32314 | NLL: 2.63720 | CalibErr: 0.08623
+[ood_near] AUROC: 0.3570 | AUPR: 0.4229 | RMSE Rat: 0.98x
+[OOD (ood_mid)] RMSE: 5.75452 | Var: 52.63618 | NLL: 2.26603 | CalibErr: 0.05625
+[ood_mid] AUROC: 0.1805 | AUPR: 0.3382 | RMSE Rat: 1.09x
+[OOD (ood_far)] RMSE: 4.45531 | Var: 35.74366 | NLL: 2.13530 | CalibErr: 0.05713
+[ood_far] AUROC: 0.0470 | AUPR: 0.3118 | RMSE Rat: 0.85x
+[OOD (ood)] RMSE: 4.45531 | Var: 35.74366 | NLL: 2.13530 | CalibErr: 0.05713
+[ood] AUROC: 0.0470 | AUPR: 0.3118 | RMSE Rat: 0.85x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 20.65418 | Var: 1457.43628 | NLL: 4.03136 | CalibErr: 0.09510
+[ID] RMSE: 20.60060 | Var: 1451.08118 | NLL: 4.02818 | CalibErr: 0.09405
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 18.32229 | Var: 1167.26758 | NLL: 3.90332 | CalibErr: 0.09218
+[ood_near] AUROC: 0.3719 | AUPR: 0.4248 | RMSE Rat: 0.89x
+[OOD (ood_mid)] RMSE: 14.82096 | Var: 737.19617 | NLL: 3.67599 | CalibErr: 0.09446
+[ood_mid] AUROC: 0.1773 | AUPR: 0.3374 | RMSE Rat: 0.72x
+[OOD (ood_far)] RMSE: 10.93987 | Var: 394.73810 | NLL: 3.38054 | CalibErr: 0.08863
+[ood_far] AUROC: 0.0312 | AUPR: 0.3104 | RMSE Rat: 0.53x
+[OOD (ood)] RMSE: 10.93987 | Var: 394.73810 | NLL: 3.38054 | CalibErr: 0.08863
+[ood] AUROC: 0.0312 | AUPR: 0.3104 | RMSE Rat: 0.53x
+[16:01:08] DONE pnc_none_HalfCheetah-v5_10 rc=0
+[16:01:08] RUN pnc_none_HalfCheetah-v5_42
+DEBUG: Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_0683ede72c   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_0683ede72c   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_42_b9324378dc   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_42_b9324378dc   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 308827] Worker Worker(salt=8074778354, workers=1, host=EriiNoDesktop, username=elean, pid=308827) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 308827] Worker Worker(salt=8074778354, workers=1, host=EriiNoDesktop, username=elean, pid=308827) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 308827] Worker Worker(salt=8074778354, workers=1, host=EriiNoDesktop, username=elean, pid=308827) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 308827] Worker Worker(salt=8074778354, workers=1, host=EriiNoDesktop, username=elean, pid=308827) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_0683ede72c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_0683ede72c   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=8074778354, workers=1, host=EriiNoDesktop, username=elean, pid=308827) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=8074778354, workers=1, host=EriiNoDesktop, username=elean, pid=308827) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=42
+
+=== Gym PJSVD (HalfCheetah-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 0.02929 | Val Loss 0.04736
+Step 1000: Train Loss -0.59442 | Val Loss -0.55105
+Step 1500: Train Loss -0.62335 | Val Loss -0.68988
+Step 2000: Train Loss -0.90804 | Val Loss -0.85637
+Final Train Loss: -0.90804 | Best Val Loss: -0.85637
+Base model training time: 11.01s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 1.87330 | Var: 6.25394 | NLL: 0.95124 | CalibErr: 0.08848
+[ID] RMSE: 1.87354 | Var: 6.16148 | NLL: 0.95155 | CalibErr: 0.08733
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.33068 | Var: 5.91970 | NLL: 3.66448 | CalibErr: 0.02843
+[ood_near] AUROC: 0.4757 | AUPR: 0.4764 | RMSE Rat: 1.78x
+[OOD (ood_mid)] RMSE: 5.15528 | Var: 5.48786 | NLL: 2.29418 | CalibErr: 0.01874
+[ood_mid] AUROC: 0.4220 | AUPR: 0.4498 | RMSE Rat: 2.75x
+[OOD (ood_far)] RMSE: 4.09232 | Var: 6.29677 | NLL: 1.85647 | CalibErr: 0.02269
+[ood_far] AUROC: 0.5226 | AUPR: 0.5312 | RMSE Rat: 2.18x
+[OOD (ood)] RMSE: 4.09232 | Var: 6.29677 | NLL: 1.85647 | CalibErr: 0.02269
+[ood] AUROC: 0.5226 | AUPR: 0.5312 | RMSE Rat: 2.18x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 3.07839 | Var: 16.96776 | NLL: 1.59112 | CalibErr: 0.08142
+[ID] RMSE: 3.09045 | Var: 16.82731 | NLL: 1.59154 | CalibErr: 0.07913
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.81014 | Var: 14.13487 | NLL: 2.71078 | CalibErr: 0.04971
+[ood_near] AUROC: 0.3548 | AUPR: 0.4062 | RMSE Rat: 1.23x
+[OOD (ood_mid)] RMSE: 5.20360 | Var: 11.56842 | NLL: 1.99389 | CalibErr: 0.01766
+[ood_mid] AUROC: 0.2550 | AUPR: 0.3654 | RMSE Rat: 1.68x
+[OOD (ood_far)] RMSE: 4.07222 | Var: 10.46494 | NLL: 1.71889 | CalibErr: 0.01085
+[ood_far] AUROC: 0.1648 | AUPR: 0.3361 | RMSE Rat: 1.32x
+[OOD (ood)] RMSE: 4.07222 | Var: 10.46494 | NLL: 1.71889 | CalibErr: 0.01085
+[ood] AUROC: 0.1648 | AUPR: 0.3361 | RMSE Rat: 1.32x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 6.45088 | Var: 70.24239 | NLL: 2.43839 | CalibErr: 0.09411
+[ID] RMSE: 6.45297 | Var: 69.76538 | NLL: 2.43618 | CalibErr: 0.09269
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 6.05485 | Var: 54.67118 | NLL: 2.55909 | CalibErr: 0.07906
+[ood_near] AUROC: 0.3240 | AUPR: 0.3915 | RMSE Rat: 0.94x
+[OOD (ood_mid)] RMSE: 6.23836 | Var: 40.59525 | NLL: 2.26556 | CalibErr: 0.06260
+[ood_mid] AUROC: 0.1710 | AUPR: 0.3355 | RMSE Rat: 0.97x
+[OOD (ood_far)] RMSE: 4.64759 | Var: 29.05086 | NLL: 2.02599 | CalibErr: 0.05847
+[ood_far] AUROC: 0.0510 | AUPR: 0.3116 | RMSE Rat: 0.72x
+[OOD (ood)] RMSE: 4.64759 | Var: 29.05086 | NLL: 2.02599 | CalibErr: 0.05847
+[ood] AUROC: 0.0510 | AUPR: 0.3116 | RMSE Rat: 0.72x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 32.12988 | Var: 1180.67603 | NLL: 4.04269 | CalibErr: 0.11378
+[ID] RMSE: 32.06859 | Var: 1175.83130 | NLL: 4.04168 | CalibErr: 0.11395
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 27.88349 | Var: 894.86908 | NLL: 3.89061 | CalibErr: 0.10600
+[ood_near] AUROC: 0.3307 | AUPR: 0.3955 | RMSE Rat: 0.87x
+[OOD (ood_mid)] RMSE: 22.69521 | Var: 594.82111 | NLL: 3.67012 | CalibErr: 0.09643
+[ood_mid] AUROC: 0.1531 | AUPR: 0.3310 | RMSE Rat: 0.71x
+[OOD (ood_far)] RMSE: 16.21840 | Var: 332.38812 | NLL: 3.38505 | CalibErr: 0.09870
+[ood_far] AUROC: 0.0285 | AUPR: 0.3098 | RMSE Rat: 0.51x
+[OOD (ood)] RMSE: 16.21840 | Var: 332.38812 | NLL: 3.38505 | CalibErr: 0.09870
+[ood] AUROC: 0.0285 | AUPR: 0.3098 | RMSE Rat: 0.51x
+[16:01:44] DONE pnc_none_HalfCheetah-v5_42 rc=0
+[16:01:44] RUN pnc_none_HalfCheetah-v5_100
+DEBUG: Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_ade2a7d9a3   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_ade2a7d9a3   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_100_2e43d44c76   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_100_2e43d44c76   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 309297] Worker Worker(salt=2920145611, workers=1, host=EriiNoDesktop, username=elean, pid=309297) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 309297] Worker Worker(salt=2920145611, workers=1, host=EriiNoDesktop, username=elean, pid=309297) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 309297] Worker Worker(salt=2920145611, workers=1, host=EriiNoDesktop, username=elean, pid=309297) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 309297] Worker Worker(salt=2920145611, workers=1, host=EriiNoDesktop, username=elean, pid=309297) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_ade2a7d9a3   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_ade2a7d9a3   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=2920145611, workers=1, host=EriiNoDesktop, username=elean, pid=309297) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2920145611, workers=1, host=EriiNoDesktop, username=elean, pid=309297) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=100
+
+=== Gym PJSVD (HalfCheetah-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -0.34799 | Val Loss -0.29255
+Step 1000: Train Loss -0.67139 | Val Loss -0.66400
+Step 1500: Train Loss -0.86098 | Val Loss -0.79986
+Step 2000: Train Loss -1.07695 | Val Loss -0.93039
+Final Train Loss: -1.07695 | Best Val Loss: -0.97243
+Base model training time: 10.65s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 1.83084 | Var: 7.32755 | NLL: 0.81923 | CalibErr: 0.09389
+[ID] RMSE: 1.79394 | Var: 7.33005 | NLL: 0.81458 | CalibErr: 0.09687
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.20066 | Var: 7.49874 | NLL: 6.05508 | CalibErr: 0.03761
+[ood_near] AUROC: 0.5115 | AUPR: 0.5223 | RMSE Rat: 1.78x
+[OOD (ood_mid)] RMSE: 4.84844 | Var: 6.70713 | NLL: 1.89685 | CalibErr: 0.02585
+[ood_mid] AUROC: 0.4376 | AUPR: 0.4764 | RMSE Rat: 2.70x
+[OOD (ood_far)] RMSE: 3.98034 | Var: 8.76724 | NLL: 3.76176 | CalibErr: 0.02026
+[ood_far] AUROC: 0.6572 | AUPR: 0.6599 | RMSE Rat: 2.22x
+[OOD (ood)] RMSE: 3.98034 | Var: 8.76724 | NLL: 3.76176 | CalibErr: 0.02026
+[ood] AUROC: 0.6572 | AUPR: 0.6599 | RMSE Rat: 2.22x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 2.76745 | Var: 21.24198 | NLL: 1.42918 | CalibErr: 0.10006
+[ID] RMSE: 2.73971 | Var: 21.37682 | NLL: 1.43049 | CalibErr: 0.10217
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.54524 | Var: 19.06043 | NLL: 3.52316 | CalibErr: 0.07081
+[ood_near] AUROC: 0.3854 | AUPR: 0.4302 | RMSE Rat: 1.29x
+[OOD (ood_mid)] RMSE: 4.84527 | Var: 14.05854 | NLL: 1.67413 | CalibErr: 0.01502
+[ood_mid] AUROC: 0.1893 | AUPR: 0.3407 | RMSE Rat: 1.77x
+[OOD (ood_far)] RMSE: 3.96152 | Var: 13.70125 | NLL: 2.62700 | CalibErr: 0.00932
+[ood_far] AUROC: 0.1494 | AUPR: 0.3305 | RMSE Rat: 1.45x
+[OOD (ood)] RMSE: 3.96152 | Var: 13.70125 | NLL: 2.62700 | CalibErr: 0.00932
+[ood] AUROC: 0.1494 | AUPR: 0.3305 | RMSE Rat: 1.45x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 4.57703 | Var: 81.06367 | NLL: 2.23716 | CalibErr: 0.11843
+[ID] RMSE: 4.59217 | Var: 81.56151 | NLL: 2.24076 | CalibErr: 0.11930
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 4.64654 | Var: 69.31492 | NLL: 2.58480 | CalibErr: 0.10572
+[ood_near] AUROC: 0.3679 | AUPR: 0.4120 | RMSE Rat: 1.01x
+[OOD (ood_mid)] RMSE: 5.22346 | Var: 47.03210 | NLL: 2.03930 | CalibErr: 0.07621
+[ood_mid] AUROC: 0.1558 | AUPR: 0.3315 | RMSE Rat: 1.14x
+[OOD (ood_far)] RMSE: 4.13610 | Var: 34.76615 | NLL: 2.11201 | CalibErr: 0.06687
+[ood_far] AUROC: 0.0471 | AUPR: 0.3108 | RMSE Rat: 0.90x
+[OOD (ood)] RMSE: 4.13610 | Var: 34.76615 | NLL: 2.11201 | CalibErr: 0.06687
+[ood] AUROC: 0.0471 | AUPR: 0.3108 | RMSE Rat: 0.90x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 18.49595 | Var: 1144.90283 | NLL: 3.80430 | CalibErr: 0.12729
+[ID] RMSE: 18.49943 | Var: 1146.40674 | NLL: 3.80584 | CalibErr: 0.12764
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 16.67095 | Var: 933.06073 | NLL: 3.69618 | CalibErr: 0.12620
+[ood_near] AUROC: 0.3628 | AUPR: 0.4083 | RMSE Rat: 0.90x
+[OOD (ood_mid)] RMSE: 14.12185 | Var: 582.77039 | NLL: 3.43564 | CalibErr: 0.12289
+[ood_mid] AUROC: 0.1664 | AUPR: 0.3350 | RMSE Rat: 0.76x
+[OOD (ood_far)] RMSE: 9.93061 | Var: 335.44647 | NLL: 3.14127 | CalibErr: 0.11808
+[ood_far] AUROC: 0.0283 | AUPR: 0.3093 | RMSE Rat: 0.54x
+[OOD (ood)] RMSE: 9.93061 | Var: 335.44647 | NLL: 3.14127 | CalibErr: 0.11808
+[ood] AUROC: 0.0283 | AUPR: 0.3093 | RMSE Rat: 0.54x
+[16:02:19] DONE pnc_none_HalfCheetah-v5_100 rc=0
+[16:02:19] RUN pnc_none_HalfCheetah-v5_200
+DEBUG: Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=HalfCheetah-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_56418b20b8   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_56418b20b8   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_200_3f4286e933   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_HalfCheetah_v5_neurips_minari_200_3f4286e933   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 309770] Worker Worker(salt=837946630, workers=1, host=EriiNoDesktop, username=elean, pid=309770) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 309770] Worker Worker(salt=837946630, workers=1, host=EriiNoDesktop, username=elean, pid=309770) running   GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 309770] Worker Worker(salt=837946630, workers=1, host=EriiNoDesktop, username=elean, pid=309770) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 309770] Worker Worker(salt=837946630, workers=1, host=EriiNoDesktop, username=elean, pid=309770) done      GymPJSVD(env=HalfCheetah-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_56418b20b8   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_56418b20b8   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=837946630, workers=1, host=EriiNoDesktop, username=elean, pid=309770) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=837946630, workers=1, host=EriiNoDesktop, username=elean, pid=309770) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=HalfCheetah-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=200
+
+=== Gym PJSVD (HalfCheetah-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 0.03405 | Val Loss 0.05242
+Step 1000: Train Loss -0.42470 | Val Loss -0.36370
+Step 1500: Train Loss -0.77092 | Val Loss -0.68137
+Step 2000: Train Loss -0.76111 | Val Loss -0.70123
+Final Train Loss: -0.76111 | Best Val Loss: -0.80976
+Base model training time: 10.92s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 1.93100 | Var: 6.83792 | NLL: 0.94531 | CalibErr: 0.09401
+[ID] RMSE: 1.90438 | Var: 6.75021 | NLL: 0.94316 | CalibErr: 0.09363
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.71777 | Var: 6.88528 | NLL: 18.67421 | CalibErr: 0.02646
+[ood_near] AUROC: 0.5114 | AUPR: 0.5281 | RMSE Rat: 1.95x
+[OOD (ood_mid)] RMSE: 5.09618 | Var: 6.57327 | NLL: 2.46189 | CalibErr: 0.02329
+[ood_mid] AUROC: 0.4662 | AUPR: 0.5429 | RMSE Rat: 2.68x
+[OOD (ood_far)] RMSE: 4.18033 | Var: 7.81725 | NLL: 1.81087 | CalibErr: 0.03235
+[ood_far] AUROC: 0.6242 | AUPR: 0.6158 | RMSE Rat: 2.20x
+[OOD (ood)] RMSE: 4.18033 | Var: 7.81725 | NLL: 1.81087 | CalibErr: 0.03235
+[ood] AUROC: 0.6242 | AUPR: 0.6158 | RMSE Rat: 2.20x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 3.18419 | Var: 20.38756 | NLL: 1.57432 | CalibErr: 0.08578
+[ID] RMSE: 3.21493 | Var: 20.32392 | NLL: 1.57389 | CalibErr: 0.08526
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 3.99853 | Var: 16.90004 | NLL: 6.99551 | CalibErr: 0.04718
+[ood_near] AUROC: 0.3545 | AUPR: 0.4069 | RMSE Rat: 1.24x
+[OOD (ood_mid)] RMSE: 5.10383 | Var: 15.51679 | NLL: 1.94371 | CalibErr: 0.01709
+[ood_mid] AUROC: 0.3207 | AUPR: 0.4293 | RMSE Rat: 1.59x
+[OOD (ood_far)] RMSE: 4.26254 | Var: 13.51495 | NLL: 1.69522 | CalibErr: 0.00889
+[ood_far] AUROC: 0.2103 | AUPR: 0.3488 | RMSE Rat: 1.33x
+[OOD (ood)] RMSE: 4.26254 | Var: 13.51495 | NLL: 1.69522 | CalibErr: 0.00889
+[ood] AUROC: 0.2103 | AUPR: 0.3488 | RMSE Rat: 1.33x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 6.35815 | Var: 96.65716 | NLL: 2.47815 | CalibErr: 0.09320
+[ID] RMSE: 6.39927 | Var: 96.73058 | NLL: 2.47835 | CalibErr: 0.09331
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 5.71618 | Var: 72.51383 | NLL: 3.15106 | CalibErr: 0.08071
+[ood_near] AUROC: 0.2975 | AUPR: 0.3880 | RMSE Rat: 0.89x
+[OOD (ood_mid)] RMSE: 6.16676 | Var: 63.18370 | NLL: 2.27661 | CalibErr: 0.06754
+[ood_mid] AUROC: 0.2545 | AUPR: 0.3689 | RMSE Rat: 0.96x
+[OOD (ood_far)] RMSE: 5.18773 | Var: 40.92965 | NLL: 2.12382 | CalibErr: 0.05970
+[ood_far] AUROC: 0.0658 | AUPR: 0.3131 | RMSE Rat: 0.81x
+[OOD (ood)] RMSE: 5.18773 | Var: 40.92965 | NLL: 2.12382 | CalibErr: 0.05970
+[ood] AUROC: 0.0658 | AUPR: 0.3131 | RMSE Rat: 0.81x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 37.00743 | Var: 2016.53699 | NLL: 4.32426 | CalibErr: 0.08417
+[ID] RMSE: 37.16993 | Var: 2023.33008 | NLL: 4.32812 | CalibErr: 0.08367
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 30.53959 | Var: 1386.68713 | NLL: 4.13899 | CalibErr: 0.08556
+[ood_near] AUROC: 0.2633 | AUPR: 0.3686 | RMSE Rat: 0.82x
+[OOD (ood_mid)] RMSE: 26.92172 | Var: 1083.83911 | NLL: 3.99976 | CalibErr: 0.08053
+[ood_mid] AUROC: 0.1566 | AUPR: 0.3316 | RMSE Rat: 0.72x
+[OOD (ood_far)] RMSE: 19.88263 | Var: 569.29382 | NLL: 3.69998 | CalibErr: 0.08443
+[ood_far] AUROC: 0.0224 | AUPR: 0.3090 | RMSE Rat: 0.53x
+[OOD (ood)] RMSE: 19.88263 | Var: 569.29382 | NLL: 3.69998 | CalibErr: 0.08443
+[ood] AUROC: 0.0224 | AUPR: 0.3090 | RMSE Rat: 0.53x
+[16:02:55] DONE pnc_none_HalfCheetah-v5_200 rc=0
+[16:02:55] RUN pnc_none_Hopper-v5_10
+DEBUG: Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_2aa80d0a6d   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_2aa80d0a6d   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_10_6e10a4ca72   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_10_6e10a4ca72   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 310246] Worker Worker(salt=6099083615, workers=1, host=EriiNoDesktop, username=elean, pid=310246) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 310246] Worker Worker(salt=6099083615, workers=1, host=EriiNoDesktop, username=elean, pid=310246) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 310246] Worker Worker(salt=6099083615, workers=1, host=EriiNoDesktop, username=elean, pid=310246) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 310246] Worker Worker(salt=6099083615, workers=1, host=EriiNoDesktop, username=elean, pid=310246) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_2aa80d0a6d   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_2aa80d0a6d   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=6099083615, workers=1, host=EriiNoDesktop, username=elean, pid=310246) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=6099083615, workers=1, host=EriiNoDesktop, username=elean, pid=310246) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== Gym PJSVD (Hopper-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.94296 | Val Loss -1.85077
+Step 1000: Train Loss -2.16210 | Val Loss -2.12758
+Step 1500: Train Loss -2.14023 | Val Loss -2.09977
+Step 2000: Train Loss -2.16206 | Val Loss -2.11119
+Final Train Loss: -2.16206 | Best Val Loss: -2.41907
+Base model training time: 10.62s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.33988 | Var: 0.26853 | NLL: -0.25596 | CalibErr: 0.09540
+[ID] RMSE: 0.33479 | Var: 0.27438 | NLL: -0.24974 | CalibErr: 0.09612
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.41928 | Var: 0.22431 | NLL: -0.00453 | CalibErr: 0.05487
+[ood_near] AUROC: 0.4148 | AUPR: 0.4446 | RMSE Rat: 1.25x
+[OOD (ood_mid)] RMSE: 0.41699 | Var: 0.16895 | NLL: 0.32004 | CalibErr: 0.03211
+[ood_mid] AUROC: 0.3384 | AUPR: 0.3870 | RMSE Rat: 1.25x
+[OOD (ood_far)] RMSE: 0.44503 | Var: 0.07499 | NLL: 0.51791 | CalibErr: 0.05637
+[ood_far] AUROC: 0.1309 | AUPR: 0.3281 | RMSE Rat: 1.33x
+[OOD (ood)] RMSE: 0.44503 | Var: 0.07499 | NLL: 0.51791 | CalibErr: 0.05637
+[ood] AUROC: 0.1309 | AUPR: 0.3281 | RMSE Rat: 1.33x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.60757 | Var: 0.86297 | NLL: 0.40895 | CalibErr: 0.06539
+[ID] RMSE: 0.59817 | Var: 0.87598 | NLL: 0.41432 | CalibErr: 0.06556
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.59584 | Var: 0.66760 | NLL: 0.37759 | CalibErr: 0.05373
+[ood_near] AUROC: 0.3796 | AUPR: 0.4234 | RMSE Rat: 1.00x
+[OOD (ood_mid)] RMSE: 0.50556 | Var: 0.49837 | NLL: 0.38198 | CalibErr: 0.03147
+[ood_mid] AUROC: 0.2912 | AUPR: 0.3730 | RMSE Rat: 0.85x
+[OOD (ood_far)] RMSE: 0.46420 | Var: 0.17854 | NLL: 0.34521 | CalibErr: 0.03480
+[ood_far] AUROC: 0.0650 | AUPR: 0.3144 | RMSE Rat: 0.78x
+[OOD (ood)] RMSE: 0.46420 | Var: 0.17854 | NLL: 0.34521 | CalibErr: 0.03480
+[ood] AUROC: 0.0650 | AUPR: 0.3144 | RMSE Rat: 0.78x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 1.27590 | Var: 3.53859 | NLL: 1.33305 | CalibErr: 0.03486
+[ID] RMSE: 1.27118 | Var: 3.57854 | NLL: 1.33996 | CalibErr: 0.03501
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.12723 | Var: 2.64697 | NLL: 1.16322 | CalibErr: 0.03424
+[ood_near] AUROC: 0.3658 | AUPR: 0.4183 | RMSE Rat: 0.89x
+[OOD (ood_mid)] RMSE: 0.93891 | Var: 1.90559 | NLL: 0.99492 | CalibErr: 0.03867
+[ood_mid] AUROC: 0.2592 | AUPR: 0.3628 | RMSE Rat: 0.74x
+[OOD (ood_far)] RMSE: 0.66698 | Var: 0.62199 | NLL: 0.72215 | CalibErr: 0.03474
+[ood_far] AUROC: 0.0490 | AUPR: 0.3115 | RMSE Rat: 0.52x
+[OOD (ood)] RMSE: 0.66698 | Var: 0.62199 | NLL: 0.72215 | CalibErr: 0.03474
+[ood] AUROC: 0.0490 | AUPR: 0.3115 | RMSE Rat: 0.52x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 6.26546 | Var: 61.02659 | NLL: 3.08204 | CalibErr: 0.04351
+[ID] RMSE: 6.27459 | Var: 61.32267 | NLL: 3.08914 | CalibErr: 0.04422
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 5.41290 | Var: 44.98529 | NLL: 2.90129 | CalibErr: 0.04553
+[ood_near] AUROC: 0.3712 | AUPR: 0.4203 | RMSE Rat: 0.86x
+[OOD (ood_mid)] RMSE: 4.48603 | Var: 30.19838 | NLL: 2.69569 | CalibErr: 0.04314
+[ood_mid] AUROC: 0.2580 | AUPR: 0.3603 | RMSE Rat: 0.71x
+[OOD (ood_far)] RMSE: 2.67981 | Var: 9.54360 | NLL: 2.20486 | CalibErr: 0.03918
+[ood_far] AUROC: 0.0554 | AUPR: 0.3124 | RMSE Rat: 0.43x
+[OOD (ood)] RMSE: 2.67981 | Var: 9.54360 | NLL: 2.20486 | CalibErr: 0.03918
+[ood] AUROC: 0.0554 | AUPR: 0.3124 | RMSE Rat: 0.43x
+[16:03:30] DONE pnc_none_Hopper-v5_10 rc=0
+[16:03:30] RUN pnc_none_Hopper-v5_42
+DEBUG: Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_85bc223b3c   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_85bc223b3c   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_42_bd176feb4a   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_42_bd176feb4a   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 310712] Worker Worker(salt=9949044684, workers=1, host=EriiNoDesktop, username=elean, pid=310712) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 310712] Worker Worker(salt=9949044684, workers=1, host=EriiNoDesktop, username=elean, pid=310712) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 310712] Worker Worker(salt=9949044684, workers=1, host=EriiNoDesktop, username=elean, pid=310712) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 310712] Worker Worker(salt=9949044684, workers=1, host=EriiNoDesktop, username=elean, pid=310712) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_85bc223b3c   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_85bc223b3c   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=9949044684, workers=1, host=EriiNoDesktop, username=elean, pid=310712) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=9949044684, workers=1, host=EriiNoDesktop, username=elean, pid=310712) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=42
+
+=== Gym PJSVD (Hopper-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.83266 | Val Loss -1.86432
+Step 1000: Train Loss -2.08529 | Val Loss -2.00607
+Step 1500: Train Loss -2.35264 | Val Loss -2.26218
+Step 2000: Train Loss -2.49368 | Val Loss -2.40488
+Final Train Loss: -2.49368 | Best Val Loss: -2.40488
+Base model training time: 10.71s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.33152 | Var: 0.29416 | NLL: -0.33328 | CalibErr: 0.12037
+[ID] RMSE: 0.34899 | Var: 0.30019 | NLL: -0.31437 | CalibErr: 0.11590
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.41540 | Var: 0.22822 | NLL: 0.02255 | CalibErr: 0.05067
+[ood_near] AUROC: 0.4091 | AUPR: 0.4286 | RMSE Rat: 1.19x
+[OOD (ood_mid)] RMSE: 0.40560 | Var: 0.16500 | NLL: 0.18940 | CalibErr: 0.04032
+[ood_mid] AUROC: 0.3213 | AUPR: 0.3783 | RMSE Rat: 1.16x
+[OOD (ood_far)] RMSE: 0.45114 | Var: 0.07433 | NLL: 0.94855 | CalibErr: 0.05469
+[ood_far] AUROC: 0.1410 | AUPR: 0.3315 | RMSE Rat: 1.29x
+[OOD (ood)] RMSE: 0.45114 | Var: 0.07433 | NLL: 0.94855 | CalibErr: 0.05469
+[ood] AUROC: 0.1410 | AUPR: 0.3315 | RMSE Rat: 1.29x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.59302 | Var: 0.92771 | NLL: 0.33951 | CalibErr: 0.08648
+[ID] RMSE: 0.60595 | Var: 0.94570 | NLL: 0.34819 | CalibErr: 0.08540
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.56660 | Var: 0.69182 | NLL: 0.33340 | CalibErr: 0.05750
+[ood_near] AUROC: 0.3752 | AUPR: 0.4095 | RMSE Rat: 0.94x
+[OOD (ood_mid)] RMSE: 0.51236 | Var: 0.54292 | NLL: 0.31606 | CalibErr: 0.03494
+[ood_mid] AUROC: 0.3062 | AUPR: 0.3739 | RMSE Rat: 0.85x
+[OOD (ood_far)] RMSE: 0.47221 | Var: 0.18249 | NLL: 0.55472 | CalibErr: 0.02012
+[ood_far] AUROC: 0.0716 | AUPR: 0.3159 | RMSE Rat: 0.78x
+[OOD (ood)] RMSE: 0.47221 | Var: 0.18249 | NLL: 0.55472 | CalibErr: 0.02012
+[ood] AUROC: 0.0716 | AUPR: 0.3159 | RMSE Rat: 0.78x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 1.17788 | Var: 3.91454 | NLL: 1.27572 | CalibErr: 0.04619
+[ID] RMSE: 1.18603 | Var: 3.99557 | NLL: 1.27664 | CalibErr: 0.04656
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.03011 | Var: 2.82973 | NLL: 1.10330 | CalibErr: 0.04730
+[ood_near] AUROC: 0.3570 | AUPR: 0.4030 | RMSE Rat: 0.87x
+[OOD (ood_mid)] RMSE: 0.92317 | Var: 2.22111 | NLL: 0.98677 | CalibErr: 0.04697
+[ood_mid] AUROC: 0.2879 | AUPR: 0.3693 | RMSE Rat: 0.78x
+[OOD (ood_far)] RMSE: 0.66467 | Var: 0.74908 | NLL: 0.82035 | CalibErr: 0.02413
+[ood_far] AUROC: 0.0584 | AUPR: 0.3130 | RMSE Rat: 0.56x
+[OOD (ood)] RMSE: 0.66467 | Var: 0.74908 | NLL: 0.82035 | CalibErr: 0.02413
+[ood] AUROC: 0.0584 | AUPR: 0.3130 | RMSE Rat: 0.56x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 5.77309 | Var: 65.09050 | NLL: 3.10533 | CalibErr: 0.05269
+[ID] RMSE: 5.80503 | Var: 66.07217 | NLL: 3.10604 | CalibErr: 0.05323
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 4.91570 | Var: 47.38225 | NLL: 2.91542 | CalibErr: 0.05498
+[ood_near] AUROC: 0.3605 | AUPR: 0.4089 | RMSE Rat: 0.85x
+[OOD (ood_mid)] RMSE: 4.27006 | Var: 33.90080 | NLL: 2.78932 | CalibErr: 0.05224
+[ood_mid] AUROC: 0.2599 | AUPR: 0.3596 | RMSE Rat: 0.74x
+[OOD (ood_far)] RMSE: 2.54413 | Var: 11.51312 | NLL: 2.29153 | CalibErr: 0.04582
+[ood_far] AUROC: 0.0584 | AUPR: 0.3129 | RMSE Rat: 0.44x
+[OOD (ood)] RMSE: 2.54413 | Var: 11.51312 | NLL: 2.29153 | CalibErr: 0.04582
+[ood] AUROC: 0.0584 | AUPR: 0.3129 | RMSE Rat: 0.44x
+[16:04:05] DONE pnc_none_Hopper-v5_42 rc=0
+[16:04:05] RUN pnc_none_Hopper-v5_100
+DEBUG: Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_d367c98908   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_d367c98908   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_100_183371974d   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_100_183371974d   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 311190] Worker Worker(salt=4389532420, workers=1, host=EriiNoDesktop, username=elean, pid=311190) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 311190] Worker Worker(salt=4389532420, workers=1, host=EriiNoDesktop, username=elean, pid=311190) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 311190] Worker Worker(salt=4389532420, workers=1, host=EriiNoDesktop, username=elean, pid=311190) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 311190] Worker Worker(salt=4389532420, workers=1, host=EriiNoDesktop, username=elean, pid=311190) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_d367c98908   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_d367c98908   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=4389532420, workers=1, host=EriiNoDesktop, username=elean, pid=311190) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=4389532420, workers=1, host=EriiNoDesktop, username=elean, pid=311190) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=100
+
+=== Gym PJSVD (Hopper-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.73575 | Val Loss -1.61372
+Step 1000: Train Loss -2.04215 | Val Loss -2.05713
+Step 1500: Train Loss -2.30402 | Val Loss -2.24351
+Step 2000: Train Loss -2.41974 | Val Loss -2.36382
+Final Train Loss: -2.41974 | Best Val Loss: -2.39603
+Base model training time: 10.86s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.28833 | Var: 0.27138 | NLL: -0.32986 | CalibErr: 0.09834
+[ID] RMSE: 0.30005 | Var: 0.27932 | NLL: -0.31372 | CalibErr: 0.09647
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.39538 | Var: 0.22767 | NLL: 0.02443 | CalibErr: 0.06636
+[ood_near] AUROC: 0.4249 | AUPR: 0.4424 | RMSE Rat: 1.32x
+[OOD (ood_mid)] RMSE: 0.40505 | Var: 0.16879 | NLL: 0.35436 | CalibErr: 0.05625
+[ood_mid] AUROC: 0.3464 | AUPR: 0.3896 | RMSE Rat: 1.35x
+[OOD (ood_far)] RMSE: 0.39902 | Var: 0.08968 | NLL: 0.43203 | CalibErr: 0.02773
+[ood_far] AUROC: 0.1903 | AUPR: 0.3435 | RMSE Rat: 1.33x
+[OOD (ood)] RMSE: 0.39902 | Var: 0.08968 | NLL: 0.43203 | CalibErr: 0.02773
+[ood] AUROC: 0.1903 | AUPR: 0.3435 | RMSE Rat: 1.33x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.53610 | Var: 0.91898 | NLL: 0.35849 | CalibErr: 0.06532
+[ID] RMSE: 0.54786 | Var: 0.93958 | NLL: 0.37149 | CalibErr: 0.06410
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.53378 | Var: 0.70970 | NLL: 0.35684 | CalibErr: 0.06545
+[ood_near] AUROC: 0.3836 | AUPR: 0.4194 | RMSE Rat: 0.97x
+[OOD (ood_mid)] RMSE: 0.48773 | Var: 0.52435 | NLL: 0.36949 | CalibErr: 0.05051
+[ood_mid] AUROC: 0.2905 | AUPR: 0.3707 | RMSE Rat: 0.89x
+[OOD (ood_far)] RMSE: 0.41507 | Var: 0.21731 | NLL: 0.28375 | CalibErr: 0.00904
+[ood_far] AUROC: 0.0880 | AUPR: 0.3184 | RMSE Rat: 0.76x
+[OOD (ood)] RMSE: 0.41507 | Var: 0.21731 | NLL: 0.28375 | CalibErr: 0.00904
+[ood] AUROC: 0.0880 | AUPR: 0.3184 | RMSE Rat: 0.76x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 1.31444 | Var: 4.31063 | NLL: 1.29150 | CalibErr: 0.04459
+[ID] RMSE: 1.33759 | Var: 4.38382 | NLL: 1.30388 | CalibErr: 0.04476
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 1.12890 | Var: 3.25505 | NLL: 1.13467 | CalibErr: 0.06056
+[ood_near] AUROC: 0.3653 | AUPR: 0.4176 | RMSE Rat: 0.84x
+[OOD (ood_mid)] RMSE: 0.96518 | Var: 2.27436 | NLL: 0.98617 | CalibErr: 0.05604
+[ood_mid] AUROC: 0.2451 | AUPR: 0.3555 | RMSE Rat: 0.72x
+[OOD (ood_far)] RMSE: 0.59202 | Var: 0.79656 | NLL: 0.59324 | CalibErr: 0.03862
+[ood_far] AUROC: 0.0524 | AUPR: 0.3122 | RMSE Rat: 0.44x
+[OOD (ood)] RMSE: 0.59202 | Var: 0.79656 | NLL: 0.59324 | CalibErr: 0.03862
+[ood] AUROC: 0.0524 | AUPR: 0.3122 | RMSE Rat: 0.44x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 7.36704 | Var: 76.76559 | NLL: 3.02514 | CalibErr: 0.07526
+[ID] RMSE: 7.43123 | Var: 78.15032 | NLL: 3.03597 | CalibErr: 0.07620
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 6.35134 | Var: 59.09858 | NLL: 2.84416 | CalibErr: 0.07903
+[ood_near] AUROC: 0.3779 | AUPR: 0.4249 | RMSE Rat: 0.85x
+[OOD (ood_mid)] RMSE: 5.32081 | Var: 41.40643 | NLL: 2.65353 | CalibErr: 0.07842
+[ood_mid] AUROC: 0.2626 | AUPR: 0.3611 | RMSE Rat: 0.72x
+[OOD (ood_far)] RMSE: 2.74933 | Var: 12.25197 | NLL: 2.06436 | CalibErr: 0.05809
+[ood_far] AUROC: 0.0477 | AUPR: 0.3116 | RMSE Rat: 0.37x
+[OOD (ood)] RMSE: 2.74933 | Var: 12.25197 | NLL: 2.06436 | CalibErr: 0.05809
+[ood] AUROC: 0.0477 | AUPR: 0.3116 | RMSE Rat: 0.37x
+[16:04:41] DONE pnc_none_Hopper-v5_100 rc=0
+[16:04:41] RUN pnc_none_Hopper-v5_200
+DEBUG: Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Hopper-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_e6b91b90e5   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_e6b91b90e5   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_200_26ab607e34   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Hopper_v5_neurips_minari_200_26ab607e34   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 311664] Worker Worker(salt=3730344626, workers=1, host=EriiNoDesktop, username=elean, pid=311664) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 311664] Worker Worker(salt=3730344626, workers=1, host=EriiNoDesktop, username=elean, pid=311664) running   GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO: [pid 311664] Worker Worker(salt=3730344626, workers=1, host=EriiNoDesktop, username=elean, pid=311664) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 311664] Worker Worker(salt=3730344626, workers=1, host=EriiNoDesktop, username=elean, pid=311664) done      GymPJSVD(env=Hopper-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_e6b91b90e5   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_e6b91b90e5   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+INFO: Worker Worker(salt=3730344626, workers=1, host=EriiNoDesktop, username=elean, pid=311664) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=3730344626, workers=1, host=EriiNoDesktop, username=elean, pid=311664) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Hopper-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 ran successfully:
+    - 1 GymPJSVD(...)
+
+This progress looks :) because there were no failed tasks or missing dependencies
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=200
+
+=== Gym PJSVD (Hopper-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss -1.89651 | Val Loss -1.81707
+Step 1000: Train Loss -2.07830 | Val Loss -2.03672
+Step 1500: Train Loss -2.59527 | Val Loss -2.49559
+Step 2000: Train Loss -2.53454 | Val Loss -2.51179
+Final Train Loss: -2.53454 | Best Val Loss: -2.51179
+Base model training time: 10.29s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 0.25858 | Var: 0.26451 | NLL: -0.35602 | CalibErr: 0.11110
+[ID] RMSE: 0.28553 | Var: 0.26733 | NLL: -0.26691 | CalibErr: 0.10456
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.36696 | Var: 0.21075 | NLL: 0.13200 | CalibErr: 0.06457
+[ood_near] AUROC: 0.4090 | AUPR: 0.4358 | RMSE Rat: 1.29x
+[OOD (ood_mid)] RMSE: 0.47034 | Var: 0.15623 | NLL: 0.54981 | CalibErr: 0.05510
+[ood_mid] AUROC: 0.3449 | AUPR: 0.3875 | RMSE Rat: 1.65x
+[OOD (ood_far)] RMSE: 0.45132 | Var: 0.08769 | NLL: 0.49578 | CalibErr: 0.04046
+[ood_far] AUROC: 0.1871 | AUPR: 0.3428 | RMSE Rat: 1.58x
+[OOD (ood)] RMSE: 0.45132 | Var: 0.08769 | NLL: 0.49578 | CalibErr: 0.04046
+[ood] AUROC: 0.1871 | AUPR: 0.3428 | RMSE Rat: 1.58x
+\n--- Results: PJSVD-multi-none (size=10.0) ---
+[VAL] RMSE: 0.47735 | Var: 0.92563 | NLL: 0.35786 | CalibErr: 0.08131
+[ID] RMSE: 0.48633 | Var: 0.92574 | NLL: 0.38145 | CalibErr: 0.07896
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.48957 | Var: 0.70387 | NLL: 0.37588 | CalibErr: 0.06548
+[ood_near] AUROC: 0.3784 | AUPR: 0.4228 | RMSE Rat: 1.01x
+[OOD (ood_mid)] RMSE: 0.54939 | Var: 0.50271 | NLL: 0.40880 | CalibErr: 0.05606
+[ood_mid] AUROC: 0.2842 | AUPR: 0.3682 | RMSE Rat: 1.13x
+[OOD (ood_far)] RMSE: 0.47921 | Var: 0.20612 | NLL: 0.32436 | CalibErr: 0.01618
+[ood_far] AUROC: 0.0722 | AUPR: 0.3156 | RMSE Rat: 0.99x
+[OOD (ood)] RMSE: 0.47921 | Var: 0.20612 | NLL: 0.32436 | CalibErr: 0.01618
+[ood] AUROC: 0.0722 | AUPR: 0.3156 | RMSE Rat: 0.99x
+\n--- Results: PJSVD-multi-none (size=20.0) ---
+[VAL] RMSE: 1.11061 | Var: 4.25507 | NLL: 1.31460 | CalibErr: 0.05685
+[ID] RMSE: 1.11063 | Var: 4.22840 | NLL: 1.32090 | CalibErr: 0.05739
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 0.97181 | Var: 3.07348 | NLL: 1.12825 | CalibErr: 0.06358
+[ood_near] AUROC: 0.3595 | AUPR: 0.4108 | RMSE Rat: 0.88x
+[OOD (ood_mid)] RMSE: 0.94154 | Var: 2.06995 | NLL: 0.99613 | CalibErr: 0.05589
+[ood_mid] AUROC: 0.2314 | AUPR: 0.3516 | RMSE Rat: 0.85x
+[OOD (ood_far)] RMSE: 0.66724 | Var: 0.80811 | NLL: 0.69533 | CalibErr: 0.02505
+[ood_far] AUROC: 0.0535 | AUPR: 0.3122 | RMSE Rat: 0.60x
+[OOD (ood)] RMSE: 0.66724 | Var: 0.80811 | NLL: 0.69533 | CalibErr: 0.02505
+[ood] AUROC: 0.0535 | AUPR: 0.3122 | RMSE Rat: 0.60x
+\n--- Results: PJSVD-multi-none (size=50.0) ---
+[VAL] RMSE: 6.21362 | Var: 70.00803 | NLL: 3.11783 | CalibErr: 0.06792
+[ID] RMSE: 6.20521 | Var: 69.60181 | NLL: 3.12572 | CalibErr: 0.06802
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 5.21915 | Var: 49.81726 | NLL: 2.91577 | CalibErr: 0.07074
+[ood_near] AUROC: 0.3617 | AUPR: 0.4098 | RMSE Rat: 0.84x
+[OOD (ood_mid)] RMSE: 4.61897 | Var: 32.95468 | NLL: 2.79311 | CalibErr: 0.06759
+[ood_mid] AUROC: 0.2398 | AUPR: 0.3543 | RMSE Rat: 0.74x
+[OOD (ood_far)] RMSE: 2.88043 | Var: 12.83990 | NLL: 2.28433 | CalibErr: 0.05023
+[ood_far] AUROC: 0.0637 | AUPR: 0.3139 | RMSE Rat: 0.46x
+[OOD (ood)] RMSE: 2.88043 | Var: 12.83990 | NLL: 2.28433 | CalibErr: 0.05023
+[ood] AUROC: 0.0637 | AUPR: 0.3139 | RMSE Rat: 0.46x
+[16:05:16] DONE pnc_none_Hopper-v5_200 rc=0
+[16:05:16] RUN pnc_none_Humanoid-v5_0
+DEBUG: Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=0, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=0, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=0, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_849d2bca0f   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_849d2bca0f   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_0_23dd80e6c6   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_0_23dd80e6c6   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 312129] Worker Worker(salt=7964061327, workers=1, host=EriiNoDesktop, username=elean, pid=312129) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=0, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 312129] Worker Worker(salt=7964061327, workers=1, host=EriiNoDesktop, username=elean, pid=312129) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=0, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+W0412 16:05:46.860157  312129 bfc_allocator.cc:502] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.30GiB (rounded to 1392000000)requested by op 
+If the cause is memory fragmentation maybe the environment variable 'TF_GPU_ALLOCATOR=cuda_malloc_async' will improve the situation. 
+Current allocation summary follows.
+Current allocation summary follows.
+W0412 16:05:46.861159  312129 bfc_allocator.cc:513] **************_____*********_______*****************************************************************
+ERROR: [pid 312129] Worker Worker(salt=7964061327, workers=1, host=EriiNoDesktop, username=elean, pid=312129) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=0, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+ERROR:luigi-interface:[pid 312129] Worker Worker(salt=7964061327, workers=1, host=EriiNoDesktop, username=elean, pid=312129) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=0, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_849d2bca0f   has status   FAILED
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_849d2bca0f   has status   FAILED
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+DEBUG: There are 1 pending tasks possibly being run by other workers
+DEBUG:luigi-interface:There are 1 pending tasks possibly being run by other workers
+DEBUG: There are 1 pending tasks unique to this worker
+DEBUG:luigi-interface:There are 1 pending tasks unique to this worker
+DEBUG: There are 1 pending tasks last scheduled by this worker
+DEBUG:luigi-interface:There are 1 pending tasks last scheduled by this worker
+INFO: Worker Worker(salt=7964061327, workers=1, host=EriiNoDesktop, username=elean, pid=312129) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=7964061327, workers=1, host=EriiNoDesktop, username=elean, pid=312129) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=0, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=0
+
+=== Gym PJSVD (Humanoid-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 4.07538 | Val Loss 4.57850
+Step 1000: Train Loss 3.87225 | Val Loss 3.98057
+Step 1500: Train Loss 2.89617 | Val Loss 3.44615
+Step 2000: Train Loss 4.47259 | Val Loss 4.07865
+Final Train Loss: 4.47259 | Best Val Loss: 3.13689
+Base model training time: 10.94s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 54.93085 | Var: 211.78207 | NLL: 4.36683 | CalibErr: 0.06729
+[ID] RMSE: 54.74300 | Var: 221.04015 | NLL: 4.34039 | CalibErr: 0.06718
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 47.38516 | Var: 200.99547 | NLL: 4.35440 | CalibErr: 0.06376
+[ood_near] AUROC: 0.4847 | AUPR: 0.4867 | RMSE Rat: 0.87x
+[OOD (ood_mid)] RMSE: 34.62857 | Var: 143.00844 | NLL: 4.09316 | CalibErr: 0.06457
+[ood_mid] AUROC: 0.4807 | AUPR: 0.4704 | RMSE Rat: 0.63x
+[OOD (ood_far)] RMSE: 34.11992 | Var: 115.38760 | NLL: 3.92142 | CalibErr: 0.07017
+[ood_far] AUROC: 0.2285 | AUPR: 0.3647 | RMSE Rat: 0.62x
+[OOD (ood)] RMSE: 34.11992 | Var: 115.38760 | NLL: 3.92142 | CalibErr: 0.07017
+[ood] AUROC: 0.2285 | AUPR: 0.3647 | RMSE Rat: 0.62x
+[16:05:47] DONE pnc_none_Humanoid-v5_0 rc=0
+[16:05:47] RUN pnc_none_Humanoid-v5_10
+DEBUG: Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=10, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_3ef629b64e   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_3ef629b64e   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_10_8270244d63   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_10_8270244d63   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 312565] Worker Worker(salt=2083709903, workers=1, host=EriiNoDesktop, username=elean, pid=312565) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 312565] Worker Worker(salt=2083709903, workers=1, host=EriiNoDesktop, username=elean, pid=312565) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+W0412 16:06:21.494243  312565 bfc_allocator.cc:502] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.30GiB (rounded to 1392000000)requested by op 
+If the cause is memory fragmentation maybe the environment variable 'TF_GPU_ALLOCATOR=cuda_malloc_async' will improve the situation. 
+Current allocation summary follows.
+Current allocation summary follows.
+W0412 16:06:21.495271  312565 bfc_allocator.cc:513] **************_____*********_______*****************************************************************
+ERROR: [pid 312565] Worker Worker(salt=2083709903, workers=1, host=EriiNoDesktop, username=elean, pid=312565) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+ERROR:luigi-interface:[pid 312565] Worker Worker(salt=2083709903, workers=1, host=EriiNoDesktop, username=elean, pid=312565) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=10, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_3ef629b64e   has status   FAILED
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_3ef629b64e   has status   FAILED
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+DEBUG: There are 1 pending tasks possibly being run by other workers
+DEBUG:luigi-interface:There are 1 pending tasks possibly being run by other workers
+DEBUG: There are 1 pending tasks unique to this worker
+DEBUG:luigi-interface:There are 1 pending tasks unique to this worker
+DEBUG: There are 1 pending tasks last scheduled by this worker
+DEBUG:luigi-interface:There are 1 pending tasks last scheduled by this worker
+INFO: Worker Worker(salt=2083709903, workers=1, host=EriiNoDesktop, username=elean, pid=312565) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2083709903, workers=1, host=EriiNoDesktop, username=elean, pid=312565) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=10, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=10
+
+=== Gym PJSVD (Humanoid-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 6.77240 | Val Loss 6.31631
+Step 1000: Train Loss 3.21368 | Val Loss 3.61305
+Step 1500: Train Loss 3.29072 | Val Loss 3.00851
+Step 2000: Train Loss 2.33468 | Val Loss 2.64207
+Final Train Loss: 2.33468 | Best Val Loss: 2.64207
+Base model training time: 11.44s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 40.89834 | Var: 187.08264 | NLL: 3.50201 | CalibErr: 0.10151
+[ID] RMSE: 41.59925 | Var: 182.24799 | NLL: 3.57676 | CalibErr: 0.10164
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 34.57169 | Var: 160.29802 | NLL: 3.57236 | CalibErr: 0.09080
+[ood_near] AUROC: 0.5136 | AUPR: 0.4949 | RMSE Rat: 0.83x
+[OOD (ood_mid)] RMSE: 28.66823 | Var: 106.93674 | NLL: 3.71027 | CalibErr: 0.07355
+[ood_mid] AUROC: 0.4273 | AUPR: 0.4432 | RMSE Rat: 0.69x
+[OOD (ood_far)] RMSE: 27.45830 | Var: 81.68863 | NLL: 3.83277 | CalibErr: 0.07093
+[ood_far] AUROC: 0.1783 | AUPR: 0.3467 | RMSE Rat: 0.66x
+[OOD (ood)] RMSE: 27.45830 | Var: 81.68863 | NLL: 3.83277 | CalibErr: 0.07093
+[ood] AUROC: 0.1783 | AUPR: 0.3467 | RMSE Rat: 0.66x
+[16:06:22] DONE pnc_none_Humanoid-v5_10 rc=0
+[16:06:22] RUN pnc_none_Humanoid-v5_42
+DEBUG: Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_f461172805   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_f461172805   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_42_29a0ff6b6f   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_42_29a0ff6b6f   has status   PENDING
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 2
+DEBUG:luigi-interface:Pending tasks: 2
+INFO: [pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) running   CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+INFO:luigi-interface:[pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) running   CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+INFO: [pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) done      CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+INFO:luigi-interface:[pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) done      CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_42_29a0ff6b6f   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_42_29a0ff6b6f   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+W0412 16:06:56.911093  313034 bfc_allocator.cc:502] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.30GiB (rounded to 1392000000)requested by op 
+If the cause is memory fragmentation maybe the environment variable 'TF_GPU_ALLOCATOR=cuda_malloc_async' will improve the situation. 
+Current allocation summary follows.
+Current allocation summary follows.
+W0412 16:06:56.912063  313034 bfc_allocator.cc:513] **************_____*********_______*****************************************************************
+ERROR: [pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+ERROR:luigi-interface:[pid 313034] Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=42, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_f461172805   has status   FAILED
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_f461172805   has status   FAILED
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+DEBUG: There are 1 pending tasks possibly being run by other workers
+DEBUG:luigi-interface:There are 1 pending tasks possibly being run by other workers
+DEBUG: There are 1 pending tasks unique to this worker
+DEBUG:luigi-interface:There are 1 pending tasks unique to this worker
+DEBUG: There are 1 pending tasks last scheduled by this worker
+DEBUG:luigi-interface:There are 1 pending tasks last scheduled by this worker
+INFO: Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=014726184, workers=1, host=EriiNoDesktop, username=elean, pid=313034) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 ran successfully:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 ran successfully:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=42, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=42
+
+=== Collecting gym data: Humanoid-v5 (steps=10000, preset='neurips_minari') ===
+Loading Minari dataset mujoco/humanoid/expert-v0 for id (10000 transitions, seed=42)...
+Loading Minari dataset mujoco/humanoid/expert-v0 for id (10000 transitions, seed=43)...
+Loading Minari dataset mujoco/humanoid/medium-v0 for ood_near (10000 transitions, seed=44)...
+Loading Minari dataset mujoco/humanoid/simple-v0 for ood_mid (10000 transitions, seed=45)...
+Collecting 10000 steps of uniform-random actions for Humanoid-v5 (ood_far)...
+Data saved (Minari).
+[seed] Seeded everything with seed=42
+
+=== Gym PJSVD (Humanoid-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 2.87201 | Val Loss 3.31166
+Step 1000: Train Loss 2.76680 | Val Loss 2.78371
+Step 1500: Train Loss 2.72931 | Val Loss 2.64065
+Step 2000: Train Loss 2.44382 | Val Loss 2.63759
+Final Train Loss: 2.44382 | Best Val Loss: 2.63759
+Base model training time: 11.06s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 42.81260 | Var: 186.30621 | NLL: 3.45153 | CalibErr: 0.10149
+[ID] RMSE: 45.13835 | Var: 185.27336 | NLL: 3.49854 | CalibErr: 0.10207
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 37.33823 | Var: 161.44019 | NLL: 3.57160 | CalibErr: 0.09130
+[ood_near] AUROC: 0.5738 | AUPR: 0.5175 | RMSE Rat: 0.83x
+[OOD (ood_mid)] RMSE: 30.04292 | Var: 119.31998 | NLL: 3.68221 | CalibErr: 0.07966
+[ood_mid] AUROC: 0.4987 | AUPR: 0.4685 | RMSE Rat: 0.67x
+[OOD (ood_far)] RMSE: 30.37806 | Var: 94.42146 | NLL: 3.65443 | CalibErr: 0.07508
+[ood_far] AUROC: 0.2635 | AUPR: 0.3712 | RMSE Rat: 0.67x
+[OOD (ood)] RMSE: 30.37806 | Var: 94.42146 | NLL: 3.65443 | CalibErr: 0.07508
+[ood] AUROC: 0.2635 | AUPR: 0.3712 | RMSE Rat: 0.67x
+[16:06:57] DONE pnc_none_Humanoid-v5_42 rc=0
+[16:06:57] RUN pnc_none_Humanoid-v5_100
+DEBUG: Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_b676bc1467   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_b676bc1467   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_100_6860bb9a43   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_100_6860bb9a43   has status   PENDING
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 2
+DEBUG:luigi-interface:Pending tasks: 2
+INFO: [pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) running   CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+INFO:luigi-interface:[pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) running   CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+INFO: [pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) done      CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+INFO:luigi-interface:[pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) done      CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_100_6860bb9a43   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_100_6860bb9a43   has status   DONE
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+W0412 16:07:32.492387  313511 bfc_allocator.cc:502] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.30GiB (rounded to 1392000000)requested by op 
+If the cause is memory fragmentation maybe the environment variable 'TF_GPU_ALLOCATOR=cuda_malloc_async' will improve the situation. 
+Current allocation summary follows.
+Current allocation summary follows.
+W0412 16:07:32.493540  313511 bfc_allocator.cc:513] **************_____*********_______*****************************************************************
+ERROR: [pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+ERROR:luigi-interface:[pid 313511] Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=100, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_b676bc1467   has status   FAILED
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_b676bc1467   has status   FAILED
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+DEBUG: There are 1 pending tasks possibly being run by other workers
+DEBUG:luigi-interface:There are 1 pending tasks possibly being run by other workers
+DEBUG: There are 1 pending tasks unique to this worker
+DEBUG:luigi-interface:There are 1 pending tasks unique to this worker
+DEBUG: There are 1 pending tasks last scheduled by this worker
+DEBUG:luigi-interface:There are 1 pending tasks last scheduled by this worker
+INFO: Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=2554617796, workers=1, host=EriiNoDesktop, username=elean, pid=313511) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 ran successfully:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 ran successfully:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=100, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=100
+
+=== Collecting gym data: Humanoid-v5 (steps=10000, preset='neurips_minari') ===
+Loading Minari dataset mujoco/humanoid/expert-v0 for id (10000 transitions, seed=100)...
+Loading Minari dataset mujoco/humanoid/expert-v0 for id (10000 transitions, seed=101)...
+Loading Minari dataset mujoco/humanoid/medium-v0 for ood_near (10000 transitions, seed=102)...
+Loading Minari dataset mujoco/humanoid/simple-v0 for ood_mid (10000 transitions, seed=103)...
+Collecting 10000 steps of uniform-random actions for Humanoid-v5 (ood_far)...
+Data saved (Minari).
+[seed] Seeded everything with seed=100
+
+=== Gym PJSVD (Humanoid-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 3.42006 | Val Loss 3.22111
+Step 1000: Train Loss 3.33764 | Val Loss 2.97049
+Step 1500: Train Loss 3.94571 | Val Loss 4.01095
+Step 2000: Train Loss 3.21287 | Val Loss 39.56760
+Final Train Loss: 3.21287 | Best Val Loss: 2.84333
+Base model training time: 10.95s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 48.27182 | Var: 253.33362 | NLL: 3.72520 | CalibErr: 0.09732
+[ID] RMSE: 48.72414 | Var: 243.73630 | NLL: 3.73350 | CalibErr: 0.09696
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 40.46156 | Var: 202.82039 | NLL: 3.81626 | CalibErr: 0.09014
+[ood_near] AUROC: 0.5710 | AUPR: 0.5131 | RMSE Rat: 0.83x
+[OOD (ood_mid)] RMSE: 32.69225 | Var: 170.03969 | NLL: 3.82520 | CalibErr: 0.09191
+[ood_mid] AUROC: 0.5812 | AUPR: 0.5158 | RMSE Rat: 0.67x
+[OOD (ood_far)] RMSE: 29.39028 | Var: 117.78412 | NLL: 3.78774 | CalibErr: 0.08298
+[ood_far] AUROC: 0.3114 | AUPR: 0.3878 | RMSE Rat: 0.60x
+[OOD (ood)] RMSE: 29.39028 | Var: 117.78412 | NLL: 3.78774 | CalibErr: 0.08298
+[ood] AUROC: 0.3114 | AUPR: 0.3878 | RMSE Rat: 0.60x
+[16:07:33] DONE pnc_none_Humanoid-v5_100 rc=0
+[16:07:33] RUN pnc_none_Humanoid-v5_200
+DEBUG: Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG:luigi-interface:Checking if GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None) is complete
+DEBUG: Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+DEBUG:luigi-interface:Checking if CollectGymData(env=Humanoid-v5, steps=10000, seed=200, policy_preset=neurips_minari) is complete
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_9837a246c5   has status   PENDING
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_9837a246c5   has status   PENDING
+INFO: Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_200_fe2cdec645   has status   DONE
+INFO:luigi-interface:Informed scheduler that task   CollectGymData_Humanoid_v5_neurips_minari_200_fe2cdec645   has status   DONE
+INFO: Done scheduling tasks
+INFO:luigi-interface:Done scheduling tasks
+INFO: Running Worker with 1 processes
+INFO:luigi-interface:Running Worker with 1 processes
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Pending tasks: 1
+DEBUG:luigi-interface:Pending tasks: 1
+INFO: [pid 314095] Worker Worker(salt=6406325999, workers=1, host=EriiNoDesktop, username=elean, pid=314095) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+INFO:luigi-interface:[pid 314095] Worker Worker(salt=6406325999, workers=1, host=EriiNoDesktop, username=elean, pid=314095) running   GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+W0412 16:08:04.655824  314095 bfc_allocator.cc:502] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.30GiB (rounded to 1392000000)requested by op 
+If the cause is memory fragmentation maybe the environment variable 'TF_GPU_ALLOCATOR=cuda_malloc_async' will improve the situation. 
+Current allocation summary follows.
+Current allocation summary follows.
+W0412 16:08:04.656051  314095 bfc_allocator.cc:513] **************_____*********_______*****************************************************************
+ERROR: [pid 314095] Worker Worker(salt=6406325999, workers=1, host=EriiNoDesktop, username=elean, pid=314095) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+ERROR:luigi-interface:[pid 314095] Worker Worker(salt=6406325999, workers=1, host=EriiNoDesktop, username=elean, pid=314095) failed    GymPJSVD(env=Humanoid-v5, steps=10000, subset_size=4096, n_directions=20, n_perturbations=50, perturbation_sizes=[5.0, 10.0, 20.0, 50.0], seed=200, policy_preset=neurips_minari, activation=relu, correction_mode=none, layer_scope=multi, pjsvd_family=random, antithetic_pairing=False, member_radius_distribution=fixed, member_radius_std=0.0, member_radius_values=[], safe_subspace_backend=projected_residual, use_full_span=False, hidden_dims=[200, 200, 200, 200], probabilistic_base_model=True, posthoc_calibrate=False, compute_l2=True, compute_geometry=True, geometry_rank=None)
+Traceback (most recent call last):
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 215, in run
+    new_deps = self._run_get_new_deps()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/luigi/worker.py", line 145, in _run_get_new_deps
+    task_gen = self.task.run()
+               ^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/gym_tasks.py", line 1061, in run
+    m[f"corrected_l2_{reg}_z"] = compute_l2_distance(z_c, z_o)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/util.py", line 83, in compute_l2_distance
+    return float(
+           ^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 299, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/profiler.py", line 384, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elean/pnc/.venv/lib/python3.12/site-packages/jax/_src/array.py", line 639, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 1.30GiB.
+DEBUG: 1 running tasks, waiting for next task to finish
+DEBUG:luigi-interface:1 running tasks, waiting for next task to finish
+INFO: Informed scheduler that task   GymPJSVD_relu_False_True_9837a246c5   has status   FAILED
+INFO:luigi-interface:Informed scheduler that task   GymPJSVD_relu_False_True_9837a246c5   has status   FAILED
+DEBUG: Asking scheduler for work...
+DEBUG:luigi-interface:Asking scheduler for work...
+DEBUG: Done
+DEBUG:luigi-interface:Done
+DEBUG: There are no more tasks to run at this time
+DEBUG:luigi-interface:There are no more tasks to run at this time
+DEBUG: There are 1 pending tasks possibly being run by other workers
+DEBUG:luigi-interface:There are 1 pending tasks possibly being run by other workers
+DEBUG: There are 1 pending tasks unique to this worker
+DEBUG:luigi-interface:There are 1 pending tasks unique to this worker
+DEBUG: There are 1 pending tasks last scheduled by this worker
+DEBUG:luigi-interface:There are 1 pending tasks last scheduled by this worker
+INFO: Worker Worker(salt=6406325999, workers=1, host=EriiNoDesktop, username=elean, pid=314095) was stopped. Shutting down Keep-Alive thread
+INFO:luigi-interface:Worker Worker(salt=6406325999, workers=1, host=EriiNoDesktop, username=elean, pid=314095) was stopped. Shutting down Keep-Alive thread
+INFO: 
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+INFO:luigi-interface:
+===== Luigi Execution Summary =====
+
+Scheduled 2 tasks of which:
+* 1 complete ones were encountered:
+    - 1 CollectGymData(env=Humanoid-v5, steps=10000, seed=200, policy_preset=neurips_minari)
+* 1 failed:
+    - 1 GymPJSVD(...)
+
+This progress looks :( because there were failed tasks
+
+===== Luigi Execution Summary =====
+
+[seed] Seeded everything with seed=200
+
+=== Gym PJSVD (Humanoid-v5, scope=multi, mode=none, full=False) ===
+Training Probabilistic Model on 9000 samples, val 1000 samples...
+Step 500: Train Loss 2.66822 | Val Loss 3.49513
+Step 1000: Train Loss 2.94935 | Val Loss 3.06919
+Step 1500: Train Loss 4.19710 | Val Loss 3.36977
+Step 2000: Train Loss 2.80540 | Val Loss 2.90411
+Final Train Loss: 2.80540 | Best Val Loss: 2.90411
+Base model training time: 11.42s
+\n--- Results: PJSVD-multi-none (size=5.0) ---
+[VAL] RMSE: 46.01304 | Var: 190.81157 | NLL: 3.72628 | CalibErr: 0.09665
+[ID] RMSE: 46.29029 | Var: 199.71938 | NLL: 3.75205 | CalibErr: 0.09567
+\nOOD Metrics:
+[OOD (ood_near)] RMSE: 38.97980 | Var: 172.68970 | NLL: 3.77928 | CalibErr: 0.08791
+[ood_near] AUROC: 0.5285 | AUPR: 0.4938 | RMSE Rat: 0.84x
+[OOD (ood_mid)] RMSE: 31.14251 | Var: 133.38725 | NLL: 3.79023 | CalibErr: 0.08019
+[ood_mid] AUROC: 0.4464 | AUPR: 0.4451 | RMSE Rat: 0.67x
+[OOD (ood_far)] RMSE: 28.45732 | Var: 97.13668 | NLL: 3.67473 | CalibErr: 0.07611
+[ood_far] AUROC: 0.2050 | AUPR: 0.3527 | RMSE Rat: 0.61x
+[OOD (ood)] RMSE: 28.45732 | Var: 97.13668 | NLL: 3.67473 | CalibErr: 0.07611
+[ood] AUROC: 0.2050 | AUPR: 0.3527 | RMSE Rat: 0.61x
+[16:08:08] DONE pnc_none_Humanoid-v5_200 rc=0
+=== END Sun Apr 12 16:08:08 PDT 2026 ===
