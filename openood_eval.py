@@ -9,34 +9,53 @@ from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 from util import _evaluate_cifar_logits, _fit_posthoc_temperature, _predict_cifar_logits
 
 
-def _uncertainty_scores_from_logits(logits: jax.Array, temperature: float) -> dict[str, np.ndarray]:
-    probs = jax.nn.softmax(logits / temperature, axis=-1)  # (S, N, C)
-    mean_probs = jnp.mean(probs, axis=0)
-    predictive_entropy = -jnp.sum(mean_probs * jnp.log(mean_probs + 1e-8), axis=-1)
-    max_softmax_uncertainty = 1.0 - jnp.max(mean_probs, axis=-1)
+def _uncertainty_scores_from_logits(
+    logits: jax.Array, temperature: float
+) -> dict[str, np.ndarray]:
+    """Compute uncertainty scores on CPU/numpy to avoid GPU OOM on CIFAR-100
+    (many-class) eval. Logits are materialized to host once up front; all
+    downstream reductions use numpy, which benefits from the much larger
+    system RAM."""
+    # Materialize to host in one shot.
+    logits_np = np.asarray(logits).astype(np.float32)
+    scaled = logits_np / float(temperature)
+
+    # Softmax along C in a numerically-stable way.
+    shifted = scaled - scaled.max(axis=-1, keepdims=True)
+    exp_shifted = np.exp(shifted)
+    probs = exp_shifted / exp_shifted.sum(axis=-1, keepdims=True)  # (S, N, C)
+
+    mean_probs = probs.mean(axis=0)  # (N, C)
+    predictive_entropy = -np.sum(mean_probs * np.log(mean_probs + 1e-8), axis=-1)
+    max_softmax_uncertainty = 1.0 - np.max(mean_probs, axis=-1)
 
     # Energy score: mean per-member negative logsumexp (larger = more OOD)
-    energy_per_member = -temperature * jax.scipy.special.logsumexp(
-        logits / temperature, axis=-1
-    )  # (S, N)
-    energy_score = jnp.mean(energy_per_member, axis=0)  # (N,)
+    # logsumexp over C computed in a stable way using scaled.
+    scaled_max = scaled.max(axis=-1)  # (S, N)
+    logsumexp_scaled = scaled_max + np.log(
+        np.exp(scaled - scaled_max[..., None]).sum(axis=-1)
+    )
+    energy_per_member = -temperature * logsumexp_scaled  # (S, N)
+    energy_score = energy_per_member.mean(axis=0)  # (N,)
 
-    # Margin uncertainty: 1 - (top1_prob - top2_prob) on mean probs
-    top2 = jax.lax.top_k(mean_probs, 2)[0]  # (N, 2)
-    margin_uncertainty = 1.0 - (top2[:, 0] - top2[:, 1])
+    # Margin: 1 - (top1 - top2)
+    part = np.partition(-mean_probs, 1, axis=-1)  # negatives so top2 are first two
+    top1 = -part[:, 0]
+    top2 = -part[:, 1]
+    margin_uncertainty = 1.0 - (top1 - top2)
 
     scores = {
-        "predictive_entropy": np.asarray(predictive_entropy),
-        "max_softmax_uncertainty": np.asarray(max_softmax_uncertainty),
-        "energy_score": np.asarray(energy_score),
-        "margin_uncertainty": np.asarray(margin_uncertainty),
+        "predictive_entropy": predictive_entropy,
+        "max_softmax_uncertainty": max_softmax_uncertainty,
+        "energy_score": energy_score,
+        "margin_uncertainty": margin_uncertainty,
     }
     if probs.shape[0] > 1:
-        sample_entropy = -jnp.sum(probs * jnp.log(probs + 1e-8), axis=-1)
-        mutual_information = predictive_entropy - jnp.mean(sample_entropy, axis=0)
-        variation_ratio = 1.0 - jnp.max(mean_probs, axis=-1)
-        scores["mutual_information"] = np.asarray(mutual_information)
-        scores["variation_ratio"] = np.asarray(variation_ratio)
+        sample_entropy = -np.sum(probs * np.log(probs + 1e-8), axis=-1)  # (S, N)
+        mutual_information = predictive_entropy - sample_entropy.mean(axis=0)
+        variation_ratio = 1.0 - np.max(mean_probs, axis=-1)
+        scores["mutual_information"] = mutual_information
+        scores["variation_ratio"] = variation_ratio
     return scores
 
 
