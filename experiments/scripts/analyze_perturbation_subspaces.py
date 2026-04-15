@@ -37,10 +37,12 @@ from ensembles import (
     PJSVDEnsemble,
     SWAGEnsemble,
     SubspaceInferenceEnsemble,
+    LaplaceEnsemble,
     _sample_member_radius_multipliers,
     _scale_coefficients_with_member_radii,
 )
 from gym_tasks import _sample_member_latents
+from laplace import compute_kfac_factors
 from models import ProbabilisticRegressionModel
 from training import train_probabilistic_model, train_swag_model, train_subspace_model
 from util import seed_everything, _split_data, get_intermediate_state
@@ -200,6 +202,34 @@ def _build_subspace_ensemble(dataset, seed):
     return model, ens
 
 
+def _build_laplace_ensemble(dataset, seed, prior=1000.0):
+    inputs_id, targets_id = dataset["id_train"]
+    x_tr, y_tr, x_va, y_va = _split_data(inputs_id, targets_id)
+    model = ProbabilisticRegressionModel(
+        inputs_id.shape[1], targets_id.shape[1],
+        nnx.Rngs(params=seed), hidden_dims=HIDDEN_DIMS, activation=nnx.relu,
+    )
+    model = train_probabilistic_model(model, x_tr, y_tr, x_va, y_va,
+                                      steps=5000, batch_size=64)
+    for p in jax.tree_util.tree_leaves(nnx.state(model)):
+        if hasattr(p, "block_until_ready"):
+            p.block_until_ready()
+    actual_subset = min(len(inputs_id), 4096)
+    np.random.seed(seed)
+    subset_idx = np.random.choice(len(inputs_id), actual_subset, replace=False)
+    X_sub = inputs_id[subset_idx]
+    Y_sub = targets_id[subset_idx]
+    factors = compute_kfac_factors(model, X_sub, Y_sub, batch_size=128)
+    for f in jax.tree_util.tree_leaves(factors):
+        if hasattr(f, "block_until_ready"):
+            f.block_until_ready()
+    ens = LaplaceEnsemble(
+        model=model, kfac_factors=factors, prior_precision=prior,
+        n_models=N_BASELINE_MEMBERS, data_size=actual_subset,
+    )
+    return model, ens
+
+
 # ── Diagnostic helpers ────────────────────────────────────────────────────
 
 def _compute_pnc_h_at_layer1(base_model, pnc_ens, x):
@@ -270,6 +300,14 @@ def _extract_weight_deltas(base_model, ensemble, perturb_indices, method):
             delta_flat = []
             for j, pi in enumerate(perturb_indices):
                 W_sampled = np.array(ensemble.base_model.layers[pi].kernel.get_value())
+                delta_flat.append((W_sampled - orig_Ws[j]).flatten())
+            deltas.append(np.concatenate(delta_flat))
+    elif method == "laplace":
+        for _ in range(ensemble.n_models):
+            ensemble._sample_model()
+            delta_flat = []
+            for j, pi in enumerate(perturb_indices):
+                W_sampled = np.array(ensemble.model.layers[pi].kernel.get_value())
                 delta_flat.append((W_sampled - orig_Ws[j]).flatten())
             deltas.append(np.concatenate(delta_flat))
     return np.array(deltas)  # (n_members, D_total)
@@ -378,52 +416,95 @@ def analyze_seed(env: str, seed: int, pnc_size_override: float | None):
     sub_base, sub_ens = _build_subspace_ensemble(dataset, seed)
     print(f"  Subspace trained ({time.time()-t2:.1f}s)")
 
-    # ── Diagnostic C: output sensitivity at layer 1 ──────────────────────
+    # ── 4. Laplace ───────────────────────────────────────────────────────
+    t3 = time.time()
+    lap_base, lap_ens = _build_laplace_ensemble(dataset, seed)
+    print(f"  Laplace trained ({time.time()-t3:.1f}s)")
+
+    # ── Diagnostic C on ID and OOD-far ─────────────────────────────────────
+
+    def _run_diagnostic_c(x_data, label):
+        """Compute gamma/dy/dh for all methods on a given data split."""
+        res = {}
+
+        y_b = base_model(x_data)
+        if isinstance(y_b, tuple):
+            y_b = y_b[0]
+
+        # PnC LS
+        h_b_pnc, h_m_ls = _compute_pnc_h_at_layer1(base_model, pnc_ls_ens, x_data)
+        y_m_ls = pnc_ls_ens.predict(x_data)
+        if isinstance(y_m_ls, tuple):
+            y_m_ls = y_m_ls[0]
+        g, dy, dh = compute_gamma_and_dy(h_b_pnc, y_b, h_m_ls, y_m_ls)
+        res["PnC (LS corr.)"] = {"gamma": g, "dy": dy, "dh": dh}
+
+        # PnC none
+        _, h_m_none = _compute_pnc_h_at_layer1(base_model, pnc_none_ens, x_data)
+        y_m_none = pnc_none_ens.predict(x_data)
+        if isinstance(y_m_none, tuple):
+            y_m_none = y_m_none[0]
+        g, dy, dh = compute_gamma_and_dy(h_b_pnc, y_b, h_m_none, y_m_none)
+        res["PnC (no corr.)"] = {"gamma": g, "dy": dy, "dh": dh}
+
+        # SWAG
+        h_b3, _, h_m3, _ = _extract_diagnostics(swag_base, swag_ens, x_data, layer_idx, "swag")
+        y_swag_b = swag_base(x_data)
+        if isinstance(y_swag_b, tuple):
+            y_swag_b = y_swag_b[0]
+        y_m_swag = swag_ens.predict(x_data)
+        if isinstance(y_m_swag, tuple):
+            y_m_swag = y_m_swag[0]
+        g, dy, dh = compute_gamma_and_dy(h_b3, y_swag_b, h_m3, y_m_swag)
+        res["SWAG"] = {"gamma": g, "dy": dy, "dh": dh}
+
+        # Subspace
+        h_b4, _, h_m4, _ = _extract_diagnostics(sub_base, sub_ens, x_data, layer_idx, "subspace")
+        y_sub_b = sub_base(x_data)
+        if isinstance(y_sub_b, tuple):
+            y_sub_b = y_sub_b[0]
+        y_m_sub = sub_ens.predict(x_data)
+        if isinstance(y_m_sub, tuple):
+            y_m_sub = y_m_sub[0]
+        g, dy, dh = compute_gamma_and_dy(h_b4, y_sub_b, h_m4, y_m_sub)
+        res["Subspace"] = {"gamma": g, "dy": dy, "dh": dh}
+
+        # Laplace
+        h_b5, _, h_m5, _ = _extract_diagnostics(lap_base, lap_ens, x_data, layer_idx, "laplace")
+        y_lap_b = lap_base(x_data)
+        if isinstance(y_lap_b, tuple):
+            y_lap_b = y_lap_b[0]
+        y_m_lap = lap_ens.predict(x_data)
+        if isinstance(y_m_lap, tuple):
+            y_m_lap = y_m_lap[0]
+        g, dy, dh = compute_gamma_and_dy(h_b5, y_lap_b, h_m5, y_m_lap)
+        res["Laplace"] = {"gamma": g, "dy": dy, "dh": dh}
+
+        print(f"  Diagnostic C ({label}) done")
+        return res
+
+    results_id = _run_diagnostic_c(x_eval, "ID")
+
+    # OOD-far
+    results_ood = None
+    if "ood_far" in dataset:
+        x_ood, _ = dataset["ood_far"]
+        n_ood = min(2000, x_ood.shape[0])
+        x_ood = x_ood[:n_ood]
+        results_ood = _run_diagnostic_c(x_ood, "OOD-far")
+
+    # Merge into a single results dict with region prefixes
     results = {}
+    for m in results_id:
+        results[m] = {}
+        for k, v in results_id[m].items():
+            results[m][k] = v                 # ID (default)
+            results[m][f"{k}_id"] = v
+        if results_ood and m in results_ood:
+            for k, v in results_ood[m].items():
+                results[m][f"{k}_ood"] = v
 
-    # Base predictions (same for both PnC variants since they share the base model)
-    y_base = base_model(x_eval)
-    if isinstance(y_base, tuple):
-        y_base = y_base[0]
-
-    # PnC: hidden state at layer 1 from the actual perturbation (pre-correction)
-    h_b_pnc, h_m_pnc_ls = _compute_pnc_h_at_layer1(base_model, pnc_ls_ens, x_eval)
-    y_m_pnc_ls = pnc_ls_ens.predict(x_eval)
-    if isinstance(y_m_pnc_ls, tuple):
-        y_m_pnc_ls = y_m_pnc_ls[0]
-    g, dy, dh = compute_gamma_and_dy(h_b_pnc, y_base, h_m_pnc_ls, y_m_pnc_ls)
-    results["PnC (LS corr.)"] = {"gamma": g, "dy": dy, "dh": dh}
-
-    _, h_m_pnc_none = _compute_pnc_h_at_layer1(base_model, pnc_none_ens, x_eval)
-    y_m_pnc_none = pnc_none_ens.predict(x_eval)
-    if isinstance(y_m_pnc_none, tuple):
-        y_m_pnc_none = y_m_pnc_none[0]
-    g, dy, dh = compute_gamma_and_dy(h_b_pnc, y_base, h_m_pnc_none, y_m_pnc_none)
-    results["PnC (no corr.)"] = {"gamma": g, "dy": dy, "dh": dh}
-
-    # SWAG: hidden state at layer 1
-    h_b3, _, h_m3, _ = _extract_diagnostics(swag_base, swag_ens, x_eval, layer_idx, "swag")
-    y_swag_base = swag_base(x_eval)
-    if isinstance(y_swag_base, tuple):
-        y_swag_base = y_swag_base[0]
-    y_m_swag = swag_ens.predict(x_eval)
-    if isinstance(y_m_swag, tuple):
-        y_m_swag = y_m_swag[0]
-    g, dy, dh = compute_gamma_and_dy(h_b3, y_swag_base, h_m3, y_m_swag)
-    results["SWAG"] = {"gamma": g, "dy": dy, "dh": dh}
-
-    # Subspace: hidden state at layer 1
-    h_b4, _, h_m4, _ = _extract_diagnostics(sub_base, sub_ens, x_eval, layer_idx, "subspace")
-    y_sub_base = sub_base(x_eval)
-    if isinstance(y_sub_base, tuple):
-        y_sub_base = y_sub_base[0]
-    y_m_sub = sub_ens.predict(x_eval)
-    if isinstance(y_m_sub, tuple):
-        y_m_sub = y_m_sub[0]
-    g, dy, dh = compute_gamma_and_dy(h_b4, y_sub_base, h_m4, y_m_sub)
-    results["Subspace"] = {"gamma": g, "dy": dy, "dh": dh}
-
-    print("  Diagnostic C done")
+    print("  Diagnostic C done (ID + OOD-far)")
 
     # ── Diagnostics A & B: weight-space alignment ────────────────────────
     # Build the full direction matrix for PnC (all perturbed layers concatenated)
@@ -455,12 +536,20 @@ def analyze_seed(env: str, seed: int, pnc_size_override: float | None):
     sub_deltas = _extract_weight_deltas(sub_base, sub_ens, perturb_indices, "subspace")
     results["Subspace"]["alpha"] = diagnostic_b(pnc_dirs, sub_deltas)
 
+    # Laplace weight deltas
+    lap_deltas = _extract_weight_deltas(lap_base, lap_ens, perturb_indices, "laplace")
+    results["Laplace"]["alpha"] = diagnostic_b(pnc_dirs, lap_deltas)
+
     print("  Diagnostics A & B done")
 
-    # h_l2 is the median of per-member dh (already at layer 1)
+    # Derived scalars for aggregation
     for m in results:
         results[m]["h_l2"] = float(np.median(results[m]["dh"]))
         results[m]["dy_median"] = float(np.median(results[m]["dy"]))
+        if "dh_ood" in results[m]:
+            results[m]["h_l2_ood"] = float(np.median(results[m]["dh_ood"]))
+            results[m]["dy_median_ood"] = float(np.median(results[m]["dy_ood"]))
+            results[m]["gamma_ood"] = results[m].get("gamma_ood", np.array([]))
 
     return results
 
@@ -473,7 +562,9 @@ def aggregate_seeds(all_results):
     agg = {}
     for m in methods:
         agg[m] = {}
-        for key in ["gamma", "alpha", "h_l2", "dy_median"]:
+        scalar_keys = ["gamma", "alpha", "h_l2", "dy_median",
+                        "gamma_ood", "h_l2_ood", "dy_median_ood"]
+        for key in scalar_keys:
             vals = []
             for r in all_results:
                 if m in r and key in r[m]:
@@ -489,8 +580,10 @@ def aggregate_seeds(all_results):
                     "q75": float(np.percentile(vals, 75)),
                     "values": vals,
                 }
-        # Also collect per-member distributions from all seeds
-        for key in ["gamma", "alpha", "dy", "dh"]:
+        # Collect per-member distributions from all seeds
+        array_keys = ["gamma", "alpha", "dy", "dh",
+                      "gamma_ood", "dy_ood", "dh_ood"]
+        for key in array_keys:
             all_members = []
             for r in all_results:
                 if m in r and key in r[m] and isinstance(r[m][key], np.ndarray):
@@ -502,62 +595,77 @@ def aggregate_seeds(all_results):
 
 # ── Plotting ──────────────────────────────────────────────────────────────
 
-METHOD_ORDER = ["Subspace", "SWAG", "PnC (no corr.)", "PnC (LS corr.)"]
+METHOD_ORDER = ["Subspace", "SWAG", "Laplace", "PnC (no corr.)", "PnC (LS corr.)"]
 METHOD_COLORS = {
     "Subspace": "#2ca02c",
     "SWAG": "#1f77b4",
+    "Laplace": "#9467bd",
     "PnC (no corr.)": "#ff7f0e",
     "PnC (LS corr.)": "#d62728",
 }
 
 
-def plot_two_panel(agg, env, out_path):
-    """Figure 1: hidden perturbation vs output change + output sensitivity."""
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
-
-    methods = [m for m in METHOD_ORDER if m in agg]
+def _plot_bar_and_boxplot(axes_row, agg, methods, colors, region_tag, region_label, env):
+    """Plot dh/dy bars and gamma boxplot on a pair of axes."""
     x_pos = np.arange(len(methods))
-    colors = [METHOD_COLORS[m] for m in methods]
+    h_key = "h_l2" if region_tag == "" else f"h_l2_{region_tag}"
+    dy_key = "dy_median" if region_tag == "" else f"dy_median_{region_tag}"
+    gamma_key = "gamma_all" if region_tag == "" else f"gamma_{region_tag}_all"
 
-    # ── Panel A: hidden L2 at layer 1 vs absolute prediction change ──
-    ax = axes[0]
-    h_l2s = [agg[m]["h_l2"]["median"] for m in methods]
-    dys = [agg[m]["dy_median"]["median"] for m in methods]
-
+    # bars
+    ax = axes_row[0]
+    h_l2s = [agg[m].get(h_key, {}).get("median", 0) for m in methods]
+    dys = [agg[m].get(dy_key, {}).get("median", 0) for m in methods]
     width = 0.35
     ax.bar(x_pos - width/2, h_l2s, width, color=colors, alpha=0.45,
-           label=r"$\|\Delta h\|$ at layer 1 (Unc-L2-h)")
+           label=r"$\|\Delta h\|$ at layer 1")
     ax.bar(x_pos + width/2, dys, width, color=colors,
-           label=r"$\|\Delta y\|$ (prediction change)")
-
+           label=r"$\|\Delta y\|$ (pred. change)")
     ax.set_xticks(x_pos)
     ax.set_xticklabels(methods, fontsize=8, rotation=15, ha="right")
     ax.set_ylabel("Mean L2 distance")
-    ax.set_title(f"{env}: hidden perturbation is not the whole story")
+    ax.set_title(f"{env} ({region_label}): dh vs dy")
     ax.legend(fontsize=7, loc="upper left")
     ax.grid(axis="y", alpha=0.3)
 
-    # ── Panel B: output sensitivity boxplot ──
-    ax2 = axes[1]
-    data_gamma = []
-    labels_gamma = []
-    colors_gamma = []
-    for m in methods:
-        if "gamma_all" in agg[m]:
-            data_gamma.append(agg[m]["gamma_all"])
-            labels_gamma.append(m)
-            colors_gamma.append(METHOD_COLORS[m])
-
-    if data_gamma:
-        bp = ax2.boxplot(data_gamma, tick_labels=labels_gamma, patch_artist=True,
+    # boxplot
+    ax2 = axes_row[1]
+    data, labels, cols = [], [], []
+    for m, c in zip(methods, colors):
+        if gamma_key in agg[m]:
+            data.append(agg[m][gamma_key])
+            labels.append(m)
+            cols.append(c)
+    if data:
+        bp = ax2.boxplot(data, tick_labels=labels, patch_artist=True,
                          showfliers=False, widths=0.5)
-        for patch, c in zip(bp["boxes"], colors_gamma):
+        for patch, c in zip(bp["boxes"], cols):
             patch.set_facecolor(c)
             patch.set_alpha(0.6)
-        ax2.set_ylabel(r"$\gamma = \|\Delta y\| \,/\, \|\Delta h\|$")
-        ax2.set_title(f"{env}: output sensitivity per unit hidden perturbation")
-        ax2.set_xticklabels(labels_gamma, fontsize=8, rotation=15, ha="right")
-        ax2.grid(axis="y", alpha=0.3)
+    ax2.set_ylabel(r"$\gamma = \|\Delta y\| / \|\Delta h\|$")
+    ax2.set_title(f"{env} ({region_label}): output sensitivity")
+    ax2.set_xticklabels(labels, fontsize=8, rotation=15, ha="right")
+    ax2.grid(axis="y", alpha=0.3)
+
+
+def plot_two_panel(agg, env, out_path):
+    """Figure: ID vs OOD-far comparison (2x2 if OOD data present, else 1x2).
+
+    ID and OOD rows share y-axes for easy comparison.
+    """
+    methods = [m for m in METHOD_ORDER if m in agg]
+    colors = [METHOD_COLORS[m] for m in methods]
+
+    has_ood = any("gamma_ood_all" in agg[m] for m in methods)
+    nrows = 2 if has_ood else 1
+    fig, axes = plt.subplots(nrows, 2, figsize=(13, 4.5 * nrows),
+                             sharey="col" if has_ood else False)
+    if nrows == 1:
+        axes = [axes]
+
+    _plot_bar_and_boxplot(axes[0], agg, methods, colors, "", "ID", env)
+    if has_ood:
+        _plot_bar_and_boxplot(axes[1], agg, methods, colors, "ood", "OOD-far", env)
 
     plt.tight_layout()
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
@@ -613,17 +721,34 @@ def main():
     print(f"\n{'='*60}")
     print(f"  SUMMARY: {env}  ({len(all_results)} seeds)")
     print(f"{'='*60}")
-    print(f"{'Method':<22} {'dh (L1)':>10} {'dy':>10} {'gamma':>10} {'alpha':>10} {'s_eff':>10}")
-    print("-" * 72)
+    for region, h_key, d_key, g_key in [
+        ("ID",      "h_l2",     "dy_median",     "gamma"),
+        ("OOD-far", "h_l2_ood", "dy_median_ood", "gamma_ood"),
+    ]:
+        has_data = any(g_key in agg.get(m, {}) for m in METHOD_ORDER)
+        if not has_data:
+            continue
+        print(f"\n  ── {region} ──")
+        print(f"  {'Method':<22} {'dh (L1)':>10} {'dy':>10} {'gamma':>10}")
+        print("  " + "-" * 52)
+        for m in METHOD_ORDER:
+            if m not in agg:
+                continue
+            h = agg[m].get(h_key, {}).get("median", float("nan"))
+            d = agg[m].get(d_key, {}).get("median", float("nan"))
+            g = agg[m].get(g_key, {}).get("median", float("nan"))
+            print(f"  {m:<22} {h:10.3f} {d:10.3f} {g:10.4f}")
+
+    # Alpha (data-independent, print once)
+    print(f"\n  ── Subspace alignment ──")
+    print(f"  {'Method':<22} {'alpha':>10} {'s_eff':>10}")
+    print("  " + "-" * 42)
     for m in METHOD_ORDER:
         if m not in agg:
             continue
-        h = agg[m].get("h_l2", {}).get("median", float("nan"))
-        d = agg[m].get("dy_median", {}).get("median", float("nan"))
-        g = agg[m].get("gamma", {}).get("median", float("nan"))
         a = agg[m].get("alpha", {}).get("median", float("nan"))
         s = np.sqrt(1 - a) if np.isfinite(a) else float("nan")
-        print(f"{m:<22} {h:10.3f} {d:10.3f} {g:10.4f} {a:10.4f} {s:10.4f}")
+        print(f"  {m:<22} {a:10.4f} {s:10.4f}")
 
     # Save raw aggregated data
     json_path = out_dir / f"pnc_subspace_analysis_{env_tag}data.json"

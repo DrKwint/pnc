@@ -324,17 +324,21 @@ class GymMCDropout(luigi.Task):
     activation = luigi.Parameter(default="relu")
     hidden_dims = luigi.ListParameter(default=[64, 64])
     posthoc_calibrate = luigi.BoolParameter(default=False)
+    dropout_prob = luigi.FloatParameter(default=0.1)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed, policy_preset=self.policy_preset)
 
     def output(self) -> luigi.LocalTarget:
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        # Backwards compatible: the historical default (0.1) produces no _dr token
+        # so existing results remain discoverable.
+        dr_str = "" if self.dropout_prob == 0.1 else f"_dr{self.dropout_prob:g}"
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
-                / f"mc_dropout{calib_str}_n{self.n_perturbations}{_hdims_str(self.hidden_dims)}_act-{self.activation}_seed{self.seed}.json"
+                / f"mc_dropout{calib_str}_n{self.n_perturbations}{dr_str}{_hdims_str(self.hidden_dims)}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
@@ -355,7 +359,7 @@ class GymMCDropout(luigi.Task):
             targets_id.shape[1],
             nnx.Rngs(params=self.seed, dropout=self.seed + 1),
             hidden_dims=list(self.hidden_dims),
-            dropout_rate=0.1,
+            dropout_rate=float(self.dropout_prob),
             activation=act_fn,
         )
         model = train_probabilistic_model(model, x_tr, y_tr, x_va, y_va, steps=5000, batch_size=64)
@@ -400,6 +404,9 @@ class GymEvidential(luigi.Task):
     hidden_dims = luigi.ListParameter(default=[64, 64])
     lam = luigi.FloatParameter(default=0.01)
     posthoc_calibrate = luigi.BoolParameter(default=False)
+    # When True, use the NIG predictive Gaussian NLL as the validation / early-
+    # stopping signal instead of the NIG training loss. See evidential.py docstring.
+    val_on_predictive_nll = luigi.BoolParameter(default=False)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(
@@ -411,12 +418,13 @@ class GymEvidential(luigi.Task):
 
     def output(self) -> luigi.LocalTarget:
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        esn_str = "_esn" if self.val_on_predictive_nll else ""
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.env
                 / (
-                    f"evidential{calib_str}_lam{self.lam:g}"
+                    f"evidential{calib_str}{esn_str}_lam{self.lam:g}"
                     f"{_hdims_str(self.hidden_dims)}_act-{self.activation}_"
                     f"seed{self.seed}.json"
                 )
@@ -451,6 +459,7 @@ class GymEvidential(luigi.Task):
         model = train_evidential_model(
             model, x_tr, y_tr, x_va, y_va,
             lam=float(self.lam), steps=5000, batch_size=64,
+            val_on_predictive_nll=bool(self.val_on_predictive_nll),
         )
         for p in jax.tree_util.tree_leaves(nnx.state(model)):
             if hasattr(p, "block_until_ready"):
@@ -676,6 +685,9 @@ class GymPJSVD(luigi.Task):
         default=True, parsing=luigi.BoolParameter.EXPLICIT_PARSING
     )
     geometry_rank = luigi.IntParameter(default=None)
+    # Tikhonov regularizer for the least-squares correction. 0.0 preserves the
+    # legacy pseudoinverse (jnp.linalg.lstsq) path; > 0 switches to ridge.
+    lambda_reg = luigi.FloatParameter(default=0.0)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed, policy_preset=self.policy_preset)
@@ -687,6 +699,8 @@ class GymPJSVD(luigi.Task):
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
         prob_str = "_prob" if self.probabilistic_base_model else ""
         anti_str = "_anti" if self.antithetic_pairing else ""
+        # Backwards compatible: default 0.0 emits no token so existing results stay discoverable.
+        lreg_str = "" if self.lambda_reg == 0.0 else f"_lreg{self.lambda_reg:g}"
         if self.member_radius_distribution == "fixed":
             radius_str = ""
         else:
@@ -700,7 +714,7 @@ class GymPJSVD(luigi.Task):
             str(
                 Path("results")
                 / self.env
-                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}{anti_str}{radius_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}{_hdims_str(self.hidden_dims)}_act-{self.activation}_seed{self.seed}.json"
+                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}{anti_str}{lreg_str}{radius_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}{_hdims_str(self.hidden_dims)}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
@@ -963,6 +977,7 @@ class GymPJSVD(luigi.Task):
                 correction_params=correction_params,
                 tail_is_hidden=self.probabilistic_base_model and self.layer_scope == "multi",
                 layer_specs=layer_specs_list if self.layer_scope == "multi" else None,
+                lambda_reg=float(self.lambda_reg),
             )
             m = _evaluate_gym(
                 f"PJSVD-{self.layer_scope}-{self.correction_mode} (size={p_size})",

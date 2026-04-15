@@ -14,7 +14,7 @@ Usage:
     python json_to_tex_table.py --out gym_tables.tex
     python json_to_tex_table.py --out gym_tables.txt
     python json_to_tex_table.py --fmt text --max-over vcal
-    python json_to_tex_table.py --fmt text --max-over vcal,prob,scope,family,backend,k,n,act,T,full,grid
+    python json_to_tex_table.py --fmt text --max-over vcal,prob,scope,family,backend,k,n,act,T,full,grid,mode,ens,lam,prel2
 """
 
 from __future__ import annotations
@@ -84,7 +84,153 @@ GYM_MAX_OVER_CHOICES = {
     "T",
     "full",
     "grid",
+    "mode",
+    "ens",
+    "lam",
+    "prel2",
+    "dr",
+    "lreg",
+    "esn",
 }
+
+
+REQUIRE_KEYS = {
+    # binary markers: value in {yes, no}
+    "vcal",
+    "prob",
+    "full",
+    "prel2",
+    "esn",
+    # choice dims: value is the choice name, or "none" for absent
+    "scope",    # first | multi | none
+    "family",   # low | random | all | none
+    "backend",  # cov | proj | activation_covariance | projected_residual | none
+    "mode",     # least_squares | affine | none
+    # value dims: exact value match
+    "k",
+    "n",
+    "T",
+    "lam",
+    "act",
+    "dr",
+    "lreg",
+}
+
+
+def _parse_yes_no(value: str) -> bool | None:
+    v = value.lower()
+    if v in ("yes", "y", "on", "1", "true"):
+        return True
+    if v in ("no", "n", "off", "0", "false"):
+        return False
+    return None
+
+
+# Keys whose dimension only shows up in certain method families. For stems
+# from other families (where the dimension has no meaning), a --require clause
+# on that key is auto-satisfied so it doesn't inadvertently drop unrelated
+# rows. Example: --require lreg=0.0001 filters PJSVD rows but keeps MC Dropout,
+# Deep Ensemble, etc. Keys not listed here are treated as universally applicable
+# (e.g. vcal, act).
+_REQUIRE_KEY_SCOPE: dict[str, tuple[str, ...]] = {
+    "lreg": ("pjsvd",),
+    "full": ("pjsvd",),
+    "mode": ("pjsvd",),
+    "scope": ("pjsvd",),
+    "family": ("pjsvd", "hybrid_pnc_de"),
+    "backend": ("pjsvd", "hybrid_pnc_de"),
+    "k": ("pjsvd", "hybrid_pnc_de"),
+    "prob": ("pjsvd", "hybrid_pnc_de"),
+    "T": ("subspace",),
+    "lam": ("evidential",),
+    "esn": ("evidential",),
+    "dr": ("mc_dropout",),
+    "ens": ("hybrid_pnc_de",),
+    "prel2": ("laplace", "swag", "subspace"),
+}
+
+
+def _clause_applies_to_stem(stem: str, key: str) -> bool:
+    """Whether a --require clause on `key` should be evaluated for this stem."""
+    scope = _REQUIRE_KEY_SCOPE.get(key)
+    if scope is None:
+        return True
+    return any(stem.startswith(prefix) for prefix in scope)
+
+
+def _stem_satisfies_clause(stem: str, key: str, value: str) -> bool:
+    """Check one key=value require clause against a canonical stem."""
+    if key in ("vcal", "prob", "full", "esn"):
+        has = f"_{key}" in stem
+        want = _parse_yes_no(value)
+        return want is not None and has == want
+    if key == "prel2":
+        has = ".pre_l2" in stem
+        want = _parse_yes_no(value)
+        return want is not None and has == want
+    if key == "scope":
+        if value == "first":
+            return "_first_" in stem
+        if value == "multi":
+            return "_multi_" in stem
+        if value == "none":
+            return "_first_" not in stem and "_multi_" not in stem
+        return False
+    if key == "family":
+        if value == "none":
+            return not any(m in stem for m in ("_low", "_random", "_all"))
+        if value in ("low", "random", "all"):
+            return f"_{value}" in stem
+        return False
+    if key == "backend":
+        aliases = {
+            "cov": "_activation_covariance",
+            "activation_covariance": "_activation_covariance",
+            "proj": "_projected_residual",
+            "projected_residual": "_projected_residual",
+        }
+        if value == "none":
+            return not any(m in stem for m in set(aliases.values()))
+        if value in aliases:
+            return aliases[value] in stem
+        return False
+    if key == "mode":
+        if value == "none":
+            return not any(m in stem for m in ("_least_squares", "_affine"))
+        if value in ("least_squares", "affine"):
+            return f"_{value}" in stem
+        return False
+    if key == "k":
+        return bool(re.search(rf"_k{re.escape(value)}(?![\d.])", stem))
+    if key == "n":
+        return bool(re.search(rf"_n{re.escape(value)}(?![\d.a-zA-Z])", stem))
+    if key == "T":
+        return bool(re.search(rf"_T{re.escape(value)}(?![\d.])", stem))
+    if key == "lam":
+        return bool(re.search(rf"_lam{re.escape(value)}(?![\d.eE+-])", stem))
+    if key == "act":
+        return bool(re.search(rf"_act-{re.escape(value)}(?![a-z])", stem))
+    if key == "dr":
+        return bool(re.search(rf"_dr{re.escape(value)}(?![\d.])", stem))
+    if key == "lreg":
+        return bool(re.search(rf"_lreg{re.escape(value)}(?![\d.eE+-])", stem))
+    return False
+
+
+def stem_satisfies_require(stem: str, require: dict[str, str]) -> bool:
+    """Return True iff canonical stem satisfies every applicable require clause.
+
+    Clauses whose key is scoped to a specific method family (see
+    ``_REQUIRE_KEY_SCOPE``) are skipped for stems from unrelated families. That
+    keeps e.g. ``--require lreg=0.0001`` from dropping MC Dropout rows, which
+    never carry an ``_lreg`` token.
+    """
+    for key, value in require.items():
+        if not _clause_applies_to_stem(stem, key):
+            continue
+        if not _stem_satisfies_clause(stem, key, value):
+            return False
+    return True
 
 
 def mean_std(values: list[float]) -> tuple[float, float | None]:
@@ -152,6 +298,53 @@ def fmt_cell_text(values: list[float], include_std: bool, mode: str = "mean_std"
 
 def is_higher_better(metric: str) -> bool:
     return "auroc" in metric or "aupr" in metric
+
+
+def beat_baseline_indices(
+    rows: list[tuple[str, dict[str, list[float]]]],
+    metrics,
+    baseline_substr: str,
+    ignore_for_bolding: set[str] | None = None,
+) -> dict[str, set[int]]:
+    """Per metric, return indices of rows whose mean ties or beats the baseline.
+
+    The baseline is the first row whose label contains `baseline_substr` (case
+    insensitive). If no row matches, no indices are bolded.
+    """
+    ignore_for_bolding = ignore_for_bolding or set()
+
+    def is_ignored(label: str) -> bool:
+        return any(label == name or label.startswith(f"{name} (") for name in ignore_for_bolding)
+
+    needle = baseline_substr.lower()
+    baseline_idx: int | None = None
+    for idx, (label, _) in enumerate(rows):
+        if needle in label.lower():
+            baseline_idx = idx
+            break
+
+    winners: dict[str, set[int]] = {metric: set() for metric, _ in metrics}
+    if baseline_idx is None:
+        return winners
+
+    _, baseline_metrics = rows[baseline_idx]
+    for metric, _ in metrics:
+        baseline_mu, _ = mean_std(baseline_metrics.get(metric, []))
+        if math.isnan(baseline_mu):
+            continue
+        higher = is_higher_better(metric)
+        picked: set[int] = set()
+        for idx, (label, row_metrics) in enumerate(rows):
+            if is_ignored(label):
+                continue
+            mu, _ = mean_std(row_metrics.get(metric, []))
+            if math.isnan(mu):
+                continue
+            tie = math.isclose(mu, baseline_mu, rel_tol=1e-12, abs_tol=1e-12)
+            if tie or (mu >= baseline_mu if higher else mu <= baseline_mu):
+                picked.add(idx)
+        winners[metric] = picked
+    return winners
 
 
 def best_metric_indices(
@@ -242,7 +435,12 @@ def gym_friendly_name(stem: str) -> str | None:
     if stem.startswith("standard_ensemble"):
         return f"Deep Ensemble{calib_suffix} (n={extract_stem_value(stem, 'n')}){act_suffix}"
     if stem.startswith("mc_dropout"):
-        return f"MC Dropout{calib_suffix} (n={extract_stem_value(stem, 'n')}){act_suffix}"
+        dr_match = re.search(r"_dr([\d.]+)", stem)
+        dr_str = f", dr={dr_match.group(1)}" if dr_match else ""
+        return (
+            f"MC Dropout{calib_suffix} (n={extract_stem_value(stem, 'n')}{dr_str})"
+            f"{act_suffix}"
+        )
     if stem.startswith("swag"):
         return f"SWAG{calib_suffix} (n={extract_stem_value(stem, 'n')}){act_suffix}"
     if stem.startswith("laplace"):
@@ -250,7 +448,8 @@ def gym_friendly_name(stem: str) -> str | None:
     if stem.startswith("evidential"):
         lam_match = re.search(r"lam([\d.e+-]+)", stem)
         lam_str = f" (lam={lam_match.group(1)})" if lam_match else ""
-        return f"Evidential{calib_suffix}{lam_str}{act_suffix}"
+        esn_suffix = " + ESN" if "_esn" in stem else ""
+        return f"Evidential{calib_suffix}{esn_suffix}{lam_str}{act_suffix}"
     if stem.startswith("hybrid_pnc_de"):
         nde_match = re.search(r"nDE(\d+)", stem)
         npnc_match = re.search(r"nPnC(\d+)", stem)
@@ -291,11 +490,16 @@ def gym_friendly_name(stem: str) -> str | None:
         elif "_all" in stem:
             family = "All"
         family_str = f" ({family}{backend})" if (family or backend) else ""
+        lreg_match = re.search(r"_lreg([\d.eE+-]+)", stem)
+        lreg_str = f", λ={lreg_match.group(1)}" if lreg_match else ""
         if not scope and not mode:
-            return f"PJSVD{calib_suffix}{prob_suffix}{family_str} (k={k}, n={n}){act_suffix}"
+            return (
+                f"PJSVD{calib_suffix}{prob_suffix}{family_str} "
+                f"(k={k}, n={n}{lreg_str}){act_suffix}"
+            )
         return (
             f"PJSVD-{scope}-{mode}{full}{calib_suffix}{prob_suffix}"
-            f"{family_str} (k={k}, n={n}){act_suffix}"
+            f"{family_str} (k={k}, n={n}{lreg_str}){act_suffix}"
         )
     if stem.startswith("subspace_inference"):
         n = extract_stem_value(stem, "n")
@@ -331,6 +535,12 @@ def gym_sort_key(stem: str, label: str) -> tuple[int, str, str]:
 
 def normalize_gym_stem(stem: str, max_over: set[str]) -> str:
     normalized = stem
+    if "prel2" in max_over:
+        # Strip the .pre_l2 suffix first so downstream regexes (e.g. _T\d[\d.]*)
+        # don't greedily consume the leading dot.
+        normalized = normalized.replace(".pre_l2", "")
+    if "esn" in max_over:
+        normalized = normalized.replace("_esn", "")
     if "vcal" in max_over:
         normalized = normalized.replace("_vcal", "")
     if "prob" in max_over:
@@ -338,6 +548,10 @@ def normalize_gym_stem(stem: str, max_over: set[str]) -> str:
     if "scope" in max_over:
         normalized = normalized.replace("_first_", "_")
         normalized = normalized.replace("_multi_", "_")
+    if "mode" in max_over:
+        normalized = normalized.replace("_least_squares", "")
+        normalized = normalized.replace("_affine", "")
+        normalized = normalized.replace("_none", "")
     if "family" in max_over:
         normalized = normalized.replace("_low", "")
         normalized = normalized.replace("_random", "")
@@ -347,10 +561,18 @@ def normalize_gym_stem(stem: str, max_over: set[str]) -> str:
         normalized = normalized.replace("_projected_residual", "")
     if "full" in max_over:
         normalized = normalized.replace("_full", "")
+    if "ens" in max_over:
+        normalized = re.sub(r"_nDE\d+_nPnC\d+", "", normalized)
     if "k" in max_over:
         normalized = re.sub(r"_k\d[\d.]*", "", normalized)
     if "n" in max_over:
         normalized = re.sub(r"_n\d[\d.]*", "", normalized)
+    if "lam" in max_over:
+        normalized = re.sub(r"_lam[\d.e+-]+", "", normalized)
+    if "dr" in max_over:
+        normalized = re.sub(r"_dr[\d.]+", "", normalized)
+    if "lreg" in max_over:
+        normalized = re.sub(r"_lreg[\d.eE+-]+", "", normalized)
     if "act" in max_over:
         normalized = re.sub(r"_act-[a-z]+", "", normalized)
     if "T" in max_over:
@@ -478,7 +700,10 @@ def config_from_stem(stem: str, method: str, profile: str) -> str | None:
 
 
 def load_env_results(
-    env_dir: Path, profile: str, seed_filter: set[int] | None = None
+    env_dir: Path,
+    profile: str,
+    seed_filter: set[int] | None = None,
+    require: dict[str, str] | None = None,
 ) -> dict[str, dict]:
     groups: dict[str, dict] = defaultdict(
         lambda: {
@@ -498,6 +723,8 @@ def load_env_results(
                 continue
 
         stem = canonical_stem(path)
+        if require and not stem_satisfies_require(stem, require):
+            continue
         method = method_name(stem, profile)
         if method is None:
             continue
@@ -635,8 +862,12 @@ def render_env_table(
     bold_pct: float,
     ignore_for_bolding: set[str] | None = None,
     stat_mode: str = "mean_std",
+    bold_vs: str | None = None,
 ) -> str:
-    winners = best_metric_indices(rows, metric_specs, bold_pct, ignore_for_bolding)
+    if bold_vs:
+        winners = beat_baseline_indices(rows, metric_specs, bold_vs, ignore_for_bolding)
+    else:
+        winners = best_metric_indices(rows, metric_specs, bold_pct, ignore_for_bolding)
     lines = [
         r"\begin{table}[t]",
         r"\centering",
@@ -676,8 +907,12 @@ def render_env_table_text(
     max_over: set[str],
     ignore_for_bolding: set[str] | None = None,
     stat_mode: str = "mean_std",
+    bold_vs: str | None = None,
 ) -> str:
-    winners = best_metric_indices(rows, metric_specs, bold_pct, ignore_for_bolding)
+    if bold_vs:
+        winners = beat_baseline_indices(rows, metric_specs, bold_vs, ignore_for_bolding)
+    else:
+        winners = best_metric_indices(rows, metric_specs, bold_pct, ignore_for_bolding)
     headers = ["Method"] + [header.replace(r" $\downarrow$", " down").replace(r" $\uparrow$", " up") for _, header in metric_specs]
     body = []
     for row_idx, (label, row_metrics) in enumerate(rows):
@@ -725,17 +960,30 @@ def build_tables(
     max_over: set[str],
     stat_mode: str = "mean_std",
     seed_filter: set[int] | None = None,
+    exclude: list[str] | None = None,
+    bold_vs: str | None = None,
+    require: dict[str, str] | None = None,
 ) -> str:
     env_dirs = sorted(p for p in results_dir.iterdir() if p.is_dir())
     if env_filter is not None:
         env_dirs = [p for p in env_dirs if p.name == env_filter]
 
+    exclude_lower = [e.lower() for e in (exclude or [])]
+
     tables = []
     for env_dir in env_dirs:
         profile = detect_profile(env_dir)
         profile_cfg = PROFILES[profile]
-        groups = load_env_results(env_dir, profile, seed_filter=seed_filter)
+        groups = load_env_results(
+            env_dir, profile, seed_filter=seed_filter, require=require
+        )
         rows = method_rows(groups, profile, max_over if profile == "gym" else set())
+        if exclude_lower:
+            rows = [
+                (label, metrics)
+                for label, metrics in rows
+                if not any(token in label.lower() for token in exclude_lower)
+            ]
         ignore_for_bolding = {"Deep Ensemble"} if ignore_deep_ensemble_for_bolding else set()
         if rows:
             if fmt == "tex":
@@ -749,6 +997,7 @@ def build_tables(
                         bold_pct,
                         ignore_for_bolding=ignore_for_bolding,
                         stat_mode=stat_mode,
+                        bold_vs=bold_vs,
                     )
                 )
             else:
@@ -762,6 +1011,7 @@ def build_tables(
                         max_over if profile == "gym" else set(),
                         ignore_for_bolding=ignore_for_bolding,
                         stat_mode=stat_mode,
+                        bold_vs=bold_vs,
                     )
                 )
 
@@ -818,6 +1068,37 @@ def main() -> None:
             "Useful to fairly compare methods with different total seed counts by filtering to a common subset."
         ),
     )
+    parser.add_argument(
+        "--exclude",
+        default="",
+        help=(
+            "Comma-separated substrings; any row whose label contains one (case-insensitive) is dropped. "
+            "Examples: --exclude Evidential; --exclude PJSVD,Hybrid."
+        ),
+    )
+    parser.add_argument(
+        "--bold-vs",
+        default=None,
+        help=(
+            "Substring matching a baseline row label (case-insensitive). Bold every row whose mean "
+            "ties or beats that baseline in each metric column, respecting metric direction. "
+            "Overrides --bold when set. Example: --bold-vs 'Deep Ensemble'."
+        ),
+    )
+    parser.add_argument(
+        "--require",
+        default="",
+        help=(
+            "Comma-separated key=value clauses; only stems satisfying every clause are loaded. "
+            "Binary markers (vcal, prob, full, prel2, esn) take yes/no. Choice dims (scope, family, "
+            "backend, mode) take a choice name or 'none'. Value dims (k, n, T, lam, act, dr, lreg) "
+            "take an exact value. Keys that belong to a specific method family (e.g. lreg → PJSVD, "
+            "lam → Evidential, dr → MC Dropout) are auto-scoped: a clause on them is silently "
+            "skipped for stems from unrelated families, so the filter doesn't drop unrelated rows. "
+            "Examples: --require vcal=no; --require family=low,mode=least_squares; "
+            "--require lreg=0.0001 (keeps non-PJSVD rows too)."
+        ),
+    )
     args = parser.parse_args()
 
     fmt = args.fmt
@@ -836,6 +1117,27 @@ def main() -> None:
     if args.seeds is not None:
         seed_filter = {int(s.strip()) for s in args.seeds.split(",") if s.strip()}
 
+    exclude = [item.strip() for item in args.exclude.split(",") if item.strip()]
+
+    require: dict[str, str] = {}
+    for item in args.require.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if "=" not in item:
+            parser.error(f"Invalid --require token '{item}'; expected key=value.")
+        key, _, value = item.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if key not in REQUIRE_KEYS:
+            parser.error(
+                f"Unknown --require key '{key}'. "
+                f"Valid keys: {', '.join(sorted(REQUIRE_KEYS))}."
+            )
+        if not value:
+            parser.error(f"Empty value for --require '{key}'; expected key=value.")
+        require[key] = value
+
     tex = build_tables(
         Path(args.results_dir),
         args.env,
@@ -846,6 +1148,9 @@ def main() -> None:
         max_over,
         stat_mode=args.stat_mode,
         seed_filter=seed_filter,
+        exclude=exclude,
+        bold_vs=args.bold_vs,
+        require=require,
     )
     if args.out:
         Path(args.out).write_text(tex)

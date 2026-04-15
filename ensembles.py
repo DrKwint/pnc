@@ -143,6 +143,23 @@ def evaluate_tail_from_preact(
 # so peak memory is O(1 member) rather than O(N members).
 # ==============================================================================
 
+def _ls_or_ridge_solve(h_aug: jax.Array, target: jax.Array, lambda_reg: float) -> jax.Array:
+    """Solve h_aug @ W_aug ≈ target.
+
+    λ=0: pseudoinverse via jnp.linalg.lstsq (handles rank-deficient h_aug with a
+    minimum-norm solution; exactly the legacy behavior).
+    λ>0: ridge via solve((h_augᵀ h_aug + λI), h_augᵀ target). Regularizes all
+    rows including the bias column, matching pnc._ridge_regression_solve.
+    """
+    if lambda_reg > 0.0:
+        D = h_aug.shape[1]
+        H = h_aug.T @ h_aug + lambda_reg * jnp.eye(D, dtype=h_aug.dtype)
+        rhs = h_aug.T @ target
+        return jnp.linalg.solve(H, rhs)
+    W_aug, _, _, _ = jnp.linalg.lstsq(h_aug, target, rcond=None)
+    return W_aug
+
+
 class PJSVDEnsemble:
     """
     Unified, memory-efficient PJSVD ensemble.
@@ -173,6 +190,12 @@ class PJSVDEnsemble:
         layer_params: dict = None,
         # Targets for correction (e.g. following layer weights/biases or original stats)
         correction_params: dict = None,
+        # Tikhonov regularization for the least-squares correction (MLP path only).
+        # 0.0 preserves legacy behavior (pseudoinverse via jnp.linalg.lstsq), which
+        # is well-defined for rank-deficient h_aug but amplifies corrections when
+        # the perturbed hidden activations lie in a near-singular subspace (the
+        # Low family's ill-conditioned-on-purpose case).
+        lambda_reg: float = 0.0,
         **kwargs
     ):
         self.base_model = base_model
@@ -203,6 +226,7 @@ class PJSVDEnsemble:
         self.layer_params = layer_params or {}
         # Targets for correction (e.g. following layer weights/biases or original stats)
         self.correction_params = correction_params or {}
+        self.lambda_reg = float(lambda_reg)
         # Per-layer independent specs for multi-layer PnC (like CIFAR MultiBlock).
         # Each entry: {"v_opts": array(K, D), "sigmas": array(K,), "W_shape": tuple}
         # When set, z_coeffs shape must be (n_members, n_layers, K).
@@ -324,7 +348,7 @@ class PJSVDEnsemble:
             # Solve least squares: [h_new, 1] @ W_aug ≈ Z
             ones = jnp.ones((N_samples, 1), dtype=h_new.dtype)
             h_new_aug = jnp.concatenate([h_new, ones], axis=-1)
-            W_aug, _, _, _ = jnp.linalg.lstsq(h_new_aug, Z, rcond=None)
+            W_aug = _ls_or_ridge_solve(h_new_aug, Z, self.lambda_reg)
 
             next_w_news.append(W_aug[:-1, :])
             next_b_news.append(W_aug[-1, :])
@@ -456,7 +480,7 @@ class PJSVDEnsemble:
                     # Solve LS: [h_pert, 1] @ W_aug ≈ target
                     ones = jnp.ones((h_pert.shape[0], 1), dtype=h_pert.dtype)
                     h_aug = jnp.concatenate([h_pert, ones], axis=-1)
-                    W_aug, _, _, _ = jnp.linalg.lstsq(h_aug, target, rcond=None)
+                    W_aug = _ls_or_ridge_solve(h_aug, target, self.lambda_reg)
                     W_corr = W_aug[:-1, :]
                     b_corr = W_aug[-1, :]
 

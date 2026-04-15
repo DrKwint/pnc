@@ -115,6 +115,20 @@ def evidential_loss(m: nnx.Module, x: jax.Array, y: jax.Array, lam: float = 0.01
     return jnp.mean(nll + lam * reg)
 
 
+def predictive_gaussian_nll(
+    m: nnx.Module, x: jax.Array, y: jax.Array
+) -> jax.Array:
+    """Gaussian NLL against the NIG posterior-predictive (γ, σ² = β(1+1/ν)/(α-1)).
+
+    Used as a validation / early-stopping signal to directly track predictive
+    calibration instead of the NIG-loss + reg, which keeps shrinking as evidence
+    accumulates even when the predictive variance has become miscalibratedly tight.
+    """
+    gamma, nu, alpha, beta = m(x)
+    var = beta * (1.0 + 1.0 / nu) / (alpha - 1.0)
+    return jnp.mean(0.5 * (jnp.log(var) + (y - gamma) ** 2 / var))
+
+
 def train_evidential_model(
     model: nnx.Module,
     train_inputs: jax.Array,
@@ -126,11 +140,21 @@ def train_evidential_model(
     batch_size: int = 64,
     patience: int = 10,
     eval_freq: int = 100,
+    val_on_predictive_nll: bool = False,
 ) -> nnx.Module:
-    """Train an EvidentialRegressionModel with the NIG loss + reg."""
+    """Train an EvidentialRegressionModel with the NIG loss + reg.
+
+    val_on_predictive_nll: when True, early stopping and best-model selection
+    use the predictive Gaussian NLL (against the NIG posterior-predictive)
+    instead of the training-style `NLL_NIG + λ·reg`. The training loss can
+    keep decreasing as evidence accumulates past the calibration sweet spot,
+    so swapping the validation signal keeps the variance honest on held-out data.
+    """
 
     def loss_fn(m, x, y):
         return evidential_loss(m, x, y, lam=lam)
+
+    val_loss_fn = predictive_gaussian_nll if val_on_predictive_nll else None
 
     return train_generic(
         model,
@@ -139,11 +163,12 @@ def train_evidential_model(
         val_inputs,
         val_targets,
         loss_fn=loss_fn,
+        val_loss_fn=val_loss_fn,
         steps=steps,
         batch_size=batch_size,
         patience=patience,
         eval_freq=eval_freq,
-        log_prefix=f"Training Evidential (lam={lam})",
+        log_prefix=f"Training Evidential (lam={lam}{', esn' if val_on_predictive_nll else ''})",
     )
 
 
