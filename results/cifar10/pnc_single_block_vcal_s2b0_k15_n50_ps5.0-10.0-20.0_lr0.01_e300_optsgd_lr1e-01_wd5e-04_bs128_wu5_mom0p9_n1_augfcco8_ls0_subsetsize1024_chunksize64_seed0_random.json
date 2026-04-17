@@ -1,0 +1,47 @@
+{
+  "5.0": {
+    "accuracy": 0.9580000042915344,
+    "brier": 0.06211987882852554,
+    "entropy": 0.12925447523593903,
+    "nll": 0.1364283710718155,
+    "ece": 0.009805985875427723,
+    "eval_time": 71.68509984016418,
+    "posthoc_temperature": 1.2857708707971816,
+    "train_time": 3.252427816390991,
+    "diag_test_raw_shift_mean": 1.6121644804684023,
+    "diag_test_raw_shift_std": 0.04773595853391645,
+    "diag_test_corr_shift_mean": 1.075517788476815,
+    "diag_test_corr_shift_std": 0.0041191209941636945,
+    "diag_test_reduction_pct": 33.287341241778
+  },
+  "10.0": {
+    "accuracy": 0.9577999711036682,
+    "brier": 0.06270475685596466,
+    "entropy": 0.12475445866584778,
+    "nll": 0.13542574644088745,
+    "ece": 0.00879020516127348,
+    "eval_time": 69.91095185279846,
+    "posthoc_temperature": 1.2451995181051154,
+    "train_time": 3.252427816390991,
+    "diag_test_raw_shift_mean": 3.997020317228394,
+    "diag_test_raw_shift_std": 0.16106409202048722,
+    "diag_test_corr_shift_mean": 1.8812591763233903,
+    "diag_test_corr_shift_std": 0.007089970192012611,
+    "diag_test_reduction_pct": 52.93345975215311
+  },
+  "20.0": {
+    "accuracy": 0.9555999636650085,
+    "brier": 0.06745977699756622,
+    "entropy": 0.13048945367336273,
+    "nll": 0.14185556769371033,
+    "ece": 0.008012464478611946,
+    "eval_time": 70.21802806854248,
+    "posthoc_temperature": 1.2075231615755588,
+    "train_time": 3.252427816390991,
+    "diag_test_raw_shift_mean": 11.375877891675295,
+    "diag_test_raw_shift_std": 0.48023015782462564,
+    "diag_test_corr_shift_mean": 2.7729710805902243,
+    "diag_test_corr_shift_std": 0.0116796879422697,
+    "diag_test_reduction_pct": 75.62411352341255
+  }
+}

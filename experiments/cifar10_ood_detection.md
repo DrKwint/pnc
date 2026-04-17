@@ -145,8 +145,11 @@ Confirmed via `python scripts/ood_comparison_table.py`.
    seed 0 (n=25) showed OOD performance is monotonically improving in [10, 25]
    with no measurable ID degradation. Higher scales (30+) might be even better.
    This is a recommended follow-up.
-8. **CIFAR-100 and WideResNet-28-10 results are not yet available.** They are
-   the next pieces of the strengthening plan — see
+8. **CIFAR-100 results are now available** in
+   `experiments/cifar100_ood_detection.md` (10 of 12 methods, 3 seeds each,
+   frozen CIFAR-10 hyperparameters). LLLA and multi-block PnC are
+   architecturally out of scope on CIFAR-100 for this GPU lane.
+9. **WideResNet-28-10 results are not yet available.** See P4 of
    `cifar_neurips_strengthening_plan.md`.
 
 ## Run commands
