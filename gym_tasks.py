@@ -688,6 +688,10 @@ class GymPJSVD(luigi.Task):
     # Tikhonov regularizer for the least-squares correction. 0.0 preserves the
     # legacy pseudoinverse (jnp.linalg.lstsq) path; > 0 switches to ridge.
     lambda_reg = luigi.FloatParameter(default=0.0)
+    # Per-member bootstrap of X_sub in the LS correction. 0.0 preserves legacy
+    # behaviour (all members share the same X_sub). 0.1 is the recommended
+    # value from experiments/pnc_variant_bakeoff_report.md.
+    bootstrap_frac = luigi.FloatParameter(default=0.0)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(env=self.env, steps=self.steps, seed=self.seed, policy_preset=self.policy_preset)
@@ -701,6 +705,7 @@ class GymPJSVD(luigi.Task):
         anti_str = "_anti" if self.antithetic_pairing else ""
         # Backwards compatible: default 0.0 emits no token so existing results stay discoverable.
         lreg_str = "" if self.lambda_reg == 0.0 else f"_lreg{self.lambda_reg:g}"
+        boot_str = "" if self.bootstrap_frac == 0.0 else f"_bf{self.bootstrap_frac:g}"
         if self.member_radius_distribution == "fixed":
             radius_str = ""
         else:
@@ -714,7 +719,7 @@ class GymPJSVD(luigi.Task):
             str(
                 Path("results")
                 / self.env
-                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}{anti_str}{lreg_str}{radius_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}{_hdims_str(self.hidden_dims)}_act-{self.activation}_seed{self.seed}.json"
+                / f"pjsvd_{self.layer_scope}_{self.correction_mode}_{self.pjsvd_family}_{self.safe_subspace_backend}{full_str}{l2_str}{calib_str}{prob_str}{anti_str}{lreg_str}{boot_str}{radius_str}_k{self.n_directions}_n{self.n_perturbations}_ps{ps}{_hdims_str(self.hidden_dims)}_act-{self.activation}_seed{self.seed}.json"
             )
         )
 
@@ -978,6 +983,8 @@ class GymPJSVD(luigi.Task):
                 tail_is_hidden=self.probabilistic_base_model and self.layer_scope == "multi",
                 layer_specs=layer_specs_list if self.layer_scope == "multi" else None,
                 lambda_reg=float(self.lambda_reg),
+                bootstrap_frac=float(self.bootstrap_frac),
+                bootstrap_seed=int(self.seed),
             )
             m = _evaluate_gym(
                 f"PJSVD-{self.layer_scope}-{self.correction_mode} (size={p_size})",
@@ -1121,6 +1128,7 @@ class GymHybridPnCDE(luigi.Task):
     )
     hidden_dims = luigi.ListParameter(default=[200, 200, 200, 200])
     posthoc_calibrate = luigi.BoolParameter(default=False)
+    bootstrap_frac = luigi.FloatParameter(default=0.0)
 
     def requires(self) -> luigi.Task:
         return CollectGymData(
@@ -1133,6 +1141,7 @@ class GymHybridPnCDE(luigi.Task):
     def output(self) -> luigi.LocalTarget:
         ps = _ps_str(self.perturbation_sizes)
         calib_str = _posthoc_suffix(self.posthoc_calibrate)
+        boot_str = "" if self.bootstrap_frac == 0.0 else f"_bf{self.bootstrap_frac:g}"
         return luigi.LocalTarget(
             str(
                 Path("results")
@@ -1141,7 +1150,7 @@ class GymHybridPnCDE(luigi.Task):
                     f"hybrid_pnc_de_multi_least_squares_{self.pjsvd_family}_"
                     f"{self.safe_subspace_backend}{calib_str}_prob_"
                     f"nDE{self.n_de}_nPnC{self.n_pjsvd_per_de}_k{self.n_directions}_"
-                    f"ps{ps}{_hdims_str(self.hidden_dims)}_act-{self.activation}_"
+                    f"ps{ps}{boot_str}{_hdims_str(self.hidden_dims)}_act-{self.activation}_"
                     f"seed{self.seed}.json"
                 )
             )
@@ -1277,6 +1286,8 @@ class GymHybridPnCDE(luigi.Task):
                 correction_params=correction_params,
                 tail_is_hidden=True,
                 layer_specs=layer_specs_list,
+                bootstrap_frac=float(self.bootstrap_frac),
+                bootstrap_seed=int(self.seed) + int(m_idx) * 1000,
             )
 
         per_member_ens = []

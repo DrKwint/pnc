@@ -196,6 +196,15 @@ class PJSVDEnsemble:
         # the perturbed hidden activations lie in a near-singular subspace (the
         # Low family's ill-conditioned-on-purpose case).
         lambda_reg: float = 0.0,
+        # Per-member bootstrap fraction for the LS correction target. When
+        # set to a value in (0, 1), each ensemble member solves its LS system
+        # on a bootstrap resample of X_sub of size ``bootstrap_frac * len(X_sub)``,
+        # drawn with replacement. This decorrelates correction failure modes
+        # across members and was shown in ``experiments/pnc_variant_bakeoff_report.md``
+        # to reduce OOD NLL ~50% and boost OOD AUROC ~0.02-0.11 on Gym envs.
+        # Default 0.0 preserves legacy single-X_sub behaviour; recommended 0.1.
+        bootstrap_frac: float = 0.0,
+        bootstrap_seed: int = 0,
         **kwargs
     ):
         self.base_model = base_model
@@ -227,6 +236,8 @@ class PJSVDEnsemble:
         # Targets for correction (e.g. following layer weights/biases or original stats)
         self.correction_params = correction_params or {}
         self.lambda_reg = float(lambda_reg)
+        self.bootstrap_frac = float(bootstrap_frac)
+        self.bootstrap_seed = int(bootstrap_seed)
         # Per-layer independent specs for multi-layer PnC (like CIFAR MultiBlock).
         # Each entry: {"v_opts": array(K, D), "sigmas": array(K,), "W_shape": tuple}
         # When set, z_coeffs shape must be (n_members, n_layers, K).
@@ -337,18 +348,33 @@ class PJSVDEnsemble:
         Z = self.correction_params.get("target_act")
         N_samples = Z.shape[0]
 
+        # Per-member bootstrap of LS correction inputs (see
+        # ``_precompute_sequential_ls`` for rationale).
+        bootstrap_active = 0.0 < self.bootstrap_frac < 1.0
+        if bootstrap_active:
+            rng_boot = np.random.RandomState(self.bootstrap_seed)
+            size_b = max(8, int(self.bootstrap_frac * N_samples))
+            per_member_idx = [rng_boot.choice(N_samples, size=size_b, replace=True)
+                              for _ in range(len(self.z_coeffs))]
+        else:
+            per_member_idx = [None] * len(self.z_coeffs)
+
         next_w_news = []
         next_b_news = []
 
         for i in range(len(self.z_coeffs)):
             p = dp_all[i]
-            perturbed_vals = self._apply_perturbations(self.X_sub, p)
+            idx_i = per_member_idx[i]
+            X_input = self.X_sub if idx_i is None else self.X_sub[idx_i]
+            Z_target = Z if idx_i is None else Z[idx_i]
+
+            perturbed_vals = self._apply_perturbations(X_input, p)
             h_new = perturbed_vals[-1]
 
-            # Solve least squares: [h_new, 1] @ W_aug ≈ Z
-            ones = jnp.ones((N_samples, 1), dtype=h_new.dtype)
+            # Solve least squares: [h_new, 1] @ W_aug ≈ Z_target
+            ones = jnp.ones((h_new.shape[0], 1), dtype=h_new.dtype)
             h_new_aug = jnp.concatenate([h_new, ones], axis=-1)
-            W_aug = _ls_or_ridge_solve(h_new_aug, Z, self.lambda_reg)
+            W_aug = _ls_or_ridge_solve(h_new_aug, Z_target, self.lambda_reg)
 
             next_w_news.append(W_aug[:-1, :])
             next_b_news.append(W_aug[-1, :])
@@ -445,9 +471,26 @@ class PJSVDEnsemble:
         per_block_w = [[] for _ in range(n_layers)]
         per_block_b = [[] for _ in range(n_layers)]
 
+        # Per-member bootstrap of the LS-correction inputs. When
+        # ``bootstrap_frac`` is in (0, 1), each member fits its LS system on a
+        # bootstrap resample of X_sub (drawn with replacement, same indices
+        # reused across all layer blocks within that member). This
+        # decorrelates the correction failure modes across members.
+        # See ``experiments/pnc_variant_bakeoff_report.md``.
+        n_X = len(self.X_sub)
+        bootstrap_active = 0.0 < self.bootstrap_frac < 1.0
+        if bootstrap_active:
+            rng_boot = np.random.RandomState(self.bootstrap_seed)
+            size_b = max(8, int(self.bootstrap_frac * n_X))
+            per_member_idx = [rng_boot.choice(n_X, size=size_b, replace=True)
+                              for _ in range(n_members)]
+        else:
+            per_member_idx = [None] * n_members
+
         for i in range(n_members):
             dWs = all_dWs[i]
-            h = self.X_sub
+            idx_i = per_member_idx[i]
+            h = self.X_sub if idx_i is None else self.X_sub[idx_i]
 
             for j in range(n_layers):
                 l_name = self.layers[j]
@@ -459,13 +502,17 @@ class PJSVDEnsemble:
                 # Perturb this layer
                 h_pert = self.activation(h @ (W_pert + dWs[j]) + b_pert)
 
-                # Correction target: original pre-activation at the correction layer
+                # Correction target: original pre-activation at the correction layer,
+                # restricted to the member's bootstrap subset when applicable.
                 if corr_idx < len(base_model.layers):
                     W_corr_orig = base_model.layers[corr_idx].kernel.get_value()
                     b_corr_orig = base_model.layers[corr_idx].bias.get_value()
-                    target = all_orig_h[corr_idx] @ W_corr_orig + b_corr_orig
+                    ref_h = all_orig_h[corr_idx] if idx_i is None else all_orig_h[corr_idx][idx_i]
+                    target = ref_h @ W_corr_orig + b_corr_orig
                 else:
-                    target = final_target
+                    target = final_target if idx_i is None else (
+                        final_target[idx_i] if final_target is not None else None
+                    )
 
                 if self.correction_mode == "none":
                     # No correction: use the ORIGINAL next-layer weights so
@@ -945,6 +992,7 @@ class SWAGEnsemble:
         use_bn_refresh: bool = True,
         seed: int = 0,
         cache_samples: bool = False,
+        scale: float = 1.0,
     ):
         self.base_model = nnx.clone(model)
         self.swag_mean = swag_mean
@@ -956,6 +1004,10 @@ class SWAGEnsemble:
         self.use_bn_refresh = bool(use_bn_refresh and self.bn_refresh_inputs is not None)
         self.rng = np.random.RandomState(seed)
         self.cache_samples = bool(cache_samples)
+        # Scalar multiplier applied to the Gaussian noise during sampling —
+        # lets callers sweep perturbation strength without retraining the
+        # SWAG posterior. Default 1.0 preserves the standard SWAG sampler.
+        self.scale = float(scale)
         self._cached_models: Optional[list] = None
         self.swag_mean_flat, self.unflatten_fn = jax.flatten_util.ravel_pytree(swag_mean)
         self.swag_var_flat, _ = jax.flatten_util.ravel_pytree(swag_var)
@@ -971,7 +1023,9 @@ class SWAGEnsemble:
     def _sample_params(self) -> nnx.State:
         flat_dtype = np.asarray(self.swag_mean_flat).dtype
         diag_noise = self.rng.normal(size=self.swag_mean_flat.shape).astype(flat_dtype)
-        sampled_flat = self.swag_mean_flat + jnp.sqrt(0.5 * self.swag_var_flat) * jnp.asarray(diag_noise)
+        sampled_flat = self.swag_mean_flat + (
+            self.scale * jnp.sqrt(0.5 * self.swag_var_flat) * jnp.asarray(diag_noise)
+        )
 
         low_rank_rank = self.swag_cov_mat_sqrt.shape[1]
         if low_rank_rank >= 2:
@@ -979,7 +1033,7 @@ class SWAGEnsemble:
             # Standard SWAG samples from a covariance made of a diagonal term plus a
             # low-rank empirical covariance D D^T / (K - 1), with each term scaled by 1/2.
             sampled_flat = sampled_flat + (
-                jnp.sqrt(0.5 / float(low_rank_rank - 1))
+                self.scale * jnp.sqrt(0.5 / float(low_rank_rank - 1))
                 * (self.swag_cov_mat_sqrt @ jnp.asarray(low_rank_noise))
             )
 
@@ -1722,6 +1776,12 @@ class MultiBlockPnCEnsemble:
         raw_calib_arr: Optional[np.ndarray] = None,
         corr_calib_arr: Optional[np.ndarray] = None,
         progress_desc: str = "Multi-block PnC: ridge solves",
+        # Per-member bootstrap of the ridge regression inputs. When in (0, 1),
+        # each member resamples its (X, T) chunks with replacement before the
+        # LS solve, decorrelating the correction failure modes across members.
+        # See ``experiments/pnc_variant_bakeoff_report.md``.
+        bootstrap_frac: float = 0.0,
+        bootstrap_seed: int = 0,
     ):
         self.base_model = base_model
         self.block_specs = block_specs
@@ -1733,6 +1793,8 @@ class MultiBlockPnCEnsemble:
         self.member_radius_std = float(member_radius_std)
         self.member_radius_values = _parse_member_radius_values(member_radius_values)
         self.member_radius_seed = int(member_radius_seed)
+        self.bootstrap_frac = float(bootstrap_frac)
+        self.bootstrap_seed = int(bootstrap_seed)
         self.member_radius_multipliers = _sample_member_radius_multipliers(
             len(self.z_coeffs),
             distribution=self.member_radius_distribution,
@@ -1767,6 +1829,30 @@ class MultiBlockPnCEnsemble:
                 def close(self):
                     return None
 
+        # Pre-compute per-member bootstrap subsets if requested. We resample
+        # at the point-level (not chunk-level) and then re-chunk to preserve
+        # memory-efficient solve. Same member index is reused across blocks
+        # to keep members comparable.
+        bootstrap_active = 0.0 < self.bootstrap_frac < 1.0
+        if bootstrap_active:
+            rng_boot = np.random.RandomState(self.bootstrap_seed)
+            # Concatenate all points per-block once so we can re-chunk cheaply.
+            per_block_flat = []
+            for b, spec in enumerate(block_specs):
+                chunks = spec["chunks"]
+                Ts = spec["T_orig_chunks"]
+                X_flat = jnp.concatenate(list(chunks), axis=0)
+                T_flat = jnp.concatenate(list(Ts), axis=0)
+                per_block_flat.append((X_flat, T_flat,
+                                        int(chunks[0].shape[0])))
+            n_total = int(per_block_flat[0][0].shape[0])
+            size_b = max(8, int(self.bootstrap_frac * n_total))
+            per_member_idx = [rng_boot.choice(n_total, size=size_b, replace=True)
+                              for _ in range(n_mem)]
+        else:
+            per_block_flat = None
+            per_member_idx = None
+
         pbar = tqdm(total=n_mem * n_blk, desc=progress_desc, unit="solve")
         for i in range(n_mem):
             row = []
@@ -1778,12 +1864,28 @@ class MultiBlockPnCEnsemble:
                 coeffs = self._coeffs_from_z(z_row, sigmas, member_index=i)
                 dp = coeffs @ v_opts
                 w1_pert = w1_orig + dp.reshape(w1_orig.shape)
+
+                if bootstrap_active:
+                    X_flat, T_flat, chunk_size = per_block_flat[b]
+                    idx_i = per_member_idx[i]
+                    X_boot = X_flat[idx_i]
+                    T_boot = T_flat[idx_i]
+                    # Re-chunk into ~chunk_size-sized pieces.
+                    nb = max(1, int(np.ceil(X_boot.shape[0] / chunk_size)))
+                    chunks_i = [X_boot[k * chunk_size:(k + 1) * chunk_size]
+                                for k in range(nb)]
+                    T_chunks_i = [T_boot[k * chunk_size:(k + 1) * chunk_size]
+                                  for k in range(nb)]
+                else:
+                    chunks_i = spec["chunks"]
+                    T_chunks_i = spec["T_orig_chunks"]
+
                 w2_pert, b2_pert = solve_chunked_conv2_correction(
                     spec["get_Y_fn"],
                     w1_pert,
                     spec["w2_orig"],
-                    spec["chunks"],
-                    spec["T_orig_chunks"],
+                    chunks_i,
+                    T_chunks_i,
                     lambda_reg=self.lambda_reg,
                 )
                 row.append(MultiBlockMemberWeights(w1=w1_pert, w2=w2_pert, b2=b2_pert))

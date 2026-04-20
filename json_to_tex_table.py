@@ -91,6 +91,7 @@ GYM_MAX_OVER_CHOICES = {
     "dr",
     "lreg",
     "esn",
+    "bf",
 }
 
 
@@ -114,6 +115,7 @@ REQUIRE_KEYS = {
     "act",
     "dr",
     "lreg",
+    "bf",  # bootstrap_frac; 'none' matches stems without a _bf token
 }
 
 
@@ -147,6 +149,7 @@ _REQUIRE_KEY_SCOPE: dict[str, tuple[str, ...]] = {
     "dr": ("mc_dropout",),
     "ens": ("hybrid_pnc_de",),
     "prel2": ("laplace", "swag", "subspace"),
+    "bf": ("pjsvd", "hybrid_pnc_de"),
 }
 
 
@@ -214,6 +217,10 @@ def _stem_satisfies_clause(stem: str, key: str, value: str) -> bool:
         return bool(re.search(rf"_dr{re.escape(value)}(?![\d.])", stem))
     if key == "lreg":
         return bool(re.search(rf"_lreg{re.escape(value)}(?![\d.eE+-])", stem))
+    if key == "bf":
+        if value == "none":
+            return "_bf" not in stem
+        return bool(re.search(rf"_bf{re.escape(value)}(?![\d.eE+-])", stem))
     return False
 
 
@@ -270,14 +277,14 @@ def fmt_cell(values: list[float], include_std: bool, mode: str = "mean_std") -> 
         if math.isnan(m):
             return "--"
         if sp is None or not include_std:
-            return f"{m:.4f}"
-        return rf"{m:.4f} (IQR {sp:.4f})"
+            return f"{m:.3f}"
+        return rf"{m:.3f} (IQR {sp:.3f})"
     mu, sd = mean_std(values)
     if math.isnan(mu):
         return "--"
     if sd is None or not include_std:
-        return f"{mu:.4f}"
-    return rf"{mu:.4f} $\pm$ {sd:.4f}"
+        return f"{mu:.3f}"
+    return rf"{mu:.3f} $\pm$ {sd:.3f}"
 
 
 def fmt_cell_text(values: list[float], include_std: bool, mode: str = "mean_std") -> str:
@@ -286,14 +293,14 @@ def fmt_cell_text(values: list[float], include_std: bool, mode: str = "mean_std"
         if math.isnan(m):
             return "--"
         if sp is None or not include_std:
-            return f"{m:.4f}"
-        return f"{m:.4f} (IQR {sp:.4f})"
+            return f"{m:.3f}"
+        return f"{m:.3f} (IQR {sp:.3f})"
     mu, sd = mean_std(values)
     if math.isnan(mu):
         return "--"
     if sd is None or not include_std:
-        return f"{mu:.4f}"
-    return f"{mu:.4f} +/- {sd:.4f}"
+        return f"{mu:.3f}"
+    return f"{mu:.3f} +/- {sd:.3f}"
 
 
 def is_higher_better(metric: str) -> bool:
@@ -393,6 +400,59 @@ def best_metric_indices(
     return winners
 
 
+def disqualify_outlier_rows(
+    rows: list[tuple[str, dict[str, list[float]]]],
+    metrics,
+    ratio: float,
+) -> tuple[list[tuple[str, dict[str, list[float]]]], list[tuple[str, str, float, float]]]:
+    """Drop rows whose mean on any lower-is-better metric exceeds ``ratio`` ×
+    the median of that column across all rows.
+
+    Higher-is-better metrics (AUROC/AUPR) are bounded in [0, 1] so the
+    multiplicative "10×" check is not meaningful and is skipped. Columns
+    whose median is ≤ 0 are also skipped (happens for NLL where most rows
+    have negative values — "10× a negative" is not well-defined).
+
+    Returns the surviving rows and a list of (label, metric, value, median)
+    tuples describing each disqualification, useful for a caption footnote.
+    """
+    if ratio <= 0:
+        return rows, []
+    if len(rows) < 3:
+        return rows, []
+    drop: set[int] = set()
+    dropped_info: list[tuple[str, str, float, float]] = []
+    for metric_key, _ in metrics:
+        if is_higher_better(metric_key):
+            continue
+        values = []
+        for _, row_metrics in rows:
+            mu, _ = mean_std(row_metrics.get(metric_key, []))
+            if not math.isnan(mu):
+                values.append(mu)
+        if len(values) < 3:
+            continue
+        sorted_vals = sorted(values)
+        mid = len(sorted_vals) // 2
+        median = (
+            sorted_vals[mid]
+            if len(sorted_vals) % 2 == 1
+            else 0.5 * (sorted_vals[mid - 1] + sorted_vals[mid])
+        )
+        if median <= 0:
+            continue
+        threshold = ratio * median
+        for idx, (label, row_metrics) in enumerate(rows):
+            if idx in drop:
+                continue
+            mu, _ = mean_std(row_metrics.get(metric_key, []))
+            if not math.isnan(mu) and mu > threshold:
+                drop.add(idx)
+                dropped_info.append((label, metric_key, float(mu), float(median)))
+    survivors = [row for idx, row in enumerate(rows) if idx not in drop]
+    return survivors, dropped_info
+
+
 def maybe_bold_tex(text: str, bold: bool) -> str:
     return rf"\textbf{{{text}}}" if bold and text != "--" else text
 
@@ -421,6 +481,11 @@ def extract_stem_value(stem: str, key: str) -> str:
 
 
 def gym_friendly_name(stem: str) -> str | None:
+    # Skip internal ablation/scale-sweep artefacts: these files hold nested
+    # dicts keyed by non-standard sweep values (e.g. SWAG scale multipliers)
+    # and do not belong in the main paper table.
+    if "scale_sweep" in stem:
+        return None
     act = extract_stem_value(stem, "act")
     act_suffix = f" [{act}]" if act != "?" else ""
     calib_suffix = " + VCal" if "_vcal" in stem else ""
@@ -460,8 +525,10 @@ def gym_friendly_name(stem: str) -> str | None:
             backend = "-Cov"
         elif "_projected_residual" in stem:
             backend = "-Proj"
+        bf_match = re.search(r"_bf([\d.eE+-]+)", stem)
+        bf_suffix = f" + Boot(f={bf_match.group(1)})" if bf_match else ""
         return (
-            f"Hybrid PnC+DE{calib_suffix}{prob_suffix}"
+            f"Hybrid PnC+DE{calib_suffix}{prob_suffix}{bf_suffix}"
             f" (Random{backend}) (M={nde}, K={npnc}){act_suffix}"
         )
     if stem.startswith("pjsvd"):
@@ -492,13 +559,15 @@ def gym_friendly_name(stem: str) -> str | None:
         family_str = f" ({family}{backend})" if (family or backend) else ""
         lreg_match = re.search(r"_lreg([\d.eE+-]+)", stem)
         lreg_str = f", λ={lreg_match.group(1)}" if lreg_match else ""
+        bf_match = re.search(r"_bf([\d.eE+-]+)", stem)
+        bf_suffix = f" + Boot(f={bf_match.group(1)})" if bf_match else ""
         if not scope and not mode:
             return (
-                f"PJSVD{calib_suffix}{prob_suffix}{family_str} "
+                f"PJSVD{calib_suffix}{prob_suffix}{bf_suffix}{family_str} "
                 f"(k={k}, n={n}{lreg_str}){act_suffix}"
             )
         return (
-            f"PJSVD-{scope}-{mode}{full}{calib_suffix}{prob_suffix}"
+            f"PJSVD-{scope}-{mode}{full}{calib_suffix}{prob_suffix}{bf_suffix}"
             f"{family_str} (k={k}, n={n}{lreg_str}){act_suffix}"
         )
     if stem.startswith("subspace_inference"):
@@ -573,6 +642,8 @@ def normalize_gym_stem(stem: str, max_over: set[str]) -> str:
         normalized = re.sub(r"_dr[\d.]+", "", normalized)
     if "lreg" in max_over:
         normalized = re.sub(r"_lreg[\d.eE+-]+", "", normalized)
+    if "bf" in max_over:
+        normalized = re.sub(r"_bf[\d.eE+-]+", "", normalized)
     if "act" in max_over:
         normalized = re.sub(r"_act-[a-z]+", "", normalized)
     if "T" in max_over:
@@ -863,6 +934,7 @@ def render_env_table(
     ignore_for_bolding: set[str] | None = None,
     stat_mode: str = "mean_std",
     bold_vs: str | None = None,
+    dropped_info: list[tuple[str, str, float, float]] | None = None,
 ) -> str:
     if bold_vs:
         winners = beat_baseline_indices(rows, metric_specs, bold_vs, ignore_for_bolding)
@@ -892,9 +964,15 @@ def render_env_table(
         [
             r"\bottomrule",
             r"\end{tabular}",
-            r"\end{table}",
         ]
     )
+    if dropped_info:
+        note = "Disqualified (mean > threshold $\\times$ col median): " + "; ".join(
+            f"{lbl} [{m}={v:.3f} vs med {med:.3f}]"
+            for lbl, m, v, med in dropped_info
+        )
+        lines.append(r"\footnote{" + note + "}")
+    lines.append(r"\end{table}")
     return "\n".join(lines)
 
 
@@ -908,6 +986,7 @@ def render_env_table_text(
     ignore_for_bolding: set[str] | None = None,
     stat_mode: str = "mean_std",
     bold_vs: str | None = None,
+    dropped_info: list[tuple[str, str, float, float]] | None = None,
 ) -> str:
     if bold_vs:
         winners = beat_baseline_indices(rows, metric_specs, bold_vs, ignore_for_bolding)
@@ -947,6 +1026,10 @@ def render_env_table_text(
     for row in body:
         lines.append(fmt_row(row))
     lines.append(sep)
+    if dropped_info:
+        lines.append("disqualified rows (mean > threshold × col median):")
+        for label, metric, mu, median in dropped_info:
+            lines.append(f"  - {label} | {metric}={mu:.3f} vs median={median:.3f}")
     return "\n".join(lines)
 
 
@@ -963,6 +1046,7 @@ def build_tables(
     exclude: list[str] | None = None,
     bold_vs: str | None = None,
     require: dict[str, str] | None = None,
+    disqualify_ratio: float = 0.0,
 ) -> str:
     env_dirs = sorted(p for p in results_dir.iterdir() if p.is_dir())
     if env_filter is not None:
@@ -984,6 +1068,11 @@ def build_tables(
                 for label, metrics in rows
                 if not any(token in label.lower() for token in exclude_lower)
             ]
+        dropped_info: list[tuple[str, str, float, float]] = []
+        if disqualify_ratio > 0:
+            rows, dropped_info = disqualify_outlier_rows(
+                rows, profile_cfg["metrics"], disqualify_ratio
+            )
         ignore_for_bolding = {"Deep Ensemble"} if ignore_deep_ensemble_for_bolding else set()
         if rows:
             if fmt == "tex":
@@ -998,6 +1087,7 @@ def build_tables(
                         ignore_for_bolding=ignore_for_bolding,
                         stat_mode=stat_mode,
                         bold_vs=bold_vs,
+                        dropped_info=dropped_info,
                     )
                 )
             else:
@@ -1012,6 +1102,7 @@ def build_tables(
                         ignore_for_bolding=ignore_for_bolding,
                         stat_mode=stat_mode,
                         bold_vs=bold_vs,
+                        dropped_info=dropped_info,
                     )
                 )
 
@@ -1099,6 +1190,18 @@ def main() -> None:
             "--require lreg=0.0001 (keeps non-PJSVD rows too)."
         ),
     )
+    parser.add_argument(
+        "--disqualify-ratio",
+        type=float,
+        default=0.0,
+        metavar="K",
+        help=(
+            "Per-env, disqualify any row whose mean on any lower-is-better metric is greater "
+            "than K × the column median. Higher-is-better metrics (AUROC/AUPR) and columns "
+            "with non-positive medians are skipped. A footnote lists which rows were dropped "
+            "and why. Default 0 disables; 10 matches the paper-table convention."
+        ),
+    )
     args = parser.parse_args()
 
     fmt = args.fmt
@@ -1151,6 +1254,7 @@ def main() -> None:
         exclude=exclude,
         bold_vs=args.bold_vs,
         require=require,
+        disqualify_ratio=args.disqualify_ratio,
     )
     if args.out:
         Path(args.out).write_text(tex)

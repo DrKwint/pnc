@@ -46,6 +46,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -251,7 +252,15 @@ def candidate_files(
     require_vcal: bool,
     forbid_vcal: bool,
 ) -> list[Path]:
-    files = sorted(env_dir.glob(f"*seed{seed}*.json"))
+    # Glob with `*seed{seed}*.json` erroneously matches `seed100` when we ask
+    # for `seed10` (prefix collision). Post-filter with a word-boundary regex
+    # requiring ``_seed{seed}`` followed by a non-digit, so seed tokens are
+    # matched exactly.
+    seed_re = re.compile(rf"_seed{seed}(?![0-9])")
+    files = sorted(
+        p for p in env_dir.glob(f"*seed{seed}*.json")
+        if seed_re.search(p.stem)
+    )
     selected = []
 
     for path in files:
@@ -276,7 +285,14 @@ def select_best_record(
     files: list[Path],
     selection_metric: str,
     selection_fallback: str,
+    restrict_cfg: str | None = None,
 ) -> tuple[Path, str, dict[str, Any]] | None:
+    """Pick the (file, cfg) pair that minimises ``selection_metric``.
+
+    ``restrict_cfg`` pins the config key (e.g. ``"50.0"`` for PnC ps). Useful
+    when the caller wants a fixed slice across seeds rather than the per-seed
+    best.
+    """
     best: tuple[float, Path, str, dict[str, Any]] | None = None
 
     for path in files:
@@ -287,6 +303,8 @@ def select_best_record(
 
         for cfg_name, metrics in iter_metric_dicts(data):
             if not isinstance(metrics, dict):
+                continue
+            if restrict_cfg is not None and cfg_name != restrict_cfg:
                 continue
 
             key = metrics.get(selection_metric)
@@ -317,6 +335,7 @@ def collect_method_points(
     forbid_vcal: bool,
     verbose: bool,
     l2_metric: str = "uncorrected_l2_id_h",
+    restrict_cfg: str | None = None,
 ) -> dict[str, Any] | None:
     xs: list[float] = []
     ys: list[float] = []
@@ -336,7 +355,10 @@ def collect_method_points(
         if not files:
             continue
 
-        best = select_best_record(files, selection_metric, selection_fallback)
+        best = select_best_record(
+            files, selection_metric, selection_fallback,
+            restrict_cfg=restrict_cfg,
+        )
         if best is None:
             continue
 

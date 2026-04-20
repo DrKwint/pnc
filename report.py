@@ -141,6 +141,8 @@ def _extract(stem: str, key: str) -> str:
 
 def _friendly_name(canonical: str) -> str | None:
     """Human-readable method name from a canonical filename stem."""
+    if "scale_sweep" in canonical:
+        return None  # Skip internal scale-sweep ablation artefacts.
     act = _extract(canonical, "act")
     act_suffix = f" [{act}]" if act != "?" else ""
     calib_suffix = " + VCal" if "_vcal" in canonical else ""
@@ -185,11 +187,13 @@ def _friendly_name(canonical: str) -> str | None:
             family = "Random"
         elif "_all" in canonical:
             family = "All"
-        
+        bf_match = re.search(r"_bf([\d.eE+-]+)", canonical)
+        bf_suffix = f" + Boot(f={bf_match.group(1)})" if bf_match else ""
+
         family_str = f" ({family}{backend})" if (family or backend) else ""
         if not scope and not mode:
-            return f"PJSVD{calib_suffix}{prob_suffix}{family_str} (k={k}, n={n}){act_suffix}"
-        return f"PJSVD-{scope}-{mode}{full}{calib_suffix}{prob_suffix}{family_str} (k={k}, n={n}){act_suffix}"
+            return f"PJSVD{calib_suffix}{prob_suffix}{bf_suffix}{family_str} (k={k}, n={n}){act_suffix}"
+        return f"PJSVD-{scope}-{mode}{full}{calib_suffix}{prob_suffix}{bf_suffix}{family_str} (k={k}, n={n}){act_suffix}"
     if canonical.startswith("ml_pjsvd"):
         return f"ML-PJSVD{calib_suffix}{backend} (k={_extract(canonical, 'k')}, n={_extract(canonical, 'n')}){act_suffix}"
     if canonical.startswith("ensemble_pjsvd"):

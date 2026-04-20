@@ -1382,6 +1382,9 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
     block_selection = luigi.ListParameter(default=[])
     seed = luigi.IntParameter(default=0)
     posthoc_calibrate = luigi.BoolParameter(default=False)
+    # Per-member bootstrap of LS correction inputs (Gym equivalent: bootstrap_ls).
+    # Default 0.0 preserves legacy behaviour; recommended 0.1.
+    bootstrap_frac = luigi.FloatParameter(default=0.0)
 
     def _selected_block_indices(self) -> list[tuple[int, int]]:
         all_indices = preact_resnet18_block_indices()
@@ -1403,13 +1406,14 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
         blk_str = ""
         if self.block_selection:
             blk_str = "_blks" + "-".join(str(int(x)) for x in self.block_selection)
+        boot_str = "" if self.bootstrap_frac == 0.0 else f"_bf{self.bootstrap_frac:g}"
         return luigi.LocalTarget(
             str(
                 Path("results")
                 / self.dataset
                 / (
                     f"pnc_multi_block{calib_str}_k{self.n_directions}_n{self.n_perturbations}"
-                    f"_ps{ps}_lr{self.lambda_reg}_e{self.epochs}{recipe}"
+                    f"_ps{ps}_lr{self.lambda_reg}{boot_str}_e{self.epochs}{recipe}"
                     f"_subsetsize{self.subset_size}_chunksize{self.chunk_size}_seed{self.seed}{suffix}{blk_str}.json"
                 )
             )
@@ -1561,6 +1565,8 @@ class CIFARMultiBlockPnC(CIFARRecipeMixin, luigi.Task):
                 perturbation_scale=float(p_size),
                 lambda_reg=self.lambda_reg,
                 sigma_sq_weights=self.sigma_sq_weights,
+                bootstrap_frac=float(self.bootstrap_frac),
+                bootstrap_seed=int(self.seed),
             )
             print(f"  Precompute time: {time.time() - t1:.2f}s")
 
