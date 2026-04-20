@@ -26,9 +26,9 @@ The OOD margins between top methods are tight (PnC scale=20.0 vs SWAG: 0.9 AUROC
 ### P0 — Multi-seed OOD on CIFAR-10 (the headline issue) — **✅ DONE**
 ### P1 — Resolve PnC configuration ambiguities — **✅ DONE** (multi-block scale=7, single-block headline scale=50, also kept scale=25 as ID-conservative entry)
 ### P2 — Inference cost benchmarking — **✅ DONE** (per-method subprocess workaround)
-### P3 — CIFAR-100 OOD benchmark — **🟡 IN PROGRESS** (base seeds 0,1 done; seed 2 in flight; auto-pipeline queued for SWAG/Epinet/MCDropout/OOD eval)
-### P4 — WideResNet-28-10 — **⏳ NOT STARTED**
-### P5 — Narrative + paper-table reframing — **⏳ NOT STARTED** (paper-ready CIFAR-10 table at `experiments/cifar10_ood_paper_table.md`)
+### P3 — CIFAR-100 OOD benchmark — **✅ DONE (with documented out-of-scope)** — 10 of 12 methods × 3 seeds (30 JSONs); LLLA and multi-block PnC documented as out-of-scope due to VRAM limits at K=100; report at `experiments/cifar100_ood_detection.md`
+### P4 — WideResNet-28-10 — **⏳ NOT STARTED** (optional strengthening)
+### P5 — Narrative + paper-table reframing — **✅ DONE** — `experiments/cifar_paper_tables.md` and `experiments/cifar_paper_narrative.md`
 
 **Headline result achieved (multi-seed CIFAR-10):**
 
