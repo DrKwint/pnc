@@ -1,0 +1,23 @@
+\begin{table}[t]
+  \centering
+  \scriptsize
+  \caption{Selected hyperparameter configuration per (env, method), chosen by lowest mean validation NLL across the seeds used in the main-paper tables. \texttt{n}: ensemble members; \texttt{dr}: dropout rate; \texttt{sws}: SWAG schedule weight scale; \texttt{prior}: Laplace prior precision; \texttt{T}: subspace temperature; \texttt{lreg}, \texttt{bf}, \texttt{ps}: P\&C Tikhonov regulariser, per-member bootstrap fraction, and perturbation size.}
+  \label{tab:appendix-selected-hparams}
+  \begin{tabular}{lllllll}
+    \toprule
+    Env & DE & MCD & SWAG & Lap. & Sub. & P\&C \\
+    \midrule
+    Ant-v5 & n=5 & dr=0.05 & sws=1.0 & prior=10000.0 & T=1.0 & lreg=0.0001, bf=0.1, ps=8.0 \\
+    HalfCheetah-v5 & n=5 & dr=0.05 & sws=0.3 & prior=10000.0 & T=1.0 & lreg=0.0001, bf=0.3, ps=32.0 \\
+    Hopper-v5 & n=5 & dr=0.05 & sws=0.1 & prior=10000.0 & T=1.0 & lreg=0.0001, bf=0.3, ps=32.0 \\
+    Walker2d-v5 & n=5 & dr=0.05 & sws=0.1 & prior=10000.0 & T=1.0 & lreg=0.01, bf=0.3, ps=16.0 \\
+    Swimmer-v5 & n=5 & dr=0.05 & sws=0.1 & prior=10000.0 & T=1.0 & lreg=0.0001, bf=0.05, ps=8.0 \\
+    Humanoid-v5 & n=5 & default & sws=3.0 & prior=10000.0 & T=10.0 & lreg=0.01, bf=0.3, ps=32.0 \\
+    HumanoidStandup-v5 & n=5 & default & sws=3.0 & prior=1000.0 & T=10.0 & lreg=0.0001, bf=0.3, ps=32.0 \\
+    Reacher-v5 & n=5 & dr=0.05 & sws=0.1 & prior=10000.0 & T=1.0 & lreg=0.0001, bf=0.05, ps=8.0 \\
+    Pusher-v5 & n=5 & dr=0.05 & sws=1.0 & prior=10000.0 & T=10.0 & lreg=0.0001, bf=0.1, ps=8.0 \\
+    InvertedPendulum-v5 & n=5 & dr=0.05 & sws=0.1 & prior=10000.0 & T=1.0 & lreg=0.0001, bf=0.05, ps=16.0 \\
+    InvertedDoublePendulum-v5 & n=5 & dr=0.2 & sws=0.3 & prior=10000.0 & T=10.0 & lreg=0.0001, bf=0.05, ps=16.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

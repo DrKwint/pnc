@@ -1,0 +1,6 @@
+factor,sharp,flat,worse,quoted_sharp,quoted_flat,quoted_worse
+scale,15,16,13,0,38,6
+rank,4,27,13,0,44,0
+bootstrap,15,17,12,4,31,9
+ridge,22,13,9,0,43,1
+TOTAL,56,73,47,4,156,16

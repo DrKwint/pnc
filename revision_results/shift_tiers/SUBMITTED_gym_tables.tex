@@ -1,0 +1,73 @@
+\begin{table}[t]
+\centering
+\caption{Ant-v5. Laplace prior and PJSVD sizes selected by best validation NLL (fallback: ID NLL for runs without nll_val).}
+\begin{tabular}{lccccc}
+\toprule
+Method & ID RMSE $\downarrow$ & Near NLL $\downarrow$ & Mid NLL $\downarrow$ & Far NLL $\downarrow$ & Far AUROC $\uparrow$ \\
+\midrule
+MC Dropout (n=100) [relu] & \textbf{0.5568} & 1.3235 & 111.7998 & 1116.7993 & 0.4924 \\
+Deep Ensemble (n=10) [relu] & \textbf{0.5707} & 0.2961 & 0.8063 & 4.2055 & 0.5712 \\
+Subspace (n=100) (T=0.0) [relu] & \textbf{0.5499} & \textbf{-0.3497} & \textbf{-0.1082} & 7.6921 & 0.2752 \\
+SWAG (n=100) [relu] & 0.6572 & \textbf{-0.4044} & \textbf{-0.2922} & \textbf{1.0990} & 0.4407 \\
+Laplace (n=100) [relu] (prior=100000.0) & 0.6099 & 0.6602 & 1.7146 & 12.2088 & 0.4027 \\
+Evidential (lam=0.01) [relu] & 0.6144 & 16.1974 & 94.7445 & 936.0230 & 0.4076 \\
+PJSVD-Multi-LS + Prob (Random-Proj) (k=20, n=50) [relu] (size=20.0) & \textbf{0.6090} & \textbf{-0.0404} & \textbf{0.6735} & \textbf{2.5286} & \textbf{0.9016} \\
+PJSVD-Multi-LS + Prob (Low-Proj) (k=20, n=50) [relu] (size=50.0) & 0.6460 & \textbf{-0.1683} & \textbf{-0.0442} & 4.5466 & 0.5750 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{HalfCheetah-v5. Laplace prior and PJSVD sizes selected by best validation NLL (fallback: ID NLL for runs without nll_val).}
+\begin{tabular}{lccccc}
+\toprule
+Method & ID RMSE $\downarrow$ & Near NLL $\downarrow$ & Mid NLL $\downarrow$ & Far NLL $\downarrow$ & Far AUROC $\uparrow$ \\
+\midrule
+MC Dropout (n=100) [relu] & 1.6824 & 7.5641 & \textbf{2.0845} & \textbf{2.5030} & 0.9133 \\
+Deep Ensemble (n=20) [relu] & \textbf{1.2535} & 8.6254 & \textbf{2.0233} & \textbf{2.7637} & \textbf{0.9797} \\
+Subspace (n=100) (T=0.0.) [relu] & 1.6160 & \textbf{5.9533} & 2.9023 & \textbf{1.8643} & 0.9574 \\
+SWAG (n=100) [relu] & \textbf{1.4893} & 12.2054 & 3.0204 & 3.2100 & 0.9630 \\
+Laplace (n=100) [relu] (prior=100000.0) & \textbf{1.2573} & 53.5115 & 3.3729 & 6.3781 & 0.9659 \\
+Evidential (lam=0.01) [relu] & \textbf{1.2224} & 13927.7484 & 3.4543 & 63.8728 & 0.8040 \\
+PJSVD-Multi-LS + Prob (Random-Proj) (k=20, n=50) [relu] (size=5.0) & \textbf{1.5976} & \textbf{6.5958} & \textbf{2.5903} & \textbf{2.8918} & \textbf{0.9784} \\
+PJSVD-Multi-LS + Prob (Low-Proj) (k=20, n=50) [relu] (size=20.0) & 1.6580 & 7.4366 & 2.7726 & 3.6114 & 0.9739 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Hopper-v5. Laplace prior and PJSVD sizes selected by best validation NLL (fallback: ID NLL for runs without nll_val).}
+\begin{tabular}{lccccc}
+\toprule
+Method & ID RMSE $\downarrow$ & Near NLL $\downarrow$ & Mid NLL $\downarrow$ & Far NLL $\downarrow$ & Far AUROC $\uparrow$ \\
+\midrule
+MC Dropout (n=100) [relu] & 0.2406 & 0.8917 & 1.6182 & 1.5331 & 0.6730 \\
+Deep Ensemble (n=10) [relu] & \textbf{0.1581} & 0.4733 & 1.0689 & 1.1122 & 0.9105 \\
+Subspace (n=100) (T=0.0) [relu] & \textbf{0.1984} & 0.7537 & 3.0287 & 1.4826 & 0.7775 \\
+SWAG (n=100) [relu] & \textbf{0.1776} & 1.0716 & 4.1276 & 2.2535 & 0.7953 \\
+Laplace (n=100) [relu] (prior=100000.0) & \textbf{0.1698} & 2.9161 & 8.2975 & 5.3004 & 0.7981 \\
+Evidential (lam=0.01) [relu] & \textbf{0.1789} & 11.7686 & 22.5773 & 9.2156 & 0.8404 \\
+PJSVD-Multi-LS + Prob (Random-Proj) (k=20, n=20) [relu] (size=20.0) & \textbf{0.2009} & \textbf{0.3675} & \textbf{0.7957} & \textbf{0.4227} & \textbf{0.9338} \\
+PJSVD-Multi-LS + Prob (Low-Proj) (k=20, n=50) [relu] (size=5.0) & \textbf{0.1988} & 1.2714 & 4.9225 & 2.2670 & 0.7503 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Humanoid-v5. Laplace prior and PJSVD sizes selected by best validation NLL (fallback: ID NLL for runs without nll_val).}
+\begin{tabular}{lccccc}
+\toprule
+Method & ID RMSE $\downarrow$ & Near NLL $\downarrow$ & Mid NLL $\downarrow$ & Far NLL $\downarrow$ & Far AUROC $\uparrow$ \\
+\midrule
+MC Dropout (n=100) [relu] & \textbf{45.0457} & \textbf{4.1370} & 4.6390 & \textbf{4.0342} & \textbf{0.2427} \\
+Deep Ensemble (n=5) [relu] & 56.5176 & \textbf{4.2335} & 4.3055 & 4.2676 & \textbf{0.2746} \\
+Subspace (n=100) (T=0.0) [relu] & \textbf{44.7104} & \textbf{4.1011} & 4.1877 & 5.0071 & 0.1849 \\
+SWAG (n=100) [relu] & \textbf{46.3202} & \textbf{3.8992} & \textbf{3.9393} & \textbf{3.7277} & 0.1952 \\
+Laplace (n=100) [relu] (prior=1000.0) & \textbf{48.0055} & \textbf{4.3258} & 4.2239 & \textbf{3.9450} & \textbf{0.2559} \\
+PJSVD-Multi-LS + Prob (Random-Proj) (k=20, n=50) [relu] (size=50.0) & \textbf{54.4857} & \textbf{4.3344} & \textbf{4.1130} & \textbf{4.1294} & \textbf{0.2076} \\
+\bottomrule
+\end{tabular}
+\end{table}

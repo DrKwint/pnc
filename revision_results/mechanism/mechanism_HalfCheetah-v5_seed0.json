@@ -1,0 +1,18 @@
+{
+  "env": "HalfCheetah-v5",
+  "seed": 0,
+  "selected_size": "5.0",
+  "pooled_spearman": {
+    "rho": 0.9042721115131559,
+    "p": 0.0,
+    "n": 40000
+  },
+  "within_regime_spearman": {
+    "id": 0.33672766931337855,
+    "near": 0.8366093394566425,
+    "mid": 0.8596449980616078,
+    "far": 0.8161541161348865
+  },
+  "regime_controlled_ols_slope_log10d": 1.9675796696288919,
+  "slope_se": 0.007837513098827525
+}

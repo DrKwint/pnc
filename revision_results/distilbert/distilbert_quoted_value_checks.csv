@@ -1,0 +1,16 @@
+method,metric,table_value,rebuttal_quoted,matches
+Internal FFN P&C,ID Acc,0.925,0.925,True
+Internal FFN P&C,ID NLL,0.301,0.301,True
+Internal FFN P&C,ID ECE,0.031,0.031,True
+Internal FFN P&C,Near AUROC,0.907,0.907,True
+Internal FFN P&C,Cross AUROC,0.967,0.967,True
+Internal FFN P&C,Far AUROC,0.981,0.981,True
+Uncorrected perturb,ID Acc,0.921,0.921,True
+Uncorrected perturb,ID NLL,1.079,1.079,True
+Uncorrected perturb,ID ECE,0.525,0.525,True
+MC Dropout,Near AUROC,0.917,0.917,True
+MC Dropout,Cross AUROC,0.969,0.969,True
+MC Dropout,Far AUROC,0.982,0.982,True
+Energy,Near AUROC,0.929,0.929,True
+Energy,Cross AUROC,0.98,0.98,True
+Energy,Far AUROC,0.99,0.99,True

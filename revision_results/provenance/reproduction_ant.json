@@ -1,0 +1,391 @@
+{
+  "config": "Ant-v5 PJSVD-Multi-LS-random bf0.1 prob k20 n50 ps[5,10,20,50] h[200x4] seed0",
+  "producing_script": "experiments/scripts/run_ant_bf0.1_fullxsub_all_seeds.sh",
+  "cached_file": "results/Ant-v5/pjsvd_multi_least_squares_random_projected_residual_prob_bf0.1_k20_n50_ps5.0-10.0-20.0-50.0_h200-200-200-200_act-relu_seed0.json",
+  "repro_file": "results/neurips_2026_rebuttal/repro/Ant-v5/pjsvd_multi_least_squares_random_projected_residual_prob_bf0.1_k20_n50_ps5.0-10.0-20.0-50.0_h200-200-200-200_act-relu_seed0.json",
+  "wall_seconds": 41.3,
+  "train_time_repro_s": 13.448949575424194,
+  "selected_size_nllval_repro": "10.0",
+  "selected_size_nllval_cached": "10.0",
+  "max_abs_diff_by_field": {
+    "rmse_val": 0.0,
+    "nll_val": 0.0,
+    "rmse_id": 0.0,
+    "nll_id": 0.0,
+    "rmse_ood_near": 0.0,
+    "rmse_ood_mid": 0.0,
+    "rmse_ood_far": 0.0,
+    "nll_ood_near": 0.0,
+    "nll_ood_mid": 0.0,
+    "nll_ood_far": 0.0,
+    "auroc_ood_near": 0.0,
+    "auroc_ood_mid": 0.0,
+    "auroc_ood_far": 0.0
+  },
+  "per_ps_comparison": [
+    {
+      "ps": "5.0",
+      "field": "rmse_val",
+      "repro": 0.5616028308868408,
+      "cached": 0.5616028308868408,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "nll_val",
+      "repro": -1.8164317607879639,
+      "cached": -1.8164316415786743,
+      "abs_diff": 1.1920928955078125e-07
+    },
+    {
+      "ps": "5.0",
+      "field": "rmse_id",
+      "repro": 0.5480218529701233,
+      "cached": 0.5480218529701233,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "nll_id",
+      "repro": -1.805023431777954,
+      "cached": -1.805023431777954,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "rmse_ood_near",
+      "repro": 0.7365713119506836,
+      "cached": 0.7365713119506836,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "rmse_ood_mid",
+      "repro": 0.8926326632499695,
+      "cached": 0.8926326632499695,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "rmse_ood_far",
+      "repro": 2.0637292861938477,
+      "cached": 2.0637292861938477,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "nll_ood_near",
+      "repro": 0.23998059332370758,
+      "cached": 0.23998059332370758,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "nll_ood_mid",
+      "repro": 0.09654557704925537,
+      "cached": 0.09654557704925537,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "nll_ood_far",
+      "repro": 1.0373541116714478,
+      "cached": 1.0373541116714478,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "auroc_ood_near",
+      "repro": 0.71734725,
+      "cached": 0.71734725,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "auroc_ood_mid",
+      "repro": 0.7918063899999999,
+      "cached": 0.7918063899999999,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "5.0",
+      "field": "auroc_ood_far",
+      "repro": 0.99791935,
+      "cached": 0.99791935,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "rmse_val",
+      "repro": 0.5623183846473694,
+      "cached": 0.5623183846473694,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "nll_val",
+      "repro": -1.8451794385910034,
+      "cached": -1.8451794385910034,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "rmse_id",
+      "repro": 0.5495074987411499,
+      "cached": 0.5495074987411499,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "nll_id",
+      "repro": -1.804904580116272,
+      "cached": -1.804904580116272,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "rmse_ood_near",
+      "repro": 0.7415587902069092,
+      "cached": 0.7415587902069092,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "rmse_ood_mid",
+      "repro": 0.907143235206604,
+      "cached": 0.907143235206604,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "rmse_ood_far",
+      "repro": 2.1350934505462646,
+      "cached": 2.1350934505462646,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "nll_ood_near",
+      "repro": 0.15472091734409332,
+      "cached": 0.15472091734409332,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "nll_ood_mid",
+      "repro": 0.015492312610149384,
+      "cached": 0.015492312610149384,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "nll_ood_far",
+      "repro": 1.1245585680007935,
+      "cached": 1.1245585680007935,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "auroc_ood_near",
+      "repro": 0.7387184450000001,
+      "cached": 0.7387184450000001,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "auroc_ood_mid",
+      "repro": 0.79953933,
+      "cached": 0.79953933,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "10.0",
+      "field": "auroc_ood_far",
+      "repro": 0.9981264400000001,
+      "cached": 0.9981264400000001,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "rmse_val",
+      "repro": 0.5574207305908203,
+      "cached": 0.5574207305908203,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "nll_val",
+      "repro": -1.837316632270813,
+      "cached": -1.837316632270813,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "rmse_id",
+      "repro": 0.5466261506080627,
+      "cached": 0.5466261506080627,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "nll_id",
+      "repro": -1.8126775026321411,
+      "cached": -1.8126775026321411,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "rmse_ood_near",
+      "repro": 0.7384923100471497,
+      "cached": 0.7384923100471497,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "rmse_ood_mid",
+      "repro": 0.8992695808410645,
+      "cached": 0.8992695808410645,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "rmse_ood_far",
+      "repro": 2.0795719623565674,
+      "cached": 2.0795719623565674,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "nll_ood_near",
+      "repro": 0.0994248017668724,
+      "cached": 0.0994248017668724,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "nll_ood_mid",
+      "repro": 0.029405592009425163,
+      "cached": 0.029405592009425163,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "nll_ood_far",
+      "repro": 1.102943778038025,
+      "cached": 1.102943778038025,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "auroc_ood_near",
+      "repro": 0.731587615,
+      "cached": 0.731587615,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "auroc_ood_mid",
+      "repro": 0.78796142,
+      "cached": 0.78796142,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "20.0",
+      "field": "auroc_ood_far",
+      "repro": 0.9982384899999999,
+      "cached": 0.9982384899999999,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "rmse_val",
+      "repro": 0.5562560558319092,
+      "cached": 0.5562560558319092,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "nll_val",
+      "repro": -1.8411478996276855,
+      "cached": -1.8411478996276855,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "rmse_id",
+      "repro": 0.5440433621406555,
+      "cached": 0.5440433621406555,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "nll_id",
+      "repro": -1.8136141300201416,
+      "cached": -1.8136141300201416,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "rmse_ood_near",
+      "repro": 0.7213374972343445,
+      "cached": 0.7213374972343445,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "rmse_ood_mid",
+      "repro": 0.8561711311340332,
+      "cached": 0.8561711311340332,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "rmse_ood_far",
+      "repro": 1.6757698059082031,
+      "cached": 1.6757698059082031,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "nll_ood_near",
+      "repro": 0.05016331747174263,
+      "cached": 0.05016331747174263,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "nll_ood_mid",
+      "repro": 0.0530925989151001,
+      "cached": 0.0530925989151001,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "nll_ood_far",
+      "repro": 1.1365623474121094,
+      "cached": 1.1365623474121094,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "auroc_ood_near",
+      "repro": 0.726984815,
+      "cached": 0.726984815,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "auroc_ood_mid",
+      "repro": 0.7708530600000001,
+      "cached": 0.7708530600000001,
+      "abs_diff": 0.0
+    },
+    {
+      "ps": "50.0",
+      "field": "auroc_ood_far",
+      "repro": 0.99816348,
+      "cached": 0.99816348,
+      "abs_diff": 0.0
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+method,cold_warmup_s,warm_total_s,warm_per_sample_ms,n_forward_passes,train_cost_factor,note,n_bench_samples
+Deep Ensemble n=5,3.728064775466919,6.689891338348389,1.3379782676696776,5,5.0,,5000
+Epinet n=50,4.95340371131897,8.085586547851562,1.6171173095703124,50,1.05,1.05x train cost: small MLP fine-tuned on top of frozen base,5000
+LLLA n=50,6.001918792724609,38.39842081069946,7.679684162139893,50,1.0,head-only sampling on top of one feature extraction per batch,5000
+Mahalanobis,3.298046827316284,3.674267053604126,0.7348534107208252,1,1.0,feature extraction only; Mahalanobis distance is pure-numpy O(N*C*D),5000
+MC Dropout n=32,4.97181510925293,25.88395094871521,5.176790189743042,32,1.0,,5000
+PnC multi-block scale=7,35.76520252227783,48.44033622741699,9.6880672454834,50,1.0,perturbation across all 8 residual blocks,5000
+PnC single-block scale=25,5.736196041107178,37.092955350875854,7.418591070175171,50,1.0,ridge-regression correction per perturbed Conv1,5000
+ReAct+Energy,0.39186930656433105,3.069406747817993,0.6138813495635986,1,1.0,,5000
+PreAct ResNet-18 / MSP / Energy,3.607205390930176,3.083054780960083,0.6166109561920166,1,1.0,,5000
+SWAG n=50,59.417330741882324,36.62664794921875,7.32532958984375,50,1.0,cached samples + BN refresh on 2048 ID train samples (one-time),5000

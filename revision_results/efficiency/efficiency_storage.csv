@@ -1,0 +1,16 @@
+env,method,params,megabytes_fp32,base_params,per_member_marginal_params
+Ant-v5,DeepEnsemble(M=50),9280500,37.122,185610,185610
+Ant-v5,PnC_naive_full(M=50),9280500,37.122,185610,185610
+Ant-v5,PnC_impl_sharedbase+corrblocks(M=50),4205610,16.822,185610,80400
+Ant-v5,PnC_min_sharedbase+coeffs(M=50),1787610,7.15,185610,40
+Ant-v5,SWAG(rank=20),4083420,16.334,185610,
+HalfCheetah-v5,DeepEnsemble(M=50),6611700,26.447,132234,132234
+HalfCheetah-v5,PnC_naive_full(M=50),6611700,26.447,132234,132234
+HalfCheetah-v5,PnC_impl_sharedbase+corrblocks(M=50),4152234,16.609,132234,80400
+HalfCheetah-v5,PnC_min_sharedbase+coeffs(M=50),1734234,6.937,132234,40
+HalfCheetah-v5,SWAG(rank=20),2909148,11.637,132234,
+Hopper-v5,DeepEnsemble(M=50),6401100,25.604,128022,128022
+Hopper-v5,PnC_naive_full(M=50),6401100,25.604,128022,128022
+Hopper-v5,PnC_impl_sharedbase+corrblocks(M=50),4148022,16.592,128022,80400
+Hopper-v5,PnC_min_sharedbase+coeffs(M=50),1730022,6.92,128022,40
+Hopper-v5,SWAG(rank=20),2816484,11.266,128022,

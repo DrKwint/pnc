@@ -1,0 +1,99 @@
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Per-env headline metrics on MuJoCo. For each (env, method) we pick the validation-NLL-best hyperparameter configuration across seeds; cells are mean $\pm$ stddev across seeds. The column-best per (env, metric) is \textbf{bold}. ID RMSE measures in-distribution accuracy; Far NLL and Far AUROC measure uncertainty quality on out-of-distribution inputs from the far split.}
+  \label{tab:appendix-per-env}
+  \begin{tabular}{lrrr}
+    \toprule
+    Method & ID RMSE ↓ & Far NLL ↓ & Far AUROC ↑ \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Ant-v5} ($n=28$ seeds)} \\
+    Deep Ensemble & 0.601 $\pm$ 0.022 & 14.361 $\pm$ 10.155 & 0.579 $\pm$ 0.075 \\
+    MC Dropout & 0.571 $\pm$ 0.076 & 1374.124 $\pm$ 980.958 & 0.379 $\pm$ 0.120 \\
+    SWAG & 0.674 $\pm$ 0.049 & \textbf{1.186 $\pm$ 0.358} & 0.476 $\pm$ 0.152 \\
+    Laplace & 0.590 $\pm$ 0.093 & 6.438 $\pm$ 3.907 & 0.401 $\pm$ 0.167 \\
+    Subspace & 0.552 $\pm$ 0.013 & 30.496 $\pm$ 24.740 & 0.302 $\pm$ 0.106 \\
+    P\&C & \textbf{0.289 $\pm$ 0.151} & 1.544 $\pm$ 0.348 & \textbf{0.993 $\pm$ 0.003} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{HalfCheetah-v5} ($n=27$ seeds)} \\
+    Deep Ensemble & 1.323 $\pm$ 0.073 & 9.665 $\pm$ 5.843 & 0.969 $\pm$ 0.017 \\
+    MC Dropout & 1.463 $\pm$ 0.103 & 6.087 $\pm$ 4.379 & 0.939 $\pm$ 0.026 \\
+    SWAG & 1.493 $\pm$ 0.083 & 7.663 $\pm$ 5.000 & 0.964 $\pm$ 0.022 \\
+    Laplace & \textbf{1.291 $\pm$ 0.088} & 5.568 $\pm$ 3.110 & 0.945 $\pm$ 0.024 \\
+    Subspace & 1.641 $\pm$ 0.078 & 19.917 $\pm$ 34.424 & 0.955 $\pm$ 0.032 \\
+    P\&C & 1.779 $\pm$ 0.800 & \textbf{3.735 $\pm$ 0.456} & \textbf{0.986 $\pm$ 0.010} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Hopper-v5} ($n=27$ seeds)} \\
+    Deep Ensemble & \textbf{0.167 $\pm$ 0.010} & 2.637 $\pm$ 0.467 & 0.903 $\pm$ 0.019 \\
+    MC Dropout & 0.210 $\pm$ 0.018 & 2.115 $\pm$ 0.683 & 0.624 $\pm$ 0.046 \\
+    SWAG & 0.180 $\pm$ 0.009 & 4.579 $\pm$ 2.421 & 0.792 $\pm$ 0.048 \\
+    Laplace & 0.175 $\pm$ 0.016 & 2.757 $\pm$ 0.823 & 0.641 $\pm$ 0.081 \\
+    Subspace & 0.194 $\pm$ 0.008 & 5.443 $\pm$ 2.539 & 0.782 $\pm$ 0.055 \\
+    P\&C & 0.219 $\pm$ 0.012 & \textbf{0.825 $\pm$ 0.080} & \textbf{0.979 $\pm$ 0.007} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Walker2d-v5} ($n=10$ seeds)} \\
+    Deep Ensemble & 0.591 $\pm$ 0.023 & 9.450 $\pm$ 2.146 & 0.972 $\pm$ 0.005 \\
+    MC Dropout & 0.566 $\pm$ 0.026 & 15.869 $\pm$ 3.836 & 0.945 $\pm$ 0.013 \\
+    SWAG & 0.661 $\pm$ 0.016 & 28.842 $\pm$ 10.908 & 0.909 $\pm$ 0.030 \\
+    Laplace & 0.579 $\pm$ 0.019 & 9.913 $\pm$ 2.415 & 0.897 $\pm$ 0.023 \\
+    Subspace & 0.729 $\pm$ 0.016 & 36.106 $\pm$ 15.215 & 0.904 $\pm$ 0.030 \\
+    P\&C & \textbf{0.551 $\pm$ 0.019} & \textbf{1.839 $\pm$ 0.029} & \textbf{0.991 $\pm$ 0.001} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Swimmer-v5} ($n=11$ seeds)} \\
+    Deep Ensemble & 0.027 $\pm$ 0.012 & 3.498 $\pm$ 0.492 & \textbf{0.998 $\pm$ 0.005} \\
+    MC Dropout & 0.058 $\pm$ 0.004 & 4.829 $\pm$ 0.645 & 0.992 $\pm$ 0.002 \\
+    SWAG & 0.056 $\pm$ 0.086 & 38.232 $\pm$ 20.216 & 0.923 $\pm$ 0.076 \\
+    Laplace & 0.035 $\pm$ 0.014 & 11.051 $\pm$ 2.425 & 0.988 $\pm$ 0.008 \\
+    Subspace & \textbf{0.026 $\pm$ 0.006} & 76.561 $\pm$ 42.428 & 0.956 $\pm$ 0.024 \\
+    P\&C & 0.051 $\pm$ 0.003 & \textbf{1.696 $\pm$ 0.439} & 0.990 $\pm$ 0.003 \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Humanoid-v5} ($n=10$ seeds)} \\
+    Deep Ensemble & 51.815 $\pm$ 6.334 & 4.234 $\pm$ 0.235 & 0.285 $\pm$ 0.053 \\
+    MC Dropout & 44.184 $\pm$ 2.090 & 3.791 $\pm$ 0.385 & 0.288 $\pm$ 0.055 \\
+    SWAG & 46.966 $\pm$ 8.429 & 3.745 $\pm$ 0.288 & 0.187 $\pm$ 0.027 \\
+    Laplace & 64.620 $\pm$ 53.173 & 4.298 $\pm$ 1.239 & 0.251 $\pm$ 0.072 \\
+    Subspace & 43.199 $\pm$ 2.519 & 4.377 $\pm$ 0.534 & 0.173 $\pm$ 0.024 \\
+    P\&C & \textbf{27.215 $\pm$ 0.586} & \textbf{3.274 $\pm$ 0.090} & \textbf{0.837 $\pm$ 0.029} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{HumanoidStandup-v5} ($n=10$ seeds)} \\
+    Deep Ensemble & 33.783 $\pm$ 7.675 & 7.065 $\pm$ 0.546 & 0.543 $\pm$ 0.113 \\
+    MC Dropout & 23.264 $\pm$ 3.640 & 6.258 $\pm$ 1.261 & 0.726 $\pm$ 0.072 \\
+    SWAG & 23.211 $\pm$ 3.301 & 5.836 $\pm$ 0.638 & 0.575 $\pm$ 0.143 \\
+    Laplace & 39.908 $\pm$ 26.810 & \textbf{5.614 $\pm$ 0.871} & 0.650 $\pm$ 0.122 \\
+    Subspace & \textbf{21.107 $\pm$ 1.290} & 25.971 $\pm$ 22.086 & 0.577 $\pm$ 0.135 \\
+    P\&C & 37515.394 $\pm$ 56733.601 & 11.277 $\pm$ 2.065 & \textbf{0.977 $\pm$ 0.013} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Reacher-v5} ($n=11$ seeds)} \\
+    Deep Ensemble & \textbf{0.087 $\pm$ 0.009} & 2.587 $\pm$ 0.423 & 0.971 $\pm$ 0.004 \\
+    MC Dropout & 0.111 $\pm$ 0.009 & 7.940 $\pm$ 0.930 & 0.929 $\pm$ 0.004 \\
+    SWAG & 0.089 $\pm$ 0.011 & 190.001 $\pm$ 53.046 & 0.816 $\pm$ 0.055 \\
+    Laplace & 0.088 $\pm$ 0.011 & 1.974 $\pm$ 0.404 & 0.926 $\pm$ 0.008 \\
+    Subspace & 0.090 $\pm$ 0.009 & 1015.748 $\pm$ 653.260 & 0.771 $\pm$ 0.058 \\
+    P\&C & 0.120 $\pm$ 0.021 & \textbf{0.917 $\pm$ 0.106} & \textbf{0.983 $\pm$ 0.003} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Pusher-v5} ($n=11$ seeds)} \\
+    Deep Ensemble & 0.054 $\pm$ 0.009 & 5.899 $\pm$ 1.033 & 0.997 $\pm$ 0.006 \\
+    MC Dropout & 0.057 $\pm$ 0.001 & 20.634 $\pm$ 4.510 & 0.972 $\pm$ 0.005 \\
+    SWAG & 0.094 $\pm$ 0.051 & 28.527 $\pm$ 18.351 & 0.625 $\pm$ 0.309 \\
+    Laplace & 0.054 $\pm$ 0.009 & 17.909 $\pm$ 2.376 & 0.900 $\pm$ 0.076 \\
+    Subspace & \textbf{0.053 $\pm$ 0.002} & 2268.085 $\pm$ 1140.032 & 0.253 $\pm$ 0.091 \\
+    P\&C & 0.054 $\pm$ 0.002 & \textbf{2.012 $\pm$ 0.227} & \textbf{1.000 $\pm$ 0.000} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{InvertedPendulum-v5} ($n=11$ seeds)} \\
+    Deep Ensemble & 0.017 $\pm$ 0.008 & -0.059 $\pm$ 0.811 & 0.832 $\pm$ 0.096 \\
+    MC Dropout & 0.010 $\pm$ 0.002 & -0.508 $\pm$ 0.452 & 0.934 $\pm$ 0.010 \\
+    SWAG & 0.052 $\pm$ 0.048 & 94.165 $\pm$ 65.723 & 0.488 $\pm$ 0.061 \\
+    Laplace & 0.014 $\pm$ 0.014 & 1.178 $\pm$ 1.002 & 0.867 $\pm$ 0.148 \\
+    Subspace & 0.015 $\pm$ 0.004 & 316.721 $\pm$ 181.217 & 0.559 $\pm$ 0.086 \\
+    P\&C & \textbf{0.006 $\pm$ 0.002} & \textbf{-1.334 $\pm$ 0.447} & \textbf{0.956 $\pm$ 0.006} \\
+    \midrule
+    \multicolumn{4}{l}{\textit{InvertedDoublePendulum-v5} ($n=11$ seeds)} \\
+    Deep Ensemble & 0.028 $\pm$ 0.013 & \textbf{4.230 $\pm$ 1.265} & 0.994 $\pm$ 0.004 \\
+    MC Dropout & 0.030 $\pm$ 0.006 & 108.931 $\pm$ 75.299 & \textbf{0.997 $\pm$ 0.001} \\
+    SWAG & 0.095 $\pm$ 0.057 & 124.220 $\pm$ 54.583 & 0.398 $\pm$ 0.289 \\
+    Laplace & 0.023 $\pm$ 0.011 & 18.250 $\pm$ 4.784 & 0.951 $\pm$ 0.092 \\
+    Subspace & 0.025 $\pm$ 0.005 & 2933.610 $\pm$ 2712.973 & 0.650 $\pm$ 0.215 \\
+    P\&C & \textbf{0.020 $\pm$ 0.004} & 4.942 $\pm$ 0.542 & 0.995 $\pm$ 0.001 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

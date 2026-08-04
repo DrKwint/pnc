@@ -1,0 +1,62 @@
+% \usepackage{tabularray}
+\begin{table}
+\centering
+\caption{HalfCheetah-v5. Hyperparameter selected per (method, seed) by best validation NLL (fallback: ID NLL). Selected value (val NLL) shown for each seed.}
+\begin{tblr}{
+  colspec = {lcccccc},
+  hline{1,Z} = {-}{0.08em},
+  hline{2,3} = {-}{0.05em},
+}
+Method & \SetCell[c=2]{c} seed=0 & & \SetCell[c=2]{c} seed=10 & & \SetCell[c=2]{c} seed=200 & \\
+& hp & val NLL & hp & val NLL & hp & val NLL \\
+Deep Ensemble & n=20 & -0.398 & n=20 & -0.439 & n=20 & -0.437 \\
+MC Dropout & dr=0.05 & 0.224 & dr=0.05 & 0.180 & dr=0.05 & 0.152 \\
+Subspace & T=1.0 & 0.017 & T=1.0 & 0.006 & T=10.0 & 0.010 \\
+SWAG & sws=0.3 & -0.008 & sws=0.3 & 0.045 & sws=0.3 & 0.010 \\
+Laplace & prior=100000.0 & -0.290 & prior=100000.0 & -0.261 & prior=100000.0 & -0.258 \\
+PnC & size=5.0 & 0.179 & size=10.0 & 0.117 & size=5.0 & 0.202 \\
+Hybrid PnC+DE & size=5.0 & -0.438 & size=5.0 & -0.468 & size=5.0 & -0.403 \\
+\end{tblr}
+\end{table}
+
+\begin{table}
+\centering
+\caption{Hopper-v5. Hyperparameter selected per (method, seed) by best validation NLL (fallback: ID NLL). Selected value (val NLL) shown for each seed.}
+\begin{tblr}{
+  colspec = {lcccccc},
+  hline{1,Z} = {-}{0.08em},
+  hline{2,3} = {-}{0.05em},
+}
+Method & \SetCell[c=2]{c} seed=0 & & \SetCell[c=2]{c} seed=10 & & \SetCell[c=2]{c} seed=200 & \\
+& hp & val NLL & hp & val NLL & hp & val NLL \\
+Deep Ensemble & n=10 & -1.884 & n=20 & -1.951 & n=10 & -1.958 \\
+MC Dropout & dr=0.05 & -1.059 & dr=0.05 & -1.160 & dr=0.05 & -1.088 \\
+Subspace & T=1.0 & -1.667 & T=1.0 & -1.740 & T=1.0 & -1.798 \\
+SWAG & sws=0.1 & -1.781 & sws=0.1 & -1.841 & sws=0.1 & -1.868 \\
+Laplace & prior=100000.0 & -1.699 & prior=100000.0 & -1.740 & prior=100000.0 & -1.817 \\
+PnC & size=5.0 & -1.475 & size=20.0 & -1.514 & size=5.0 & -1.593 \\
+Hybrid PnC+DE & size=5.0 & -1.864 & size=5.0 & -1.876 & size=5.0 & -1.924 \\
+\end{tblr}
+\end{table}
+
+\begin{table}
+\centering
+\caption{Ant-v5. Hyperparameter selected per (method, seed) by best validation NLL (fallback: ID NLL). Selected value (val NLL) shown for each seed.}
+\begin{tblr}{
+  colspec = {lcccccc},
+  hline{1,Z} = {-}{0.08em},
+  hline{2,3} = {-}{0.05em},
+}
+Method & \SetCell[c=2]{c} seed=0 & & \SetCell[c=2]{c} seed=10 & & \SetCell[c=2]{c} seed=200 & \\
+& hp & val NLL & hp & val NLL & hp & val NLL \\
+Deep Ensemble & n=10 & -1.904 & n=10 & -1.825 & n=10 & -1.627 \\
+MC Dropout & dr=0.3 & -3.056 & dr=0.1 & -3.211 & dr=0.1 & -3.088 \\
+Subspace & T=10.0 & -1.823 & T=10.0 & -1.888 & T=1.0 & -1.780 \\
+SWAG & sws=3.0 & -0.677 & sws=(default) & -1.211 & sws=3.0 & -0.634 \\
+Laplace & prior=100000.0 & -1.758 & prior=100000.0 & -1.023 & prior=100000.0 & -1.830 \\
+PnC & size=10.0 & -1.845 & size=5.0 & -1.253 & size=20.0 & -1.781 \\
+Hybrid PnC+DE & size=20.0 & -2.418 & size=5.0 & -1.285 & size=5.0 & -1.958 \\
+\end{tblr}
+\end{table}
+
+\paragraph{Methods evaluated but excluded.} Evidential regression (Amini et al. 2020) was evaluated during development but excluded from the main comparison due to NLL instability across seeds; results are available in the released code.

@@ -1,0 +1,18 @@
+{
+  "env": "Hopper-v5",
+  "seed": 0,
+  "selected_size": "5.0",
+  "pooled_spearman": {
+    "rho": 0.7486102142823481,
+    "p": 0.0,
+    "n": 40000
+  },
+  "within_regime_spearman": {
+    "id": 0.5130817269489742,
+    "near": 0.6906845647090618,
+    "mid": 0.730358690417969,
+    "far": 0.7756688259799962
+  },
+  "regime_controlled_ols_slope_log10d": 0.3243272887769182,
+  "slope_se": 0.002127614905006362
+}

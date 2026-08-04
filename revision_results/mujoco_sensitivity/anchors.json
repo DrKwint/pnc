@@ -1,0 +1,17 @@
+{
+  "_note": "CORRECTED submitted per-env anchor (PC_HPARAMS, user-provided). lreg=ridge toward ORIGINAL weights, bf=bootstrap fraction, ps=perturbation scale. K=20, M=50, multi-block, random directions, correction subset=4096 for all envs (bf*4096 rows/member; e.g. bf=0.05 -> ~205 rows). Supersedes the earlier wrong anchor (lambda=0/toward-zero/bf=0.1/val-NLL-scale), archived under archive_wrong_anchor_lam0/.",
+  "common": {"subspace_dimension_K": 20, "ensemble_size_M": 50, "correction_subset_size": 4096, "ridge_center": "original", "layer_scope": "multi", "perturb_layers": [0,2], "direction_family": "random", "hidden_dims": [200,200,200,200]},
+  "per_env": {
+    "Ant-v5": {"lreg": 1e-4, "bf": 0.10, "ps": 8.0},
+    "HalfCheetah-v5": {"lreg": 1e-4, "bf": 0.30, "ps": 32.0},
+    "Hopper-v5": {"lreg": 1e-4, "bf": 0.30, "ps": 32.0},
+    "Walker2d-v5": {"lreg": 1e-2, "bf": 0.30, "ps": 16.0},
+    "Swimmer-v5": {"lreg": 1e-4, "bf": 0.05, "ps": 8.0},
+    "Humanoid-v5": {"lreg": 1e-2, "bf": 0.30, "ps": 32.0},
+    "HumanoidStandup-v5": {"lreg": 1e-2, "bf": 0.20, "ps": 8.0},
+    "Reacher-v5": {"lreg": 1e-4, "bf": 0.05, "ps": 8.0},
+    "Pusher-v5": {"lreg": 1e-4, "bf": 0.10, "ps": 8.0},
+    "InvertedPendulum-v5": {"lreg": 1e-4, "bf": 0.05, "ps": 16.0},
+    "InvertedDoublePendulum-v5": {"lreg": 1e-4, "bf": 0.05, "ps": 16.0}
+  }
+}

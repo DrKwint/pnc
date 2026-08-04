@@ -1,0 +1,12 @@
+environment,rows_with_mid_tier,has_distinct_mid_tier
+Ant-v5,550,True
+HalfCheetah-v5,400,True
+Hopper-v5,400,True
+Humanoid-v5,250,True
+HumanoidStandup-v5,0,False
+InvertedDoublePendulum-v5,0,False
+InvertedPendulum-v5,0,False
+Pusher-v5,0,False
+Reacher-v5,0,False
+Swimmer-v5,0,False
+Walker2d-v5,0,False
