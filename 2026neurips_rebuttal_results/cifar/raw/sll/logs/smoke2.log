@@ -1,0 +1,19 @@
+E0727 11:40:23.231684   54863 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:23.334060   54864 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:23.724247   54869 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:23.817108   54861 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:23.917505   54865 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:24.261385   54869 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:24.359765   54861 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:24.532961   54864 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:24.989987   54864 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+  [diag-ggn] 0/64 (5s)
+[select] seed0 S=128 backbone: zero-curv frac=0.000 leaves touched=1 diag[min,med,max]=[1.40e-45,1.40e-45,1.40e-45]
+  [dense-ggn] 0/64 (2s)
+E0727 11:40:36.334052   54867 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:36.745165   54861 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:40:37.238315   54867 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[posterior] seed0 S=128: lam*=1e-06 (=lam_full 0.0873) T*=1.172 valNLL=0.0882 valAcc=96.88 eig[min,max]=[8.35e-48,1.65e-43] (22s)
+[smoke] OK

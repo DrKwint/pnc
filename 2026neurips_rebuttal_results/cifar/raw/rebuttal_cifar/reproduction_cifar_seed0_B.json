@@ -1,0 +1,60 @@
+{
+  "candidate": "B",
+  "label": "B_s3b1_ps50_nobf",
+  "seed": 0,
+  "params": {
+    "dataset": "cifar10",
+    "epochs": 300,
+    "n_directions": 20,
+    "n_perturbations": 50,
+    "perturbation_sizes": [
+      50.0
+    ],
+    "subset_size": 1024,
+    "chunk_size": 1024,
+    "target_stage_idx": 3,
+    "target_block_idx": 1,
+    "random_directions": true,
+    "seed": 0,
+    "lambda_reg": 0.001,
+    "posthoc_calibrate": true,
+    "bootstrap_frac": 0.0
+  },
+  "checkpoint": "results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed0.pkl",
+  "cached_reference": "results/cifar10/openood_v1p5_pnc_single_block_vcal_s3b1_k20_n50_ps50.0_lr0.001_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_subsetsize1024_chunksize1024_seed0_random.json",
+  "repro_output": "/home/elean/pnc/results/neurips_2026_rebuttal/cifar/repro_B_s3b1_ps50_nobf_seed0.json",
+  "start_utc": "2026-07-23T18:52:56.642488+00:00",
+  "end_utc": "2026-07-23T19:07:48.603689+00:00",
+  "runtime_sec": 891.9611961841583,
+  "hardware": "NVIDIA RTX 5060 8GB, WSL2; JAX 0.9.1 Flax 0.12.3 py3.12.3",
+  "reproduced": {
+    "acc": 95.6499993801117,
+    "nll": 0.13840681314468384,
+    "ece": 0.0078833456158638,
+    "posthoc_temperature": 0.9970511556524966,
+    "near_auroc": 91.69502375,
+    "far_auroc": 95.19149640414362,
+    "near_fpr95": 30.75,
+    "far_fpr95": 17.97
+  },
+  "cached": {
+    "acc": 95.6499993801117,
+    "nll": 0.1384059339761734,
+    "ece": 0.007784417763352394,
+    "posthoc_temperature": 0.9971876788903381,
+    "near_auroc": 91.69506625,
+    "far_auroc": 95.19154516763383,
+    "near_fpr95": 30.75,
+    "far_fpr95": 17.97
+  },
+  "abs_diff": {
+    "acc": 0.0,
+    "nll": 8.791685104370117e-07,
+    "ece": 9.892785251140648e-05,
+    "posthoc_temperature": -0.00013652323784152376,
+    "near_auroc": -4.24999999921738e-05,
+    "far_auroc": -4.8763490212877514e-05,
+    "near_fpr95": 0.0,
+    "far_fpr95": 0.0
+  }
+}

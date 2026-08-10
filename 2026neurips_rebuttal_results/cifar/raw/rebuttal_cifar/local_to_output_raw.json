@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "seed": 0,
+    "block": "s3b0",
+    "scale": 25.0,
+    "calib": 1024,
+    "m_check": 8,
+    "n_eval": 64,
+    "runtime_sec": 36.53321290016174
+  },
+  "results": {
+    "id_test": {
+      "regime": "id",
+      "n_eval": 64,
+      "m_check": 8,
+      "downstream_cosine_mean": 0.7350389122797274,
+      "downstream_cosine_median": 0.8229930397102336,
+      "downstream_relmag_mean": 0.7304354571826667,
+      "downstream_relmag_median": 0.6554065636400166,
+      "spearman_Rfrob_vs_dlogit": -0.26872710622710616,
+      "stat_vs_disagreement_spearman": {
+        "frob": {
+          "spearman_logit_cov_tr": -0.2934523809523809,
+          "spearman_MI": -0.16204212454212452,
+          "spearman_pred_entropy": -0.08365384615384615
+        },
+        "meanpatch": {
+          "spearman_logit_cov_tr": -0.2736263736263736,
+          "spearman_MI": -0.14377289377289376,
+          "spearman_pred_entropy": -0.06684981684981685
+        },
+        "maxpatch": {
+          "spearman_logit_cov_tr": -0.2738553113553113,
+          "spearman_MI": -0.14267399267399264,
+          "spearman_pred_entropy": -0.05695970695970695
+        },
+        "p95patch": {
+          "spearman_logit_cov_tr": -0.270558608058608,
+          "spearman_MI": -0.1421245421245421,
+          "spearman_pred_entropy": -0.06396520146520146
+        },
+        "chan": {
+          "spearman_logit_cov_tr": -0.2934523809523809,
+          "spearman_MI": -0.16204212454212452,
+          "spearman_pred_entropy": -0.08365384615384615
+        },
+        "gap": {
+          "spearman_logit_cov_tr": -0.16414835164835165,
+          "spearman_MI": -0.03287545787545787,
+          "spearman_pred_entropy": 0.020833333333333332
+        },
+        "jproj": {
+          "spearman_logit_cov_tr": 0.8592032967032965,
+          "spearman_MI": 0.8019688644688644,
+          "spearman_pred_entropy": 0.7188644688644688
+        }
+      }
+    },
+    "cifar100": {
+      "regime": "near",
+      "n_eval": 64,
+      "m_check": 8,
+      "downstream_cosine_mean": 0.7608164341175224,
+      "downstream_cosine_median": 0.8282366045642211,
+      "downstream_relmag_mean": 0.7439395322899155,
+      "downstream_relmag_median": 0.6816118348154871,
+      "spearman_Rfrob_vs_dlogit": 0.001923076923076923,
+      "stat_vs_disagreement_spearman": {
+        "frob": {
+          "spearman_logit_cov_tr": 0.06446886446886446,
+          "spearman_MI": -0.08012820512820512,
+          "spearman_pred_entropy": -0.06268315018315017
+        },
+        "meanpatch": {
+          "spearman_logit_cov_tr": 0.07257326007326007,
+          "spearman_MI": -0.06739926739926738,
+          "spearman_pred_entropy": -0.05421245421245421
+        },
+        "maxpatch": {
+          "spearman_logit_cov_tr": 0.08127289377289376,
+          "spearman_MI": -0.07179487179487179,
+          "spearman_pred_entropy": -0.05782967032967032
+        },
+        "p95patch": {
+          "spearman_logit_cov_tr": 0.08580586080586079,
+          "spearman_MI": -0.0737179487179487,
+          "spearman_pred_entropy": -0.04803113553113552
+        },
+        "chan": {
+          "spearman_logit_cov_tr": 0.06446886446886446,
+          "spearman_MI": -0.08012820512820512,
+          "spearman_pred_entropy": -0.06268315018315017
+        },
+        "gap": {
+          "spearman_logit_cov_tr": 0.1211080586080586,
+          "spearman_MI": -0.07774725274725273,
+          "spearman_pred_entropy": -0.030265567765567766
+        },
+        "jproj": {
+          "spearman_logit_cov_tr": 0.7697802197802196,
+          "spearman_MI": 0.5360347985347984,
+          "spearman_pred_entropy": 0.5206501831501831
+        }
+      }
+    },
+    "svhn": {
+      "regime": "far",
+      "n_eval": 64,
+      "m_check": 8,
+      "downstream_cosine_mean": 0.853242350368375,
+      "downstream_cosine_median": 0.8870137541113475,
+      "downstream_relmag_mean": 0.6134400253653285,
+      "downstream_relmag_median": 0.5707575901088341,
+      "spearman_Rfrob_vs_dlogit": 0.21011904761904757,
+      "stat_vs_disagreement_spearman": {
+        "frob": {
+          "spearman_logit_cov_tr": 0.5466575091575091,
+          "spearman_MI": 0.3326923076923076,
+          "spearman_pred_entropy": -0.08246336996336996
+        },
+        "meanpatch": {
+          "spearman_logit_cov_tr": 0.5458333333333333,
+          "spearman_MI": 0.32307692307692304,
+          "spearman_pred_entropy": -0.09148351648351648
+        },
+        "maxpatch": {
+          "spearman_logit_cov_tr": 0.49761904761904757,
+          "spearman_MI": 0.33708791208791206,
+          "spearman_pred_entropy": -0.07119963369963368
+        },
+        "p95patch": {
+          "spearman_logit_cov_tr": 0.5128205128205128,
+          "spearman_MI": 0.3344322344322344,
+          "spearman_pred_entropy": -0.0993131868131868
+        },
+        "chan": {
+          "spearman_logit_cov_tr": 0.5466575091575091,
+          "spearman_MI": 0.3326923076923076,
+          "spearman_pred_entropy": -0.08246336996336996
+        },
+        "gap": {
+          "spearman_logit_cov_tr": -0.12774725274725274,
+          "spearman_MI": -0.12655677655677655,
+          "spearman_pred_entropy": 0.09949633699633698
+        },
+        "jproj": {
+          "spearman_logit_cov_tr": 0.5271978021978022,
+          "spearman_MI": 0.4798076923076922,
+          "spearman_pred_entropy": 0.18704212454212452
+        }
+      }
+    }
+  }
+}

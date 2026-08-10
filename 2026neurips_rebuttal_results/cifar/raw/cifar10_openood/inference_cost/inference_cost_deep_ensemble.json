@@ -1,0 +1,15 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "deep_ensemble",
+  "methods": {
+    "Deep Ensemble n=5": {
+      "cold_warmup_s": 3.728064775466919,
+      "warm_total_s": 6.689891338348389,
+      "warm_per_sample_ms": 1.3379782676696776,
+      "n_forward_passes": 5,
+      "train_cost_factor": 5.0
+    }
+  }
+}

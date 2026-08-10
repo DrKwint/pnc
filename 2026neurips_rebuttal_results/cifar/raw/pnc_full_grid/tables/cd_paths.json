@@ -1,0 +1,23 @@
+{
+  "forward": {
+    "block": "s3b0",
+    "scale": 25.0,
+    "frac": 0.05,
+    "nll": 0.1304765765865644
+  },
+  "reverse": {
+    "block": "s3b0",
+    "scale": 25.0,
+    "frac": 0.05,
+    "nll": 0.1304765765865644
+  },
+  "global_opt": {
+    "label": "s3b0",
+    "stage_idx": 3,
+    "block_idx": 0,
+    "scale": 25.0,
+    "bootstrap_frac": 0.05,
+    "mean_val_nll": 0.1304765765865644,
+    "std_val_nll": 0.004908252167624336
+  }
+}

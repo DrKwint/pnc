@@ -1,0 +1,356 @@
+{
+  "25.0": {
+    "benchmark": "openood_v1_5",
+    "ensemble_name": "PnC scale=25.0",
+    "benchmark_metadata": {
+      "benchmark_name": "openood_v1_5",
+      "root_dir": "openood_data",
+      "id_dataset": "cifar10",
+      "normalize": true,
+      "max_examples_per_dataset": null,
+      "uses_ood_validation": false,
+      "uses_ood_model_selection": false
+    },
+    "posthoc_temperature": 0.761891523059237,
+    "posthoc_calibrate": true,
+    "protocol": {
+      "ood_validation_used": false,
+      "ood_tuning_used": false,
+      "temperature_fit_split": "id_validation_only",
+      "primary_score": "predictive_entropy"
+    },
+    "id_metrics": {
+      "accuracy": 0.953499972820282,
+      "brier": 0.06743976473808289,
+      "entropy": 0.1297341138124466,
+      "nll": 0.1416812688112259,
+      "ece": 0.006490080314874649,
+      "eval_time": 91.80321168899536,
+      "posthoc_temperature": 0.761891523059237
+    },
+    "val_metrics": {
+      "accuracy": 0.9551999568939209,
+      "brier": 0.06480062752962112,
+      "entropy": 0.13214826583862305,
+      "nll": 0.132247194647789,
+      "ece": 0.006768598380684852,
+      "eval_time": 0.0,
+      "posthoc_temperature": 0.761891523059237
+    },
+    "near_ood": {
+      "per_dataset": {
+        "cifar100": {
+          "name": "CIFAR-100",
+          "n_examples": 10000,
+          "eval_time": 97.89310812950134,
+          "scores": {
+            "predictive_entropy": {
+              "auroc": 0.916780275,
+              "aupr": 0.9045000340862215,
+              "fpr95": 0.3013
+            },
+            "max_softmax_uncertainty": {
+              "auroc": 0.91122244,
+              "aupr": 0.8923311084018487,
+              "fpr95": 0.3009
+            },
+            "energy_score": {
+              "auroc": 0.9150721249999999,
+              "aupr": 0.9057230845094053,
+              "fpr95": 0.3329
+            },
+            "margin_uncertainty": {
+              "auroc": 0.9065685250000001,
+              "aupr": 0.8766917232339728,
+              "fpr95": 0.2993
+            },
+            "mutual_information": {
+              "auroc": 0.913961285,
+              "aupr": 0.8972260996497554,
+              "fpr95": 0.3038
+            },
+            "variation_ratio": {
+              "auroc": 0.91122244,
+              "aupr": 0.8923311084018487,
+              "fpr95": 0.3009
+            }
+          }
+        },
+        "tiny_imagenet": {
+          "name": "Tiny ImageNet-200",
+          "n_examples": 10000,
+          "eval_time": 91.63516402244568,
+          "scores": {
+            "predictive_entropy": {
+              "auroc": 0.91353704,
+              "aupr": 0.906489475155354,
+              "fpr95": 0.3498
+            },
+            "max_softmax_uncertainty": {
+              "auroc": 0.906885425,
+              "aupr": 0.8929607139386534,
+              "fpr95": 0.3486
+            },
+            "energy_score": {
+              "auroc": 0.91473506,
+              "aupr": 0.910525542424687,
+              "fpr95": 0.3789
+            },
+            "margin_uncertainty": {
+              "auroc": 0.9015453150000001,
+              "aupr": 0.8760958046665863,
+              "fpr95": 0.3472
+            },
+            "mutual_information": {
+              "auroc": 0.9097072349999998,
+              "aupr": 0.8975863398022021,
+              "fpr95": 0.3471
+            },
+            "variation_ratio": {
+              "auroc": 0.906885425,
+              "aupr": 0.8929607139386534,
+              "fpr95": 0.3486
+            }
+          }
+        }
+      },
+      "aggregate": {
+        "predictive_entropy": {
+          "mean_auroc": 0.9151586575,
+          "mean_aupr": 0.9054947546207878,
+          "mean_fpr95": 0.32555,
+          "concat_auroc": 0.9151586574999999
+        },
+        "max_softmax_uncertainty": {
+          "mean_auroc": 0.9090539325,
+          "mean_aupr": 0.892645911170251,
+          "mean_fpr95": 0.32475,
+          "concat_auroc": 0.9090539325
+        },
+        "energy_score": {
+          "mean_auroc": 0.9149035925,
+          "mean_aupr": 0.9081243134670461,
+          "mean_fpr95": 0.3559,
+          "concat_auroc": 0.9149035925
+        },
+        "margin_uncertainty": {
+          "mean_auroc": 0.9040569200000002,
+          "mean_aupr": 0.8763937639502796,
+          "mean_fpr95": 0.32325000000000004,
+          "concat_auroc": 0.9040569199999999
+        },
+        "mutual_information": {
+          "mean_auroc": 0.9118342599999999,
+          "mean_aupr": 0.8974062197259788,
+          "mean_fpr95": 0.32545,
+          "concat_auroc": 0.91183426
+        },
+        "variation_ratio": {
+          "mean_auroc": 0.9090539325,
+          "mean_aupr": 0.892645911170251,
+          "mean_fpr95": 0.32475,
+          "concat_auroc": 0.9090539325
+        }
+      }
+    },
+    "far_ood": {
+      "per_dataset": {
+        "mnist": {
+          "name": "MNIST",
+          "n_examples": 10000,
+          "eval_time": 95.93263983726501,
+          "scores": {
+            "predictive_entropy": {
+              "auroc": 0.9308849250000002,
+              "aupr": 0.904692103886578,
+              "fpr95": 0.2036
+            },
+            "max_softmax_uncertainty": {
+              "auroc": 0.921243515,
+              "aupr": 0.8841889330766575,
+              "fpr95": 0.2087
+            },
+            "energy_score": {
+              "auroc": 0.933492565,
+              "aupr": 0.9073605847301,
+              "fpr95": 0.212
+            },
+            "margin_uncertainty": {
+              "auroc": 0.91541861,
+              "aupr": 0.8695575830688339,
+              "fpr95": 0.2151
+            },
+            "mutual_information": {
+              "auroc": 0.9363433349999999,
+              "aupr": 0.9187239136300956,
+              "fpr95": 0.2002
+            },
+            "variation_ratio": {
+              "auroc": 0.921243515,
+              "aupr": 0.8841889330766575,
+              "fpr95": 0.2087
+            }
+          }
+        },
+        "svhn": {
+          "name": "SVHN",
+          "n_examples": 26032,
+          "eval_time": 240.1719183921814,
+          "scores": {
+            "predictive_entropy": {
+              "auroc": 0.9719721861555009,
+              "aupr": 0.9849834878413009,
+              "fpr95": 0.1075
+            },
+            "max_softmax_uncertainty": {
+              "auroc": 0.9637250921942225,
+              "aupr": 0.9799052410849088,
+              "fpr95": 0.1147
+            },
+            "energy_score": {
+              "auroc": 0.9688108462661339,
+              "aupr": 0.981809879020838,
+              "fpr95": 0.1074
+            },
+            "margin_uncertainty": {
+              "auroc": 0.9558833685464043,
+              "aupr": 0.9718680790174323,
+              "fpr95": 0.1211
+            },
+            "mutual_information": {
+              "auroc": 0.9730959857098955,
+              "aupr": 0.9865407419870891,
+              "fpr95": 0.1082
+            },
+            "variation_ratio": {
+              "auroc": 0.9637250921942225,
+              "aupr": 0.9799052410849088,
+              "fpr95": 0.1147
+            }
+          }
+        },
+        "textures": {
+          "name": "Textures",
+          "n_examples": 5640,
+          "eval_time": 54.56847381591797,
+          "scores": {
+            "predictive_entropy": {
+              "auroc": 0.9542740691489362,
+              "aupr": 0.9108968962077302,
+              "fpr95": 0.183
+            },
+            "max_softmax_uncertainty": {
+              "auroc": 0.9456928812056737,
+              "aupr": 0.8865492465265318,
+              "fpr95": 0.1853
+            },
+            "energy_score": {
+              "auroc": 0.9540932978723404,
+              "aupr": 0.9113559726048235,
+              "fpr95": 0.1787
+            },
+            "margin_uncertainty": {
+              "auroc": 0.938021365248227,
+              "aupr": 0.8533947708738898,
+              "fpr95": 0.1883
+            },
+            "mutual_information": {
+              "auroc": 0.9490117553191489,
+              "aupr": 0.8963844617664259,
+              "fpr95": 0.1868
+            },
+            "variation_ratio": {
+              "auroc": 0.9456928812056737,
+              "aupr": 0.8865492465265318,
+              "fpr95": 0.1853
+            }
+          }
+        },
+        "places365": {
+          "name": "Places365",
+          "n_examples": 10000,
+          "eval_time": 95.08105039596558,
+          "scores": {
+            "predictive_entropy": {
+              "auroc": 0.9213990699999999,
+              "aupr": 0.9132523699871751,
+              "fpr95": 0.2942
+            },
+            "max_softmax_uncertainty": {
+              "auroc": 0.9142411049999999,
+              "aupr": 0.8987306668935003,
+              "fpr95": 0.2939
+            },
+            "energy_score": {
+              "auroc": 0.9234872000000001,
+              "aupr": 0.9185026662464437,
+              "fpr95": 0.3226
+            },
+            "margin_uncertainty": {
+              "auroc": 0.908377675,
+              "aupr": 0.8801778764665833,
+              "fpr95": 0.2972
+            },
+            "mutual_information": {
+              "auroc": 0.9171528,
+              "aupr": 0.9024552898706864,
+              "fpr95": 0.2981
+            },
+            "variation_ratio": {
+              "auroc": 0.9142411049999999,
+              "aupr": 0.8987306668935003,
+              "fpr95": 0.2939
+            }
+          }
+        }
+      },
+      "aggregate": {
+        "predictive_entropy": {
+          "mean_auroc": 0.9446325625761092,
+          "mean_aupr": 0.928456214480696,
+          "mean_fpr95": 0.197075,
+          "concat_auroc": 0.9523015491949218
+        },
+        "max_softmax_uncertainty": {
+          "mean_auroc": 0.9362256483499741,
+          "mean_aupr": 0.9123435218953996,
+          "mean_fpr95": 0.20065,
+          "concat_auroc": 0.9439589264979099
+        },
+        "energy_score": {
+          "mean_auroc": 0.9449709772846187,
+          "mean_aupr": 0.9297572756505514,
+          "mean_fpr95": 0.205175,
+          "concat_auroc": 0.9515979215048769
+        },
+        "margin_uncertainty": {
+          "mean_auroc": 0.9294252546986578,
+          "mean_aupr": 0.8937495773566848,
+          "mean_fpr95": 0.205425,
+          "concat_auroc": 0.9369089487536768
+        },
+        "mutual_information": {
+          "mean_auroc": 0.9439009690072611,
+          "mean_aupr": 0.9260261018135743,
+          "mean_fpr95": 0.19832499999999997,
+          "concat_auroc": 0.952527913570212
+        },
+        "variation_ratio": {
+          "mean_auroc": 0.9362256483499741,
+          "mean_aupr": 0.9123435218953996,
+          "mean_fpr95": 0.20065,
+          "concat_auroc": 0.9439589264979099
+        }
+      }
+    },
+    "near_ood_auroc": 0.9151586575,
+    "far_ood_auroc": 0.9446325625761092,
+    "builder_metadata": {
+      "builder": "single_block",
+      "subset_size_used": 1024,
+      "target_stage_idx": 3,
+      "target_block_idx": 0,
+      "random_directions": true
+    }
+  }
+}

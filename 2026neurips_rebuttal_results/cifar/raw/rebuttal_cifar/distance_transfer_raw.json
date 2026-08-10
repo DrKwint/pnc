@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "seed": 0,
+    "block": "s3b0",
+    "scale": 25.0,
+    "n_eval_per_dataset": 256,
+    "m_check": 8,
+    "n_total": 1280,
+    "runtime_sec": 392.91683888435364
+  },
+  "analysis": {
+    "MI": {
+      "R2_distance": 0.11614444501816401,
+      "R2_transfer": 0.49339685460677885,
+      "R2_both": 0.49444914421034314,
+      "R2_datasetFE": 0.26173021639707417,
+      "dR2_transfer_given_distance": 0.37830469919217913,
+      "dR2_distance_given_transfer": 0.0010522896035642937,
+      "dR2_transfer_given_distance_and_FE": 0.20517101067283228,
+      "dR2_distance_given_transfer_and_FE": 0.0003514065614572681,
+      "within_dataset_R2_distance_mean": 0.07813452081838604,
+      "within_dataset_R2_transfer_mean": 0.346615519534228
+    },
+    "logit_cov_tr": {
+      "R2_distance": 0.19853927999318677,
+      "R2_transfer": 0.7143139426236202,
+      "R2_both": 0.7237938193682618,
+      "R2_datasetFE": 0.3988167638884904,
+      "dR2_transfer_given_distance": 0.525254539375075,
+      "dR2_distance_given_transfer": 0.009479876744641569,
+      "dR2_transfer_given_distance_and_FE": 0.24987988163704067,
+      "dR2_distance_given_transfer_and_FE": 0.012512816323668408,
+      "within_dataset_R2_distance_mean": 0.21011584232187047,
+      "within_dataset_R2_transfer_mean": 0.6247351023080188
+    },
+    "pred_ent": {
+      "R2_distance": 0.21190649413538587,
+      "R2_transfer": 0.4499623673852239,
+      "R2_both": 0.4524128734213102,
+      "R2_datasetFE": 0.33692168845693016,
+      "dR2_transfer_given_distance": 0.24050637928592433,
+      "dR2_distance_given_transfer": 0.0024505060360863196,
+      "dR2_transfer_given_distance_and_FE": 0.11143971910685868,
+      "dR2_distance_given_transfer_and_FE": 0.001928488141799134,
+      "within_dataset_R2_distance_mean": 0.03288636333337558,
+      "within_dataset_R2_transfer_mean": 0.2648699883052986
+    }
+  }
+}

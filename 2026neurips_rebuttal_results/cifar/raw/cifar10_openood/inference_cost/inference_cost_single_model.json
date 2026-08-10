@@ -1,0 +1,15 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "single_model",
+  "methods": {
+    "PreAct ResNet-18 / MSP / Energy": {
+      "cold_warmup_s": 3.607205390930176,
+      "warm_total_s": 3.083054780960083,
+      "warm_per_sample_ms": 0.6166109561920166,
+      "n_forward_passes": 1,
+      "train_cost_factor": 1.0
+    }
+  }
+}

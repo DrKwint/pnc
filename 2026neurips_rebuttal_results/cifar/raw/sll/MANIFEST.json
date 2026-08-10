@@ -1,0 +1,63 @@
+{
+  "method": "SLL-Backbone",
+  "framework_note": "PyTorch spec implemented in JAX/Flax nnx",
+  "checkpoint_paths": {
+    "0": "/home/elean/pnc/results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed0.pkl",
+    "1": "/home/elean/pnc/results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed1.pkl",
+    "2": "/home/elean/pnc/results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed2.pkl"
+  },
+  "checkpoint_hashes": {
+    "0": "b4c45628adaa9e5321e15ae83679841e2474e23c2126968fe6cdffcb2143a7e5",
+    "1": "2e942d691915025dac8e15d56aeaf289a4bebaa065184338f6a1ef18105674b4",
+    "2": "9b5d9de691ba2d51f63bdb8cf9445ee05e7cdc292e6c57c68847ff77e8793035"
+  },
+  "checkpoint_hash_matches_scod": {
+    "0": true,
+    "1": true,
+    "2": true
+  },
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "model_architecture": "PreActResNet18 (CIFAR-10)",
+  "subnetwork_size": 2048,
+  "subnetwork_pct_of_backbone_candidates": 0.0183,
+  "selection": "predictive_variance_contribution R_j/(G_diag+lambda0) [ID-only]; faithful marginal-variance rule degenerates",
+  "covariance": "dense full-covariance within selected subnetwork; all other params fixed",
+  "prediction": "linearized probit predictive entropy (primary); MC posterior predictive (secondary)",
+  "split_seed": 99,
+  "val_examples": 5000,
+  "train_examples": 45000,
+  "calib_pool": 1024,
+  "normalization": {
+    "mean": [
+      0.4914,
+      0.4822,
+      0.4465
+    ],
+    "std": [
+      0.247,
+      0.2435,
+      0.2616
+    ]
+  },
+  "near_ood": [
+    "CIFAR-100",
+    "TinyImageNet"
+  ],
+  "far_ood": [
+    "MNIST",
+    "SVHN",
+    "Textures",
+    "Places365"
+  ],
+  "M_posterior_samples": 50,
+  "git_commit": "854f4d847ce9ce0d723e7b49a707ebe2f5fcb95c",
+  "git_dirty": true,
+  "jax_version": "0.9.1",
+  "flax_version": "0.12.3",
+  "gpu": "RTX 5060 8GB",
+  "aggregation": "macro-mean over datasets; +/- sample std over 3 seeds"
+}

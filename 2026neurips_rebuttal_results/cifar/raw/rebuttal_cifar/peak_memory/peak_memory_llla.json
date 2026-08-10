@@ -1,0 +1,18 @@
+{
+  "method": "llla",
+  "note": "dense 5130^2 GGN inverse + Cholesky, prior=10.0",
+  "n_forward_passes": 50,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 1922.901611328125,
+  "resident_after_build_mib": 244.95068359375,
+  "predict_peak_mib": 2096.707275390625,
+  "in_use_after_predict_mib": 252.970703125,
+  "cold_warmup_s": 15.875165462493896,
+  "warm_total_s": 37.273693561553955,
+  "warm_per_sample_ms": 7.454738712310791
+}

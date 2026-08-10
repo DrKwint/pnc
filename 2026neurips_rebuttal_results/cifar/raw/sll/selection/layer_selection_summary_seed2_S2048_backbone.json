@@ -1,0 +1,55 @@
+{
+  "seed": 2,
+  "tag": "backbone",
+  "diag_seconds": 14.2,
+  "S": 2048,
+  "include_fc": false,
+  "selection": "predictive_variance_contribution",
+  "lambda0": 0.0011571894865483046,
+  "n_candidates": 11167040,
+  "n_zero_curvature_candidates": 582229,
+  "zero_curvature_candidate_fraction": 0.05213816732097315,
+  "n_zero_influence_candidates": 571530,
+  "zero_influence_excluded": true,
+  "selected_zero_curvature_fraction": 0.0,
+  "selected_diag_min": 0.0006859724526293576,
+  "selected_diag_max": 0.30474913120269775,
+  "selected_diag_median": 0.007349880877882242,
+  "selected_R_median": 86.68061828613281,
+  "selected_score_min": 8786.646484375,
+  "selected_score_max": 20130.787109375,
+  "per_leaf": {
+    "stage3.1.conv2.kernel": {
+      "selected": 1,
+      "leaf_numel": 589824,
+      "pct": 0.0002
+    },
+    "stage4.0.conv2.kernel": {
+      "selected": 31,
+      "leaf_numel": 2359296,
+      "pct": 0.0013
+    },
+    "stage4.0.downsample.kernel": {
+      "selected": 2,
+      "leaf_numel": 131072,
+      "pct": 0.0015
+    },
+    "stage4.1.bn2.scale": {
+      "selected": 1,
+      "leaf_numel": 512,
+      "pct": 0.1953
+    },
+    "stage4.1.conv1.kernel": {
+      "selected": 1924,
+      "leaf_numel": 2359296,
+      "pct": 0.0815
+    },
+    "stage4.1.conv2.kernel": {
+      "selected": 89,
+      "leaf_numel": 2359296,
+      "pct": 0.0038
+    }
+  },
+  "num_leaves_touched": 6,
+  "contains_fc": false
+}

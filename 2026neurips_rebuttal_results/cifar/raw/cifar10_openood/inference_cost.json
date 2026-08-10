@@ -1,0 +1,83 @@
+{
+  "methods": {
+    "Deep Ensemble n=5": {
+      "cold_warmup_s": 3.728064775466919,
+      "warm_total_s": 6.689891338348389,
+      "warm_per_sample_ms": 1.3379782676696776,
+      "n_forward_passes": 5,
+      "train_cost_factor": 5.0
+    },
+    "Epinet n=50": {
+      "cold_warmup_s": 4.95340371131897,
+      "warm_total_s": 8.085586547851562,
+      "warm_per_sample_ms": 1.6171173095703124,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.05,
+      "note": "1.05x train cost: small MLP fine-tuned on top of frozen base"
+    },
+    "LLLA n=50": {
+      "cold_warmup_s": 6.001918792724609,
+      "warm_total_s": 38.39842081069946,
+      "warm_per_sample_ms": 7.679684162139893,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "head-only sampling on top of one feature extraction per batch"
+    },
+    "Mahalanobis": {
+      "cold_warmup_s": 3.298046827316284,
+      "warm_total_s": 3.674267053604126,
+      "warm_per_sample_ms": 0.7348534107208252,
+      "n_forward_passes": 1,
+      "train_cost_factor": 1.0,
+      "note": "feature extraction only; Mahalanobis distance is pure-numpy O(N*C*D)"
+    },
+    "MC Dropout n=32": {
+      "cold_warmup_s": 4.97181510925293,
+      "warm_total_s": 25.88395094871521,
+      "warm_per_sample_ms": 5.176790189743042,
+      "n_forward_passes": 32,
+      "train_cost_factor": 1.0
+    },
+    "PnC multi-block scale=7": {
+      "cold_warmup_s": 35.76520252227783,
+      "warm_total_s": 48.44033622741699,
+      "warm_per_sample_ms": 9.6880672454834,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "perturbation across all 8 residual blocks"
+    },
+    "PnC single-block scale=25": {
+      "cold_warmup_s": 5.736196041107178,
+      "warm_total_s": 37.092955350875854,
+      "warm_per_sample_ms": 7.418591070175171,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "ridge-regression correction per perturbed Conv1"
+    },
+    "ReAct+Energy": {
+      "cold_warmup_s": 0.39186930656433105,
+      "warm_total_s": 3.069406747817993,
+      "warm_per_sample_ms": 0.6138813495635986,
+      "n_forward_passes": 1,
+      "train_cost_factor": 1.0
+    },
+    "PreAct ResNet-18 / MSP / Energy": {
+      "cold_warmup_s": 3.607205390930176,
+      "warm_total_s": 3.083054780960083,
+      "warm_per_sample_ms": 0.6166109561920166,
+      "n_forward_passes": 1,
+      "train_cost_factor": 1.0
+    },
+    "SWAG n=50": {
+      "cold_warmup_s": 59.417330741882324,
+      "warm_total_s": 36.62664794921875,
+      "warm_per_sample_ms": 7.32532958984375,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "cached samples + BN refresh on 2048 ID train samples (one-time)"
+    }
+  },
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0
+}

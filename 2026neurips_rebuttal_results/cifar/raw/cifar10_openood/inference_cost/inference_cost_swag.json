@@ -1,0 +1,16 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "swag",
+  "methods": {
+    "SWAG n=50": {
+      "cold_warmup_s": 59.417330741882324,
+      "warm_total_s": 36.62664794921875,
+      "warm_per_sample_ms": 7.32532958984375,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "cached samples + BN refresh on 2048 ID train samples (one-time)"
+    }
+  }
+}

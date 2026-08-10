@@ -1,0 +1,2 @@
+[sweep] seed=2 factors=['scalex', 'boot']; 75 cells already done
+[sweep] skip scale_ps12.5 seed2 (cached)

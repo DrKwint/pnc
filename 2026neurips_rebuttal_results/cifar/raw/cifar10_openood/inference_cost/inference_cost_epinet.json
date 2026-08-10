@@ -1,0 +1,16 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "epinet",
+  "methods": {
+    "Epinet n=50": {
+      "cold_warmup_s": 4.95340371131897,
+      "warm_total_s": 8.085586547851562,
+      "warm_per_sample_ms": 1.6171173095703124,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.05,
+      "note": "1.05x train cost: small MLP fine-tuned on top of frozen base"
+    }
+  }
+}

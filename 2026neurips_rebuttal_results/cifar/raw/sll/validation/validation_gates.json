@@ -1,0 +1,47 @@
+{
+  "gate1_frozen_parity": {
+    "status": "PASS",
+    "base_logits_parity_max_abs": 0.00045,
+    "note": "float32; merge/unravel exact 0.0; BN use_running_average=True; weights unchanged"
+  },
+  "gate2_fisher_factor": {
+    "status": "PASS",
+    "float64_rel_err": 1.04e-15,
+    "float32_rel_err": 4.69e-07,
+    "note": "reused SCOD fisher_factor_test"
+  },
+  "gate3_selected_jacobian": {
+    "status": "PASS",
+    "float64_max_abs_diff": 0.0,
+    "note": "sel_jac == sliced full-pytree Jacobian, exact in float64"
+  },
+  "gate4_finite_difference": {
+    "status": "PASS",
+    "eps_1e-3": 1.13e-06,
+    "eps_1e-5": 1.13e-08,
+    "note": "J_S u converges (float64); nonlinear net only here"
+  },
+  "gate5_full_ggn_reference": {
+    "status": "PASS",
+    "ggn_rel_diff": 0.00086,
+    "note": "streamed F^T F == explicit sum J_S^T H J_S (float32)"
+  },
+  "gate6_posterior_covariance": {
+    "status": "PASS",
+    "cov_rel_err": 0.015,
+    "note": "empirical cov(20k) == (G+lambda I)^-1"
+  },
+  "gate7_predictive_covariance": {
+    "status": "PASS",
+    "predvar_rel_err": 0.024,
+    "note": "var(dz) == diag J_S(G+lambda I)^-1 J_S^T"
+  },
+  "gate8_last_layer_sanity": {
+    "status": "NOT_RUN",
+    "note": "deferred; existing LLLA uses a different (last-layer KFAC) approximation, not directly matched to a subnetwork full-cov GGN"
+  },
+  "gate9_ood_isolation": {
+    "status": "PASS",
+    "note": "selection/GGN/prior/temperature ID-only; OOD loaded only in run_eval after S,lambda,rule,T frozen"
+  }
+}

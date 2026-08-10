@@ -1,0 +1,37 @@
+{
+  "seed": 0,
+  "anchor": {
+    "dataset": "cifar10",
+    "epochs": 300,
+    "n_directions": 20,
+    "n_perturbations": 50,
+    "perturbation_sizes": [
+      25.0
+    ],
+    "subset_size": 1024,
+    "chunk_size": 1024,
+    "target_stage_idx": 3,
+    "target_block_idx": 0,
+    "random_directions": true,
+    "seed": 0,
+    "lambda_reg": 0.001,
+    "posthoc_calibrate": true,
+    "bootstrap_frac": 0.05
+  },
+  "n_sub": 2500,
+  "per_dataset_counts": {
+    "id_test": 2500,
+    "cifar100": 2500,
+    "tiny_imagenet": 2500,
+    "mnist": 2500,
+    "svhn": 2500,
+    "textures": 2500,
+    "places365": 2500
+  },
+  "shrinkage": 0.1,
+  "representation_primary": "block_input(stage3 GAP,256d)",
+  "representation_secondary": "penultimate(512d)",
+  "temperature_applied": false,
+  "runtime_sec": 182.4051058292389,
+  "calibration_images": 1024
+}

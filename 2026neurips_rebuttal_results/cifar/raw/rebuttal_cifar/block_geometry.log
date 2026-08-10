@@ -1,0 +1,10 @@
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[geo] s0b0: p=577 rows=1048576 rows/p=1817.3 numrank=577 rank/p=1.00 stable_rank=1.6 cond(G)=2.7e+05 cond(G+λ)=2.7e+05 λ_rel=1.7e-09
+[geo] s0b1: p=577 rows=1048576 rows/p=1817.3 numrank=577 rank/p=1.00 stable_rank=1.5 cond(G)=4.9e+05 cond(G+λ)=4.9e+05 λ_rel=1.1e-09
+[geo] s1b0: p=1153 rows=262144 rows/p=227.4 numrank=1153 rank/p=1.00 stable_rank=2.6 cond(G)=5.3e+04 cond(G+λ)=5.3e+04 λ_rel=6.7e-08
+[geo] s1b1: p=1153 rows=262144 rows/p=227.4 numrank=1153 rank/p=1.00 stable_rank=2.7 cond(G)=2.1e+04 cond(G+λ)=2.1e+04 λ_rel=5.3e-08
+[geo] s2b0: p=2305 rows=65536 rows/p=28.4 numrank=2301 rank/p=1.00 stable_rank=3.7 cond(G)=3.7e+18 cond(G+λ)=7.3e+08 λ_rel=8.6e-07
+[geo] s2b1: p=2305 rows=65536 rows/p=28.4 numrank=2305 rank/p=1.00 stable_rank=4.0 cond(G)=1.2e+04 cond(G+λ)=1.2e+04 λ_rel=6.8e-07
+[geo] s3b0: p=4609 rows=16384 rows/p=3.6 numrank=4609 rank/p=1.00 stable_rank=4.8 cond(G)=7.3e+10 cond(G+λ)=8.1e+07 λ_rel=1.2e-05
+[geo] s3b1: p=4609 rows=16384 rows/p=3.6 numrank=4609 rank/p=1.00 stable_rank=4.1 cond(G)=1.0e+05 cond(G+λ)=1.0e+05 λ_rel=7.1e-06
+[geo] wrote block_geometry_raw.json in 93s

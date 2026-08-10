@@ -1,0 +1,4 @@
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[bn] frozen               id_acc=94.50 id_nll=0.209 id_MI=0.0001 nearAUROC=92.00 farAUROC=95.30
+[bn] per_member_refresh   id_acc=94.75 id_nll=0.207 id_MI=0.0001 nearAUROC=91.74 farAUROC=95.05
+[bn] wrote bn_study_raw.json in 140s

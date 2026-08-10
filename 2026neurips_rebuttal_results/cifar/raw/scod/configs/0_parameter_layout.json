@@ -1,0 +1,638 @@
+{
+  "seed": 0,
+  "total_params": 11172170,
+  "num_leaves": 56,
+  "parameter_set": "all_logit_influencing (conv kernels + BN affine + fc weight/bias)",
+  "excluded": {
+    "reason": "BatchNorm running mean/var are frozen buffers (nnx.BatchStat), not differentiated; no integer counters / disconnected params",
+    "names": [
+      "*.bn*.mean",
+      "*.bn*.var",
+      "final_bn.mean",
+      "final_bn.var"
+    ]
+  },
+  "layout": [
+    {
+      "name": "fc.bias",
+      "shape": [
+        10
+      ],
+      "offset": 0,
+      "numel": 10,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "fc.kernel",
+      "shape": [
+        512,
+        10
+      ],
+      "offset": 10,
+      "numel": 5120,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "final_bn.bias",
+      "shape": [
+        512
+      ],
+      "offset": 5130,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "final_bn.scale",
+      "shape": [
+        512
+      ],
+      "offset": 5642,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.0.bn1.bias",
+      "shape": [
+        64
+      ],
+      "offset": 6154,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.0.bn1.scale",
+      "shape": [
+        64
+      ],
+      "offset": 6218,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.0.bn2.bias",
+      "shape": [
+        64
+      ],
+      "offset": 6282,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.0.bn2.scale",
+      "shape": [
+        64
+      ],
+      "offset": 6346,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.0.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 6410,
+      "numel": 36864,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.0.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 43274,
+      "numel": 36864,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.1.bn1.bias",
+      "shape": [
+        64
+      ],
+      "offset": 80138,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.1.bn1.scale",
+      "shape": [
+        64
+      ],
+      "offset": 80202,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.1.bn2.bias",
+      "shape": [
+        64
+      ],
+      "offset": 80266,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.1.bn2.scale",
+      "shape": [
+        64
+      ],
+      "offset": 80330,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.1.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 80394,
+      "numel": 36864,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage1.1.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 117258,
+      "numel": 36864,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.bn1.bias",
+      "shape": [
+        64
+      ],
+      "offset": 154122,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.bn1.scale",
+      "shape": [
+        64
+      ],
+      "offset": 154186,
+      "numel": 64,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.bn2.bias",
+      "shape": [
+        128
+      ],
+      "offset": 154250,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.bn2.scale",
+      "shape": [
+        128
+      ],
+      "offset": 154378,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        64,
+        128
+      ],
+      "offset": 154506,
+      "numel": 73728,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        128,
+        128
+      ],
+      "offset": 228234,
+      "numel": 147456,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.0.downsample.kernel",
+      "shape": [
+        1,
+        1,
+        64,
+        128
+      ],
+      "offset": 375690,
+      "numel": 8192,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.1.bn1.bias",
+      "shape": [
+        128
+      ],
+      "offset": 383882,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.1.bn1.scale",
+      "shape": [
+        128
+      ],
+      "offset": 384010,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.1.bn2.bias",
+      "shape": [
+        128
+      ],
+      "offset": 384138,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.1.bn2.scale",
+      "shape": [
+        128
+      ],
+      "offset": 384266,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.1.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        128,
+        128
+      ],
+      "offset": 384394,
+      "numel": 147456,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage2.1.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        128,
+        128
+      ],
+      "offset": 531850,
+      "numel": 147456,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.bn1.bias",
+      "shape": [
+        128
+      ],
+      "offset": 679306,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.bn1.scale",
+      "shape": [
+        128
+      ],
+      "offset": 679434,
+      "numel": 128,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.bn2.bias",
+      "shape": [
+        256
+      ],
+      "offset": 679562,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.bn2.scale",
+      "shape": [
+        256
+      ],
+      "offset": 679818,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        128,
+        256
+      ],
+      "offset": 680074,
+      "numel": 294912,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        256,
+        256
+      ],
+      "offset": 974986,
+      "numel": 589824,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.0.downsample.kernel",
+      "shape": [
+        1,
+        1,
+        128,
+        256
+      ],
+      "offset": 1564810,
+      "numel": 32768,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.1.bn1.bias",
+      "shape": [
+        256
+      ],
+      "offset": 1597578,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.1.bn1.scale",
+      "shape": [
+        256
+      ],
+      "offset": 1597834,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.1.bn2.bias",
+      "shape": [
+        256
+      ],
+      "offset": 1598090,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.1.bn2.scale",
+      "shape": [
+        256
+      ],
+      "offset": 1598346,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.1.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        256,
+        256
+      ],
+      "offset": 1598602,
+      "numel": 589824,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage3.1.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        256,
+        256
+      ],
+      "offset": 2188426,
+      "numel": 589824,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.bn1.bias",
+      "shape": [
+        256
+      ],
+      "offset": 2778250,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.bn1.scale",
+      "shape": [
+        256
+      ],
+      "offset": 2778506,
+      "numel": 256,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.bn2.bias",
+      "shape": [
+        512
+      ],
+      "offset": 2778762,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.bn2.scale",
+      "shape": [
+        512
+      ],
+      "offset": 2779274,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        256,
+        512
+      ],
+      "offset": 2779786,
+      "numel": 1179648,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        512,
+        512
+      ],
+      "offset": 3959434,
+      "numel": 2359296,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.0.downsample.kernel",
+      "shape": [
+        1,
+        1,
+        256,
+        512
+      ],
+      "offset": 6318730,
+      "numel": 131072,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.1.bn1.bias",
+      "shape": [
+        512
+      ],
+      "offset": 6449802,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.1.bn1.scale",
+      "shape": [
+        512
+      ],
+      "offset": 6450314,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.1.bn2.bias",
+      "shape": [
+        512
+      ],
+      "offset": 6450826,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.1.bn2.scale",
+      "shape": [
+        512
+      ],
+      "offset": 6451338,
+      "numel": 512,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.1.conv1.kernel",
+      "shape": [
+        3,
+        3,
+        512,
+        512
+      ],
+      "offset": 6451850,
+      "numel": 2359296,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stage4.1.conv2.kernel",
+      "shape": [
+        3,
+        3,
+        512,
+        512
+      ],
+      "offset": 8811146,
+      "numel": 2359296,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    },
+    {
+      "name": "stem.kernel",
+      "shape": [
+        3,
+        3,
+        3,
+        64
+      ],
+      "offset": 11170442,
+      "numel": 1728,
+      "included": true,
+      "reason": "influences logits (conv kernel / BN affine / fc weight-bias)"
+    }
+  ]
+}

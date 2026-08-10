@@ -1,0 +1,16 @@
+{
+  "P": 11172170,
+  "k_max": 20,
+  "T": 124,
+  "C": 10,
+  "block_cols": 31,
+  "sketch_bytes": 5541396320,
+  "basis_bytes": 893773600,
+  "est_peak_gpu_bytes": 4602934040,
+  "est_peak_cpu_bytes": 7135169920.0,
+  "available_cpu_gb": 13.72,
+  "gpu_total_mb": 8151.0,
+  "est_peak_gpu_gb": 4.6,
+  "est_peak_cpu_gb": 7.14,
+  "est_sketch_gb": 5.54
+}

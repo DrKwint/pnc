@@ -1,0 +1,12 @@
+method,ms_per_sample,throughput_sps,n_forward_passes,train_cost_factor,batch_size,n_bench
+PreAct ResNet-18 / MSP / Energy,0.617,1621.8,1,1.0,256,5000
+ReAct+Energy,0.614,1629.0,1,1.0,256,5000
+Mahalanobis,0.735,1360.8,1,1.0,256,5000
+Epinet n=50,1.617,618.4,50,1.05,256,5000
+MC Dropout n=32,5.177,193.2,32,1.0,256,5000
+SWAG n=50,7.325,136.5,50,1.0,256,5000
+LLLA n=50,7.68,130.2,50,1.0,256,5000
+PnC single-block scale=25,7.419,134.8,50,1.0,256,5000
+PnC multi-block scale=7,9.688,103.2,50,1.0,256,5000
+Deep Ensemble n=5,1.338,747.4,5,5.0,256,5000
+Deep Ensemble n=50 (matched-M),7.261,137.7,50,50.0,256,5000

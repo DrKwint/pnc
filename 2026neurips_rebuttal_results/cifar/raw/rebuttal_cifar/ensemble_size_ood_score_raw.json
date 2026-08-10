@@ -1,0 +1,217 @@
+{
+  "meta": {
+    "seed": 0,
+    "block": "s3b0",
+    "scale": 25.0,
+    "M_pool": 100,
+    "n_eval": 800,
+    "fitted_T": 0.7519966570712966,
+    "near": [
+      "cifar100",
+      "tiny_imagenet"
+    ],
+    "far": [
+      "mnist",
+      "svhn",
+      "textures",
+      "places365"
+    ],
+    "runtime_sec": 190.99933171272278
+  },
+  "ensemble_size_curve": [
+    {
+      "M": 2,
+      "near_auroc_mean": 90.79415624999999,
+      "near_auroc_std": 0.4115463864774605,
+      "far_auroc_mean": 95.144125,
+      "far_auroc_std": 0.18282875295005954,
+      "id_pred_ent": 0.09043999016284943,
+      "id_MI": 0.013974232599139214,
+      "id_logit_cov_tr": 2.3249853606309907
+    },
+    {
+      "M": 4,
+      "near_auroc_mean": 91.51078125,
+      "near_auroc_std": 0.3485648134841168,
+      "far_auroc_mean": 95.82574218750001,
+      "far_auroc_std": 0.1885363854218337,
+      "id_pred_ent": 0.0967191606760025,
+      "id_MI": 0.021840060129761696,
+      "id_logit_cov_tr": 2.2796771755828305
+    },
+    {
+      "M": 8,
+      "near_auroc_mean": 91.89831250000002,
+      "near_auroc_std": 0.18159268251708163,
+      "far_auroc_mean": 96.1894765625,
+      "far_auroc_std": 0.2758536650233856,
+      "id_pred_ent": 0.1014593243598938,
+      "id_MI": 0.02652670443058014,
+      "id_logit_cov_tr": 2.238038265494126
+    },
+    {
+      "M": 16,
+      "near_auroc_mean": 92.22398437500001,
+      "near_auroc_std": 0.15833094759030367,
+      "far_auroc_mean": 96.445125,
+      "far_auroc_std": 0.18181068047602608,
+      "id_pred_ent": 0.10392598807811737,
+      "id_MI": 0.02929096482694149,
+      "id_logit_cov_tr": 2.248257425956617
+    },
+    {
+      "M": 32,
+      "near_auroc_mean": 92.27290624999999,
+      "near_auroc_std": 0.07103482104419712,
+      "far_auroc_mean": 96.51980468750001,
+      "far_auroc_std": 0.09012731744376273,
+      "id_pred_ent": 0.10585898160934448,
+      "id_MI": 0.031096911057829857,
+      "id_logit_cov_tr": 2.2538478800022643
+    },
+    {
+      "M": 50,
+      "near_auroc_mean": 92.29384375000001,
+      "near_auroc_std": 0.065276331941362,
+      "far_auroc_mean": 96.5398046875,
+      "far_auroc_std": 0.043911024818216904,
+      "id_pred_ent": 0.10684375464916229,
+      "id_MI": 0.03179576247930527,
+      "id_logit_cov_tr": 2.252295320585919
+    },
+    {
+      "M": 64,
+      "near_auroc_mean": 92.33062499999998,
+      "near_auroc_std": 0.031554222305619904,
+      "far_auroc_mean": 96.5527890625,
+      "far_auroc_std": 0.022188883649637593,
+      "id_pred_ent": 0.1070210188627243,
+      "id_MI": 0.03185082972049713,
+      "id_logit_cov_tr": 2.2493957719904443
+    },
+    {
+      "M": 100,
+      "near_auroc_mean": 92.358671875,
+      "near_auroc_std": 0.0,
+      "far_auroc_mean": 96.5713671875,
+      "far_auroc_std": 0.0,
+      "id_pred_ent": 0.10709274560213089,
+      "id_MI": 0.03208783268928528,
+      "id_logit_cov_tr": 2.2509953424795146
+    }
+  ],
+  "ood_score_analysis": {
+    "T1": {
+      "predictive_entropy": {
+        "near_auroc": 92.492890625,
+        "near_fpr95": 30.75,
+        "far_auroc": 96.70015625,
+        "far_fpr95": 12.90625
+      },
+      "mutual_information": {
+        "near_auroc": 92.224609375,
+        "near_fpr95": 29.1875,
+        "far_auroc": 96.1791015625,
+        "far_fpr95": 12.875
+      },
+      "expected_entropy": {
+        "near_auroc": 92.46484375,
+        "near_fpr95": 31.0,
+        "far_auroc": 96.65,
+        "far_fpr95": 13.09375
+      },
+      "max_softmax_unc": {
+        "near_auroc": 92.053515625,
+        "near_fpr95": 30.75,
+        "far_auroc": 96.01843749999999,
+        "far_fpr95": 13.6875
+      },
+      "variation_ratio": {
+        "near_auroc": 86.318359375,
+        "near_fpr95": 100.0,
+        "far_auroc": 91.5123828125,
+        "far_fpr95": 55.78125
+      },
+      "mean_member_kl": {
+        "near_auroc": 92.22453125000001,
+        "near_fpr95": 29.1875,
+        "far_auroc": 96.1791015625,
+        "far_fpr95": 12.875
+      },
+      "logit_cov_tr": {
+        "near_auroc": 92.775546875,
+        "near_fpr95": 28.25,
+        "far_auroc": 96.7362890625,
+        "far_fpr95": 11.59375
+      },
+      "prob_cov_tr": {
+        "near_auroc": 91.24648437500001,
+        "near_fpr95": 29.5,
+        "far_auroc": 94.66484374999999,
+        "far_fpr95": 14.6875
+      },
+      "energy": {
+        "near_auroc": 92.35453125,
+        "near_fpr95": 32.5,
+        "far_auroc": 96.731484375,
+        "far_fpr95": 13.75
+      }
+    },
+    "Tfit": {
+      "predictive_entropy": {
+        "near_auroc": 92.339765625,
+        "near_fpr95": 31.0625,
+        "far_auroc": 96.508515625,
+        "far_fpr95": 13.125
+      },
+      "mutual_information": {
+        "near_auroc": 92.101640625,
+        "near_fpr95": 29.1875,
+        "far_auroc": 96.0540625,
+        "far_fpr95": 13.6875
+      },
+      "expected_entropy": {
+        "near_auroc": 92.35484375,
+        "near_fpr95": 31.0625,
+        "far_auroc": 96.51542968750002,
+        "far_fpr95": 13.25
+      },
+      "max_softmax_unc": {
+        "near_auroc": 91.91624999999999,
+        "near_fpr95": 30.6875,
+        "far_auroc": 95.817421875,
+        "far_fpr95": 13.8125
+      },
+      "variation_ratio": {
+        "near_auroc": 86.318359375,
+        "near_fpr95": 100.0,
+        "far_auroc": 91.5123828125,
+        "far_fpr95": 55.78125
+      },
+      "mean_member_kl": {
+        "near_auroc": 92.101640625,
+        "near_fpr95": 29.1875,
+        "far_auroc": 96.0540625,
+        "far_fpr95": 13.6875
+      },
+      "logit_cov_tr": {
+        "near_auroc": 92.775546875,
+        "near_fpr95": 28.25,
+        "far_auroc": 96.7362890625,
+        "far_fpr95": 11.59375
+      },
+      "prob_cov_tr": {
+        "near_auroc": 91.342265625,
+        "near_fpr95": 29.1875,
+        "far_auroc": 94.864296875,
+        "far_fpr95": 15.0
+      },
+      "energy": {
+        "near_auroc": 92.35453125,
+        "near_fpr95": 32.5,
+        "far_auroc": 96.731484375,
+        "far_fpr95": 13.75
+      }
+    }
+  }
+}

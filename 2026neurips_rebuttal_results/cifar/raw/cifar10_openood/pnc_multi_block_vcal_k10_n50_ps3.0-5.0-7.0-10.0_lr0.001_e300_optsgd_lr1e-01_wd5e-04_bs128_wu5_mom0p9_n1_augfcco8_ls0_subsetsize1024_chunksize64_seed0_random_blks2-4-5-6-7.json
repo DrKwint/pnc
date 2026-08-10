@@ -1,0 +1,62 @@
+{
+  "3.0": {
+    "accuracy": 0.9585999846458435,
+    "brier": 0.062292106449604034,
+    "entropy": 0.12919999659061432,
+    "nll": 0.13628137111663818,
+    "ece": 0.008957203739881516,
+    "eval_time": 73.20080852508545,
+    "posthoc_temperature": 1.2754097696359987,
+    "train_time": 8.267333984375,
+    "diag_calib_raw_shift_mean": 0.9027961566118335,
+    "diag_calib_raw_shift_std": 0.03198741056808925,
+    "diag_calib_corr_shift_mean": 0.5637779620715544,
+    "diag_calib_corr_shift_std": 0.0026208417351499054,
+    "diag_calib_reduction_pct": 37.55202013854695
+  },
+  "5.0": {
+    "accuracy": 0.9572999477386475,
+    "brier": 0.0628480464220047,
+    "entropy": 0.12654009461402893,
+    "nll": 0.13536138832569122,
+    "ece": 0.008991113522648812,
+    "eval_time": 71.46175336837769,
+    "posthoc_temperature": 1.2324373146519545,
+    "train_time": 8.267333984375,
+    "diag_calib_raw_shift_mean": 1.642702579062377,
+    "diag_calib_raw_shift_std": 0.07617481242781787,
+    "diag_calib_corr_shift_mean": 0.8821753847109595,
+    "diag_calib_corr_shift_std": 0.0042387379529456115,
+    "diag_calib_reduction_pct": 46.29731541458034
+  },
+  "7.0": {
+    "accuracy": 0.9560999870300293,
+    "brier": 0.06464051455259323,
+    "entropy": 0.12778456509113312,
+    "nll": 0.13693396747112274,
+    "ece": 0.0074441525369882584,
+    "eval_time": 71.19258737564087,
+    "posthoc_temperature": 1.1857819831469607,
+    "train_time": 8.267333984375,
+    "diag_calib_raw_shift_mean": 2.5524375208809387,
+    "diag_calib_raw_shift_std": 0.13173807436353474,
+    "diag_calib_corr_shift_mean": 1.1547067756508544,
+    "diag_calib_corr_shift_std": 0.005790782986336992,
+    "diag_calib_reduction_pct": 54.76062523748394
+  },
+  "10.0": {
+    "accuracy": 0.9530999660491943,
+    "brier": 0.06999655067920685,
+    "entropy": 0.13718879222869873,
+    "nll": 0.14537735283374786,
+    "ece": 0.005839111536741257,
+    "eval_time": 71.01023030281067,
+    "posthoc_temperature": 1.108909349446781,
+    "train_time": 8.267333984375,
+    "diag_calib_raw_shift_mean": 4.237579443353333,
+    "diag_calib_raw_shift_std": 0.2259168080305871,
+    "diag_calib_corr_shift_mean": 1.4857350573582662,
+    "diag_calib_corr_shift_std": 0.007702707291310962,
+    "diag_calib_reduction_pct": 64.93906303778448
+  }
+}

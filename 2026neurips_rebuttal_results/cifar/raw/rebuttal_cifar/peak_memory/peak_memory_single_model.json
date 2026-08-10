@@ -1,0 +1,18 @@
+{
+  "method": "single_model",
+  "note": "single forward pass",
+  "n_forward_passes": 1,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 93.15771484375,
+  "resident_after_build_mib": 44.1484375,
+  "predict_peak_mib": 2469.6494140625,
+  "in_use_after_predict_mib": 44.1484375,
+  "cold_warmup_s": 4.067010402679443,
+  "warm_total_s": 3.039424180984497,
+  "warm_per_sample_ms": 0.6078848361968994
+}

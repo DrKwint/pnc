@@ -1,0 +1,84 @@
+[preflight] {"P": 11172170, "k_max": 20, "T": 124, "est_sketch_gb": 5.54, "est_peak_cpu_gb": 7.14, "est_peak_gpu_gb": 4.6, "available_cpu_gb": 13.72, "gpu_total_mb": 8151.0}
+E0726 17:59:04.065964    5188 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:04.546774    5194 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:05.018938    5193 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[build] seed0 tempered/base100000 sketch_seed=100000 T_temp=1.3120 N=1024 T=124 k=20
+E0726 17:59:11.426026    5191 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:11.667982    5187 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:11.836525    5188 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:11.979450    5189 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:12.209702    5186 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:12.305000    5187 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:12.478523    5188 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:12.583444    5193 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:12.709529    5192 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:12.916726    5186 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0726 17:59:13.077388    5191 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+  [sketch] block 1/4 ex 0/1024 (5s)
+  [sketch] block 1/4 ex 256/1024 (14s)
+  [sketch] block 1/4 ex 512/1024 (23s)
+  [sketch] block 1/4 ex 768/1024 (33s)
+  [sketch] column-block 1/4 done (46s)
+  [sketch] column-block 2/4 done (86s)
+  [sketch] column-block 3/4 done (125s)
+  [sketch] column-block 4/4 done (165s)
+[build] seed0 untempered sketch_seed=100000 T_temp=1.0000 N=1024 T=124 k=20
+  [sketch] block 1/4 ex 0/1024 (2s)
+  [sketch] block 1/4 ex 256/1024 (11s)
+  [sketch] block 1/4 ex 512/1024 (20s)
+  [sketch] block 1/4 ex 768/1024 (30s)
+  [sketch] column-block 1/4 done (43s)
+  [sketch] column-block 2/4 done (83s)
+  [sketch] column-block 3/4 done (122s)
+  [sketch] column-block 4/4 done (162s)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[build] seed0 DONE acc=95.77 T=1.3120 immutable=True (349s)
+[preflight] {"P": 11172170, "k_max": 20, "T": 124, "est_sketch_gb": 5.54, "est_peak_cpu_gb": 7.14, "est_peak_gpu_gb": 4.6, "available_cpu_gb": 10.75, "gpu_total_mb": 8151.0}
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[build] seed1 tempered/base100000 sketch_seed=100001 T_temp=1.3595 N=1024 T=124 k=20
+  [sketch] block 1/4 ex 0/1024 (2s)
+  [sketch] block 1/4 ex 256/1024 (11s)
+  [sketch] block 1/4 ex 512/1024 (21s)
+  [sketch] block 1/4 ex 768/1024 (30s)
+  [sketch] column-block 1/4 done (43s)
+  [sketch] column-block 2/4 done (83s)
+  [sketch] column-block 3/4 done (123s)
+  [sketch] column-block 4/4 done (162s)
+[build] seed1 untempered sketch_seed=100001 T_temp=1.0000 N=1024 T=124 k=20
+  [sketch] block 1/4 ex 0/1024 (2s)
+  [sketch] block 1/4 ex 256/1024 (11s)
+  [sketch] block 1/4 ex 512/1024 (21s)
+  [sketch] block 1/4 ex 768/1024 (30s)
+  [sketch] column-block 1/4 done (43s)
+  [sketch] column-block 2/4 done (83s)
+  [sketch] column-block 3/4 done (123s)
+  [sketch] column-block 4/4 done (163s)
+[build] seed1 DONE acc=95.90 T=1.3595 immutable=True (338s)
+[preflight] {"P": 11172170, "k_max": 20, "T": 124, "est_sketch_gb": 5.54, "est_peak_cpu_gb": 7.14, "est_peak_gpu_gb": 4.6, "available_cpu_gb": 10.68, "gpu_total_mb": 8151.0}
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[build] seed2 tempered/base100000 sketch_seed=100002 T_temp=1.3291 N=1024 T=124 k=20
+  [sketch] block 1/4 ex 0/1024 (2s)
+  [sketch] block 1/4 ex 256/1024 (11s)
+  [sketch] block 1/4 ex 512/1024 (21s)
+  [sketch] block 1/4 ex 768/1024 (30s)
+  [sketch] column-block 1/4 done (43s)
+  [sketch] column-block 2/4 done (84s)
+  [sketch] column-block 3/4 done (123s)
+  [sketch] column-block 4/4 done (163s)
+[build] seed2 untempered sketch_seed=100002 T_temp=1.0000 N=1024 T=124 k=20
+  [sketch] block 1/4 ex 0/1024 (2s)
+  [sketch] block 1/4 ex 256/1024 (11s)
+  [sketch] block 1/4 ex 512/1024 (21s)
+  [sketch] block 1/4 ex 768/1024 (31s)
+  [sketch] column-block 1/4 done (44s)
+  [sketch] column-block 2/4 done (84s)
+  [sketch] column-block 3/4 done (124s)
+  [sketch] column-block 4/4 done (163s)
+[build] seed2 DONE acc=95.55 T=1.3291 immutable=True (338s)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[build] wrote MANIFEST.json
+[build] ALL SEEDS DONE: {"0": {"P": 11172170, "temperature": 1.3120340757619302, "immutable": true, "id_test_acc": 95.77, "build_seconds": 349.1}, "1": {"P": 11172170, "temperature": 1.3594659671845, "immutable": true, "id_test_acc": 95.89999999999999, "build_seconds": 337.5}, "2": {"P": 11172170, "temperature": 1.3291347716148063, "immutable": true, "id_test_acc": 95.55, "build_seconds": 338.5}}

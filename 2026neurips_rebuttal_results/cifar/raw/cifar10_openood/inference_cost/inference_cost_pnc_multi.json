@@ -1,0 +1,16 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "pnc_multi",
+  "methods": {
+    "PnC multi-block scale=7": {
+      "cold_warmup_s": 35.76520252227783,
+      "warm_total_s": 48.44033622741699,
+      "warm_per_sample_ms": 9.6880672454834,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "perturbation across all 8 residual blocks"
+    }
+  }
+}

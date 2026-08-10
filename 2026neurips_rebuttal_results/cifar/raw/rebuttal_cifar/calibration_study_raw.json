@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "seed": 0,
+    "block": "s3b0",
+    "M": 50,
+    "sizes": [
+      128,
+      256,
+      512
+    ],
+    "methods": [
+      "random",
+      "class_balanced",
+      "kcenter"
+    ],
+    "runtime_sec": 431.7398965358734
+  },
+  "results": [
+    {
+      "size": 128,
+      "method": "random",
+      "id_acc": 95.125,
+      "id_nll": 0.1932554841041565,
+      "id_MI": 0.08683428168296814,
+      "near_auroc": 91.985703125,
+      "far_auroc": 94.9020703125
+    },
+    {
+      "size": 128,
+      "method": "class_balanced",
+      "id_acc": 95.125,
+      "id_nll": 0.19579888880252838,
+      "id_MI": 0.08929985761642456,
+      "near_auroc": 92.345546875,
+      "far_auroc": 95.91000000000001
+    },
+    {
+      "size": 128,
+      "method": "kcenter",
+      "id_acc": 94.875,
+      "id_nll": 0.21818454563617706,
+      "id_MI": 0.10910609364509583,
+      "near_auroc": 92.039296875,
+      "far_auroc": 95.585234375
+    },
+    {
+      "size": 256,
+      "method": "random",
+      "id_acc": 9.5,
+      "id_nll": 2.1810054779052734,
+      "id_MI": 0.3459164500236511,
+      "near_auroc": 44.378359375,
+      "far_auroc": 62.778085937499995
+    },
+    {
+      "size": 256,
+      "method": "class_balanced",
+      "id_acc": 10.5,
+      "id_nll": 1.8966882228851318,
+      "id_MI": 0.39005815982818604,
+      "near_auroc": 49.285390625000005,
+      "far_auroc": 60.63859375
+    },
+    {
+      "size": 256,
+      "method": "kcenter",
+      "id_acc": 9.5,
+      "id_nll": 2.093623161315918,
+      "id_MI": 0.3697783648967743,
+      "near_auroc": 46.27078125,
+      "far_auroc": 61.530625
+    },
+    {
+      "size": 512,
+      "method": "random",
+      "id_acc": 95.5,
+      "id_nll": 0.14927208423614502,
+      "id_MI": 0.01596541330218315,
+      "near_auroc": 91.92328125,
+      "far_auroc": 95.2398828125
+    },
+    {
+      "size": 512,
+      "method": "class_balanced",
+      "id_acc": 95.5,
+      "id_nll": 0.14565972983837128,
+      "id_MI": 0.016428744420409203,
+      "near_auroc": 91.768671875,
+      "far_auroc": 95.2141015625
+    },
+    {
+      "size": 512,
+      "method": "kcenter",
+      "id_acc": 94.875,
+      "id_nll": 0.1462426334619522,
+      "id_MI": 0.015980610623955727,
+      "near_auroc": 91.8725,
+      "far_auroc": 95.31515625
+    }
+  ]
+}

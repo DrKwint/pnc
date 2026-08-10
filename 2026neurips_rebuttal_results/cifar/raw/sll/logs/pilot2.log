@@ -1,0 +1,33 @@
+E0727 12:02:06.940692   59577 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 12:02:07.263639   59583 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 12:02:07.621592   59580 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+  [diag-ggn] 0/1024 (4s)
+  [diag-ggn] 256/1024 (8s)
+  [diag-ggn] 512/1024 (11s)
+  [diag-ggn] 768/1024 (14s)
+[select] seed0 S=512 backbone: zero-curv frac=0.000 leaves touched=3 diag[min,med,max]=[9.73e-04,1.03e-02,1.07e-01]
+  [dense-ggn] 0/1024 (4s)
+  [dense-ggn] 256/1024 (6s)
+  [dense-ggn] 512/1024 (9s)
+  [dense-ggn] 768/1024 (11s)
+E0727 12:03:21.887927   59578 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 12:03:22.545701   59576 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 12:03:22.864604   59584 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[posterior] seed0 S=512: lam*=0.121 (=lam_full 2.63e+03) T*=0.609 valNLL=0.1769 valAcc=95.84 eig[min,max]=[1.32e-06,1.26e+00] (85s)
+[select] seed0 reuse cached diag GGN
+[select] seed0 S=1024 backbone: zero-curv frac=0.000 leaves touched=3 diag[min,med,max]=[7.77e-04,9.39e-03,2.62e-01]
+  [dense-ggn] 0/1024 (2s)
+  [dense-ggn] 256/1024 (5s)
+  [dense-ggn] 512/1024 (9s)
+  [dense-ggn] 768/1024 (11s)
+[posterior] seed0 S=1024: lam*=0.000951 (=lam_full 10.4) T*=0.123 valNLL=0.1795 valAcc=95.56 eig[min,max]=[5.52e-07,1.90e+00] (65s)
+[select] seed0 reuse cached diag GGN
+[select] seed0 S=2048 backbone: zero-curv frac=0.000 leaves touched=4 diag[min,med,max]=[7.77e-04,9.63e-03,2.64e-01]
+  [dense-ggn] 0/1024 (2s)
+  [dense-ggn] 256/1024 (6s)
+  [dense-ggn] 512/1024 (12s)
+  [dense-ggn] 768/1024 (17s)
+[posterior] seed0 S=2048: lam*=0.000716 (=lam_full 3.91) T*=0.073 valNLL=0.1687 valAcc=95.84 eig[min,max]=[3.00e-07,4.31e+00] (77s)
+[pilot] chosen S=2048  {"512": 0.1769, "1024": 0.1795, "2048": 0.1687}

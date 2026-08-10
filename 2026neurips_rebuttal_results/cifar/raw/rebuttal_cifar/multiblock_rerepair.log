@@ -1,0 +1,6 @@
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[rr] built corrections (21s)
+[rr] id_test   (id) S_median=0.963 suppression=3.7% r_before=0.605 r_after=0.607
+[rr] cifar100  (near) S_median=1.356 suppression=-35.6% r_before=0.408 r_after=0.550
+[rr] svhn      (far) S_median=1.598 suppression=-59.8% r_before=0.301 r_after=0.487
+[rr] S_ID=0.963 < S_near=1.356, S_far=1.598 ? asymmetric_rerepair=True (24s)

@@ -1,0 +1,45 @@
+{
+  "seed": 0,
+  "tag": "backbone",
+  "diag_seconds": 17.2,
+  "S": 2048,
+  "include_fc": false,
+  "selection": "predictive_variance_contribution",
+  "lambda0": 0.0010720040882006288,
+  "n_candidates": 11167040,
+  "n_zero_curvature_candidates": 586817,
+  "zero_curvature_candidate_fraction": 0.052549019256669625,
+  "n_zero_influence_candidates": 574562,
+  "zero_influence_excluded": true,
+  "selected_zero_curvature_fraction": 0.0,
+  "selected_diag_min": 0.0007774427649565041,
+  "selected_diag_max": 0.26388251781463623,
+  "selected_diag_median": 0.009629656560719013,
+  "selected_R_median": 100.15249633789062,
+  "selected_score_min": 8329.4755859375,
+  "selected_score_max": 17505.048828125,
+  "per_leaf": {
+    "stage4.0.conv2.kernel": {
+      "selected": 86,
+      "leaf_numel": 2359296,
+      "pct": 0.0036
+    },
+    "stage4.0.downsample.kernel": {
+      "selected": 1,
+      "leaf_numel": 131072,
+      "pct": 0.0008
+    },
+    "stage4.1.conv1.kernel": {
+      "selected": 1894,
+      "leaf_numel": 2359296,
+      "pct": 0.0803
+    },
+    "stage4.1.conv2.kernel": {
+      "selected": 67,
+      "leaf_numel": 2359296,
+      "pct": 0.0028
+    }
+  },
+  "num_leaves_touched": 4,
+  "contains_fc": false
+}

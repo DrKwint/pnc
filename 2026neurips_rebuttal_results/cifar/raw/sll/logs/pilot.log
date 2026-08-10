@@ -1,0 +1,39 @@
+E0727 11:41:28.987482   55944 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:29.215621   55942 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:29.353290   55951 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:29.507412   55946 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:29.733094   55943 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:29.914709   55947 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:30.058992   55942 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:30.178703   55950 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:41:30.479591   55945 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+  [diag-ggn] 0/1024 (5s)
+  [diag-ggn] 256/1024 (7s)
+  [diag-ggn] 512/1024 (9s)
+  [diag-ggn] 768/1024 (12s)
+[select] seed0 S=512 backbone: zero-curv frac=0.000 leaves touched=1 diag[min,med,max]=[1.40e-45,1.40e-45,1.40e-45]
+  [dense-ggn] 0/1024 (2s)
+  [dense-ggn] 256/1024 (4s)
+  [dense-ggn] 512/1024 (6s)
+  [dense-ggn] 768/1024 (9s)
+E0727 11:42:41.017408   55944 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:42:41.700796   55947 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E0727 11:42:41.865667   55949 cuda_timer.cc:87] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[posterior] seed0 S=512: lam*=1e-06 (=lam_full 0.0218) T*=1.312 valNLL=0.1327 valAcc=96.00 eig[min,max]=[6.70e-47,1.76e-42] (83s)
+[select] seed0 reuse cached diag GGN
+[select] seed0 S=1024 backbone: zero-curv frac=0.000 leaves touched=1 diag[min,med,max]=[1.40e-45,1.40e-45,1.40e-45]
+  [dense-ggn] 0/1024 (2s)
+  [dense-ggn] 256/1024 (5s)
+  [dense-ggn] 512/1024 (7s)
+  [dense-ggn] 768/1024 (9s)
+[posterior] seed0 S=1024: lam*=1e-06 (=lam_full 0.0109) T*=1.312 valNLL=0.1327 valAcc=96.00 eig[min,max]=[1.43e-47,3.36e-42] (66s)
+[select] seed0 reuse cached diag GGN
+[select] seed0 S=2048 backbone: zero-curv frac=0.000 leaves touched=1 diag[min,med,max]=[1.40e-45,1.40e-45,4.20e-45]
+  [dense-ggn] 0/1024 (2s)
+  [dense-ggn] 256/1024 (6s)
+  [dense-ggn] 512/1024 (9s)
+  [dense-ggn] 768/1024 (12s)
+[posterior] seed0 S=2048: lam*=1e-06 (=lam_full 0.00546) T*=1.312 valNLL=0.1327 valAcc=96.00 eig[min,max]=[1.12e-48,7.23e-42] (73s)
+[pilot] chosen S=512  {"512": 0.1327, "1024": 0.1327, "2048": 0.1327}

@@ -1,0 +1,19 @@
+{
+  "accuracy": 0.9580999612808228,
+  "brier": 0.06250176578760147,
+  "entropy": 0.13401129841804504,
+  "nll": 0.1414519101381302,
+  "ece": 0.009642435498535632,
+  "eval_time": 12.748903751373291,
+  "posthoc_temperature": 1.688508689651698,
+  "train_time": 31.347312927246094,
+  "epinet_config": {
+    "index_dim": 8,
+    "hiddens": [
+      50,
+      50
+    ],
+    "prior_scale": 1.0,
+    "epinet_epochs": 100
+  }
+}

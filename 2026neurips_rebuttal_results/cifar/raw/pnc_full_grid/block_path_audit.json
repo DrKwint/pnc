@@ -1,0 +1,140 @@
+[
+  {
+    "label": "s1b0",
+    "stage_idx": 1,
+    "block_idx": 0,
+    "flax_module": "stage2",
+    "conv1_path": "stage2.0.conv1.kernel",
+    "conv1_shape": [
+      3,
+      3,
+      64,
+      128
+    ],
+    "conv2_path": "stage2.0.conv2.kernel",
+    "conv2_shape": [
+      3,
+      3,
+      128,
+      128
+    ],
+    "in_channels": 64,
+    "out_channels": 128,
+    "has_downsample": true
+  },
+  {
+    "label": "s1b1",
+    "stage_idx": 1,
+    "block_idx": 1,
+    "flax_module": "stage2",
+    "conv1_path": "stage2.1.conv1.kernel",
+    "conv1_shape": [
+      3,
+      3,
+      128,
+      128
+    ],
+    "conv2_path": "stage2.1.conv2.kernel",
+    "conv2_shape": [
+      3,
+      3,
+      128,
+      128
+    ],
+    "in_channels": 128,
+    "out_channels": 128,
+    "has_downsample": false
+  },
+  {
+    "label": "s2b0",
+    "stage_idx": 2,
+    "block_idx": 0,
+    "flax_module": "stage3",
+    "conv1_path": "stage3.0.conv1.kernel",
+    "conv1_shape": [
+      3,
+      3,
+      128,
+      256
+    ],
+    "conv2_path": "stage3.0.conv2.kernel",
+    "conv2_shape": [
+      3,
+      3,
+      256,
+      256
+    ],
+    "in_channels": 128,
+    "out_channels": 256,
+    "has_downsample": true
+  },
+  {
+    "label": "s2b1",
+    "stage_idx": 2,
+    "block_idx": 1,
+    "flax_module": "stage3",
+    "conv1_path": "stage3.1.conv1.kernel",
+    "conv1_shape": [
+      3,
+      3,
+      256,
+      256
+    ],
+    "conv2_path": "stage3.1.conv2.kernel",
+    "conv2_shape": [
+      3,
+      3,
+      256,
+      256
+    ],
+    "in_channels": 256,
+    "out_channels": 256,
+    "has_downsample": false
+  },
+  {
+    "label": "s3b0",
+    "stage_idx": 3,
+    "block_idx": 0,
+    "flax_module": "stage4",
+    "conv1_path": "stage4.0.conv1.kernel",
+    "conv1_shape": [
+      3,
+      3,
+      256,
+      512
+    ],
+    "conv2_path": "stage4.0.conv2.kernel",
+    "conv2_shape": [
+      3,
+      3,
+      512,
+      512
+    ],
+    "in_channels": 256,
+    "out_channels": 512,
+    "has_downsample": true
+  },
+  {
+    "label": "s3b1",
+    "stage_idx": 3,
+    "block_idx": 1,
+    "flax_module": "stage4",
+    "conv1_path": "stage4.1.conv1.kernel",
+    "conv1_shape": [
+      3,
+      3,
+      512,
+      512
+    ],
+    "conv2_path": "stage4.1.conv2.kernel",
+    "conv2_shape": [
+      3,
+      3,
+      512,
+      512
+    ],
+    "in_channels": 512,
+    "out_channels": 512,
+    "has_downsample": false
+  }
+]

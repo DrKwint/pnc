@@ -1,0 +1,17 @@
+{
+  "seed": 2,
+  "stage_idx": 3,
+  "block_idx": 1,
+  "label": "s3b1",
+  "scale": 100.0,
+  "bootstrap_frac": 0.2,
+  "K": 20,
+  "M": 50,
+  "lambda_reg": 0.001,
+  "subset_size": 1024,
+  "chunk_size": 64,
+  "basis_seed": 2,
+  "coeff_seed": 19,
+  "bootstrap_seed": 2,
+  "git_commit": "854f4d847ce9ce0d723e7b49a707ebe2f5fcb95c"
+}

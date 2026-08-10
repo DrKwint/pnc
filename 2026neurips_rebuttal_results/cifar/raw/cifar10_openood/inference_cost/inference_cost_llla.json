@@ -1,0 +1,16 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "llla",
+  "methods": {
+    "LLLA n=50": {
+      "cold_warmup_s": 6.001918792724609,
+      "warm_total_s": 38.39842081069946,
+      "warm_per_sample_ms": 7.679684162139893,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "head-only sampling on top of one feature extraction per batch"
+    }
+  }
+}

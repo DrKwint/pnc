@@ -1,0 +1,60 @@
+{
+  "candidate": "A",
+  "label": "A_s3b0_ps25_bf0.05",
+  "seed": 0,
+  "params": {
+    "dataset": "cifar10",
+    "epochs": 300,
+    "n_directions": 20,
+    "n_perturbations": 50,
+    "perturbation_sizes": [
+      25.0
+    ],
+    "subset_size": 1024,
+    "chunk_size": 1024,
+    "target_stage_idx": 3,
+    "target_block_idx": 0,
+    "random_directions": true,
+    "seed": 0,
+    "lambda_reg": 0.001,
+    "posthoc_calibrate": true,
+    "bootstrap_frac": 0.05
+  },
+  "checkpoint": "results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed0.pkl",
+  "cached_reference": "results/cifar10/openood_v1p5_pnc_single_block_vcal_s3b0_k20_n50_ps25.0_lr0.001_bf0.05_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_subsetsize1024_chunksize1024_seed0_random.json",
+  "repro_output": "/home/elean/pnc/results/neurips_2026_rebuttal/cifar/repro_A_s3b0_ps25_bf0.05_seed0.json",
+  "start_utc": "2026-07-23T17:31:06.689659+00:00",
+  "end_utc": "2026-07-23T18:52:44.984324+00:00",
+  "runtime_sec": 4898.294660806656,
+  "hardware": "NVIDIA RTX 5060 8GB, WSL2; JAX 0.9.1 Flax 0.12.3 py3.12.3",
+  "reproduced": {
+    "acc": 95.84999680519104,
+    "nll": 0.1342470943927765,
+    "ece": 0.004936750933527946,
+    "posthoc_temperature": 0.7608388941150124,
+    "near_auroc": 91.41339675,
+    "far_auroc": 95.6913266048524,
+    "near_fpr95": 33.989999999999995,
+    "far_fpr95": 17.1625
+  },
+  "cached": {
+    "acc": 95.84999680519104,
+    "nll": 0.13424740731716156,
+    "ece": 0.004938346034288406,
+    "posthoc_temperature": 0.7607359341996746,
+    "near_auroc": 91.41330324999998,
+    "far_auroc": 95.69114446525717,
+    "near_fpr95": 33.975,
+    "far_fpr95": 17.1625
+  },
+  "abs_diff": {
+    "acc": 0.0,
+    "nll": -3.129243850708008e-07,
+    "ece": -1.5951007604599401e-06,
+    "posthoc_temperature": 0.00010295991533781912,
+    "near_auroc": 9.350000001973058e-05,
+    "far_auroc": 0.00018213959523905032,
+    "near_fpr95": 0.014999999999993463,
+    "far_fpr95": 0.0
+  }
+}

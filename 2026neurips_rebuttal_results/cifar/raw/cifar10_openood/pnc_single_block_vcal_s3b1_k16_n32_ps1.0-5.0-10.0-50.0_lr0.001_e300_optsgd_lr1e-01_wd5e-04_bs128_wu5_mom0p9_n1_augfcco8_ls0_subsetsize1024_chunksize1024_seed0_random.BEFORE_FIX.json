@@ -1,0 +1,62 @@
+{
+  "1.0": {
+    "accuracy": 0.916700005531311,
+    "brier": 0.12357336282730103,
+    "entropy": 0.2527146339416504,
+    "nll": 0.2659405469894409,
+    "ece": 0.00919991403222084,
+    "eval_time": 46.32842779159546,
+    "posthoc_temperature": 0.4140230011158799,
+    "train_time": 11.505929946899414,
+    "diag_test_raw_shift_mean": 1.1151013123103835,
+    "diag_test_raw_shift_std": 0.0005182058102535032,
+    "diag_test_corr_shift_mean": 0.021544710919955613,
+    "diag_test_corr_shift_std": 0.00010169147026077013,
+    "diag_test_reduction_pct": 98.06791448614676
+  },
+  "5.0": {
+    "accuracy": 0.923799991607666,
+    "brier": 0.11493197083473206,
+    "entropy": 0.23382847011089325,
+    "nll": 0.2472640573978424,
+    "ece": 0.008775600749254226,
+    "eval_time": 45.57313537597656,
+    "posthoc_temperature": 0.3508275079965172,
+    "train_time": 11.505929946899414,
+    "diag_test_raw_shift_mean": 1.12182854898128,
+    "diag_test_raw_shift_std": 0.0030821987643648626,
+    "diag_test_corr_shift_mean": 0.1025390543539379,
+    "diag_test_corr_shift_std": 0.0005545770060118567,
+    "diag_test_reduction_pct": 90.85965012684326
+  },
+  "10.0": {
+    "accuracy": 0.9269999861717224,
+    "brier": 0.11045368015766144,
+    "entropy": 0.2357827126979828,
+    "nll": 0.2356884777545929,
+    "ece": 0.011888635307550431,
+    "eval_time": 44.69019079208374,
+    "posthoc_temperature": 0.26963199159545326,
+    "train_time": 11.505929946899414,
+    "diag_test_raw_shift_mean": 1.1600724655146277,
+    "diag_test_raw_shift_std": 0.009001899036876754,
+    "diag_test_corr_shift_mean": 0.197464740268894,
+    "diag_test_corr_shift_std": 0.0010687112196574528,
+    "diag_test_reduction_pct": 82.9782409169478
+  },
+  "50.0": {
+    "accuracy": 0.9239999651908875,
+    "brier": 0.14441774785518646,
+    "entropy": 0.554146409034729,
+    "nll": 0.33543074131011963,
+    "ece": 0.11147420745640993,
+    "eval_time": 45.844340562820435,
+    "posthoc_temperature": 0.12643919600123274,
+    "train_time": 11.505929946899414,
+    "diag_test_raw_shift_mean": 3.173842226294469,
+    "diag_test_raw_shift_std": 0.10984662884000256,
+    "diag_test_corr_shift_mean": 0.5281076587730118,
+    "diag_test_corr_shift_std": 0.003146533216578739,
+    "diag_test_reduction_pct": 83.36062031068813
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "method": "pnc_anchor_s3b0",
+  "note": "s3b0 + bootstrap_frac=0.05 (SUBMITTED anchor)",
+  "n_forward_passes": 50,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 4332.201904296875,
+  "resident_after_build_mib": 1062.6611328125,
+  "predict_peak_mib": 4332.201904296875,
+  "in_use_after_predict_mib": 1062.6611328125,
+  "cold_warmup_s": 4.789023399353027,
+  "warm_total_s": 37.64407277107239,
+  "warm_per_sample_ms": 7.5288145542144775
+}

@@ -1,0 +1,18 @@
+{
+  "method": "pnc_single_s3b1",
+  "note": "s3b1 (as shipped in latency table)",
+  "n_forward_passes": 50,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 4332.2021484375,
+  "resident_after_build_mib": 1328.974609375,
+  "predict_peak_mib": 4332.2021484375,
+  "in_use_after_predict_mib": 1328.974609375,
+  "cold_warmup_s": 4.717272758483887,
+  "warm_total_s": 37.02016735076904,
+  "warm_per_sample_ms": 7.404033470153808
+}

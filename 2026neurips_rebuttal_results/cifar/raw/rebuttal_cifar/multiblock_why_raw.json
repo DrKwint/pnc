@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "seed": 0,
+    "M": 50,
+    "n_eval": 500,
+    "scale": 25.0,
+    "runtime_sec": 104.82847166061401
+  },
+  "per_block": {
+    "s2b1": {
+      "near_auroc_pe": 89.9592,
+      "far_auroc_pe": 93.9083,
+      "near_auroc_lc": 89.81800000000001,
+      "far_auroc_lc": 91.6199,
+      "id_MI": 1.4869729056954384e-05,
+      "near_MI": 0.03915080428123474
+    },
+    "s3b0": {
+      "near_auroc_pe": 91.9538,
+      "far_auroc_pe": 95.4136,
+      "near_auroc_lc": 93.50899999999999,
+      "far_auroc_lc": 95.5865,
+      "id_MI": 0.00012666033580899239,
+      "near_MI": 0.1137147843837738
+    }
+  },
+  "pooled": {
+    "near_auroc_pe": 91.4214,
+    "far_auroc_pe": 94.989,
+    "near_auroc_lc": 89.57499999999999,
+    "far_auroc_lc": 92.09469999999999,
+    "id_MI": 0.00015969108790159225
+  },
+  "overlap": {
+    "id": {
+      "princ_cos_top3_med": 0.7593425355084138,
+      "random_baseline_approx": 0.55
+    },
+    "near": {
+      "princ_cos_top3_med": 0.7858604417775151,
+      "random_baseline_approx": 0.55
+    },
+    "far": {
+      "princ_cos_top3_med": 0.7869753588518101,
+      "random_baseline_approx": 0.55
+    }
+  },
+  "dilution": {
+    "weak_block_near_auroc_pe": 89.9592,
+    "strong_block_near_auroc_pe": 91.9538,
+    "pooled_near_auroc_pe": 91.4214,
+    "pooled_vs_best_single_pe": -0.5323999999999955,
+    "pooled_near_between_weak_and_strong": true
+  }
+}

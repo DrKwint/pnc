@@ -1,0 +1,15 @@
+{
+  "seed": 0,
+  "scales": [
+    5.0,
+    12.5,
+    25.0,
+    50.0,
+    100.0
+  ],
+  "n_sub": 2000,
+  "anchor_scale": 25.0,
+  "temperature_applied": false,
+  "runtime_sec": 1107.3905684947968,
+  "note": "OOD score=predictive_entropy; AUROC macro-mean over datasets; subsampled N_SUB/dataset"
+}

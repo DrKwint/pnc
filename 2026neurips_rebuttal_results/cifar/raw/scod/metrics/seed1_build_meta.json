@@ -1,0 +1,33 @@
+{
+  "seed": 1,
+  "P": 11172170,
+  "temperature": 1.3594659671845,
+  "temp_info": {
+    "val_nll": 0.14765837788581848,
+    "n_val": 5000
+  },
+  "calib_subset_size": 1024,
+  "calib_idx_sha256": "1934a9d908db3d6a9bf8cc07c6c48e7f48fc1dfe87bcde48c2c8a153b190273c",
+  "calib_idx_first10": [
+    25275,
+    12561,
+    24707,
+    25066,
+    33429,
+    44157,
+    40878,
+    23566,
+    25887,
+    37512
+  ],
+  "immutability_max_abs_weight_change": 0.0,
+  "immutable": true,
+  "base_id_metrics": {
+    "id_test_acc": 95.89999999999999,
+    "id_test_nll": 0.14436276257038116,
+    "id_test_ece": 0.00971293617635966,
+    "id_test_nll_untempered": 0.16106735169887543,
+    "n_test": 10000
+  },
+  "build_seconds": 337.5
+}

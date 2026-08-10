@@ -1,0 +1,24 @@
+{
+  "seed0": {
+    "total_post_hoc_construction_s": 85.5,
+    "selected_jacobian_s": 47.9,
+    "dense_ggn_s": 24.5,
+    "per_image_inference_ms_approx": 8.7,
+    "eval_per_10k_dataset_s_approx": 87
+  },
+  "seed1": {
+    "total_post_hoc_construction_s": 89.3,
+    "selected_jacobian_s": 47.4,
+    "dense_ggn_s": 15.8,
+    "per_image_inference_ms_approx": 8.7,
+    "eval_per_10k_dataset_s_approx": 87
+  },
+  "seed2": {
+    "total_post_hoc_construction_s": 86.8,
+    "selected_jacobian_s": 45.6,
+    "dense_ggn_s": 17.7,
+    "per_image_inference_ms_approx": 8.7,
+    "eval_per_10k_dataset_s_approx": 87
+  },
+  "notes": "SLL inference needs a per-example selected-parameter Jacobian (not a plain forward). Diagonal-GGN selection ~40s/seed (cached). Construction total ~86s/seed."
+}

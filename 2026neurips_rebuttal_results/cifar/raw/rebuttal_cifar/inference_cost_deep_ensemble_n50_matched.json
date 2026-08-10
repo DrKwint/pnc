@@ -1,0 +1,16 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "deep_ensemble_matched_m50",
+  "methods": {
+    "Deep Ensemble n=50 (matched-M)": {
+      "cold_warmup_s": 5.415015697479248,
+      "warm_total_s": 36.306530475616455,
+      "warm_per_sample_ms": 7.261306095123291,
+      "n_forward_passes": 50,
+      "train_cost_factor": 50.0,
+      "note": "matched-M latency comparison to P&C anchor (both 50 fwd passes); weights are 50 clones of seed-0 base (latency is weight-independent)."
+    }
+  }
+}

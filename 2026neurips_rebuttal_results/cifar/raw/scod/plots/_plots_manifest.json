@@ -1,0 +1,17 @@
+{
+  "made": [
+    "score_distribution_by_dataset.png",
+    "score_distribution_by_regime.png",
+    "scod_vs_energy_scatter.png",
+    "near_far_auroc_by_method.png",
+    "near_far_fpr95_by_method.png",
+    "rank_sensitivity.png",
+    "Meps_sensitivity.png",
+    "fisher_spectrum_by_seed.png",
+    "cost_quality_frontier.png"
+  ],
+  "skipped": {
+    "scod_vs_pnc_scatter.png": "needs P&C per-example scores (not produced here)",
+    "sketch_seed_sensitivity.png": "needs multiple sketch seeds per model seed"
+  }
+}

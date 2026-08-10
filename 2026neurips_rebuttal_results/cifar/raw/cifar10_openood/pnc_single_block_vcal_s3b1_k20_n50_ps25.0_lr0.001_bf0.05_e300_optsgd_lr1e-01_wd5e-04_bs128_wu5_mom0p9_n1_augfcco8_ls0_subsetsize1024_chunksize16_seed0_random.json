@@ -1,0 +1,26 @@
+{
+  "25.0": {
+    "accuracy": 0.9575999975204468,
+    "brier": 0.06279200315475464,
+    "entropy": 0.12873835861682892,
+    "nll": 0.13498196005821228,
+    "ece": 0.006970543076097966,
+    "eval_time": 73.00843572616577,
+    "posthoc_temperature": 1.0392523800535514,
+    "val_metrics": {
+      "accuracy": 0.9583999514579773,
+      "brier": 0.06133021041750908,
+      "entropy": 0.12742172181606293,
+      "nll": 0.12944340705871582,
+      "ece": 0.007736672830581665,
+      "eval_time": 0.0,
+      "posthoc_temperature": 1.0392523800535514
+    },
+    "train_time": 8.102505207061768,
+    "diag_test_raw_shift_mean": 1.676983912741219,
+    "diag_test_raw_shift_std": 0.09204121977340826,
+    "diag_test_corr_shift_mean": 0.6180339837640598,
+    "diag_test_corr_shift_std": 0.017282428269634702,
+    "diag_test_reduction_pct": 63.14609943076645
+  }
+}

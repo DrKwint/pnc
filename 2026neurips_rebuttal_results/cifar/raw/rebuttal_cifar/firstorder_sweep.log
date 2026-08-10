@@ -1,0 +1,17 @@
+CIFAR-10 loaded: train=(50000, 32, 32, 3), test=(10000, 32, 32, 3)
+[fo] t=  0.005 s_rel=0.001 | id_test:relL=5.72e-19,cos=1.000 cifar100:relL=9.49e-19,cos=1.000 svhn:relL=1.39e-18,cos=1.000
+[fo] t=  0.010 s_rel=0.001 | id_test:relL=3.81e-01,cos=0.924 cifar100:relL=3.80e-01,cos=0.924 svhn:relL=3.89e-01,cos=0.922
+[fo] t=  0.025 s_rel=0.003 | id_test:relL=4.10e-01,cos=0.912 cifar100:relL=4.11e-01,cos=0.911 svhn:relL=4.28e-01,cos=0.904
+[fo] t=  0.050 s_rel=0.007 | id_test:relL=4.28e-01,cos=0.904 cifar100:relL=4.28e-01,cos=0.903 svhn:relL=4.43e-01,cos=0.897
+[fo] t=  0.100 s_rel=0.014 | id_test:relL=4.39e-01,cos=0.898 cifar100:relL=4.41e-01,cos=0.897 svhn:relL=4.56e-01,cos=0.890
+[fo] t=  0.250 s_rel=0.035 | id_test:relL=4.55e-01,cos=0.890 cifar100:relL=4.56e-01,cos=0.890 svhn:relL=4.70e-01,cos=0.883
+[fo] t=  0.500 s_rel=0.069 | id_test:relL=4.73e-01,cos=0.881 cifar100:relL=4.73e-01,cos=0.881 svhn:relL=4.85e-01,cos=0.875
+[fo] t=  1.000 s_rel=0.139 | id_test:relL=5.09e-01,cos=0.861 cifar100:relL=5.08e-01,cos=0.861 svhn:relL=5.15e-01,cos=0.858
+[fo] t=  2.500 s_rel=0.347 | id_test:relL=6.27e-01,cos=0.783 cifar100:relL=6.22e-01,cos=0.787 svhn:relL=6.17e-01,cos=0.792
+[fo] t=  5.000 s_rel=0.694 | id_test:relL=7.91e-01,cos=0.638 cifar100:relL=7.85e-01,cos=0.644 svhn:relL=7.67e-01,cos=0.664
+[fo] t= 10.000 s_rel=1.388 | id_test:relL=9.67e-01,cos=0.413 cifar100:relL=9.61e-01,cos=0.418 svhn:relL=9.39e-01,cos=0.454
+[fo] t= 25.000 s_rel=3.470 | id_test:relL=1.06e+00,cos=0.154 cifar100:relL=1.05e+00,cos=0.161 svhn:relL=1.04e+00,cos=0.202
+[fo] t= 50.000 s_rel=6.940 | id_test:relL=1.03e+00,cos=0.066 cifar100:relL=1.03e+00,cos=0.062 svhn:relL=1.02e+00,cos=0.103
+[fo] t=100.000 s_rel=13.881 | id_test:relL=1.01e+00,cos=0.030 cifar100:relL=1.01e+00,cos=0.021 svhn:relL=1.01e+00,cos=0.056
+[fo] within-10% scale: {'id_test': 0.005, 'cifar100': 0.005, 'svhn': 0.005} ; submitted=25.0 ; remainder slope: {'id_test': 11.82, 'cifar100': 11.69, 'svhn': 11.6} ; xcheck={'id_test': '3.8e-01', 'cifar100': '3.8e-01', 'svhn': '3.9e-01'}
+[fo] wrote firstorder_sweep_raw.json in 84s

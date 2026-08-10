@@ -1,0 +1,17 @@
+{
+  "7.0": {
+    "accuracy": 0.9569000005722046,
+    "brier": 0.06271114200353622,
+    "entropy": 0.1236116960644722,
+    "nll": 0.13345307111740112,
+    "ece": 0.007885122987627982,
+    "eval_time": 73.14545464515686,
+    "posthoc_temperature": 1.1845798787560848,
+    "train_time": 9.427178621292114,
+    "diag_calib_raw_shift_mean": 2.5263928596754512,
+    "diag_calib_raw_shift_std": 0.1482974937927441,
+    "diag_calib_corr_shift_mean": 1.14597794432166,
+    "diag_calib_corr_shift_std": 0.0055420659854071895,
+    "diag_calib_reduction_pct": 54.63975684017637
+  }
+}

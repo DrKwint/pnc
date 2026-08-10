@@ -1,0 +1,16 @@
+{
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "method_selected": "pnc_single",
+  "methods": {
+    "PnC single-block scale=25": {
+      "cold_warmup_s": 5.736196041107178,
+      "warm_total_s": 37.092955350875854,
+      "warm_per_sample_ms": 7.418591070175171,
+      "n_forward_passes": 50,
+      "train_cost_factor": 1.0,
+      "note": "ridge-regression correction per perturbed Conv1"
+    }
+  }
+}
