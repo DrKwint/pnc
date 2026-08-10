@@ -1,0 +1,355 @@
+{
+  "meta": {
+    "seed": 0,
+    "calib": 1024,
+    "scale": 25.0,
+    "lambda": 0.001,
+    "runtime_sec": 92.54260516166687
+  },
+  "results": {
+    "s0b0": {
+      "stage": 0,
+      "block": 0,
+      "p": 577,
+      "Cin_conv2": 64,
+      "patch_rows": 1048576,
+      "nominal_rows_over_p": 1817.2894280762564,
+      "numerical_rank": 577,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 1.6262628420464642,
+      "cond_G": 267395.20135279506,
+      "cond_G_plus_lambda": 267394.8614258062,
+      "smallest_supported_sv": 28.04677256910485,
+      "largest_sv": 14503.061794800196,
+      "lambda_rel": 1.6868081055747603e-09,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 65536,
+          "num_rank": 577
+        },
+        {
+          "images": 128,
+          "rows": 131072,
+          "num_rank": 577
+        },
+        {
+          "images": 256,
+          "rows": 262144,
+          "num_rank": 577
+        },
+        {
+          "images": 512,
+          "rows": 524288,
+          "num_rank": 577
+        },
+        {
+          "images": 1024,
+          "rows": 1048576,
+          "num_rank": 577
+        }
+      ]
+    },
+    "s0b1": {
+      "stage": 0,
+      "block": 1,
+      "p": 577,
+      "Cin_conv2": 64,
+      "patch_rows": 1048576,
+      "nominal_rows_over_p": 1817.2894280762564,
+      "numerical_rank": 577,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 1.5068430423956656,
+      "cond_G": 489756.0890602193,
+      "cond_G_plus_lambda": 489755.39106460166,
+      "smallest_supported_sv": 26.488832755106714,
+      "largest_sv": 18537.567414063473,
+      "lambda_rel": 1.114300458419791e-09,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 65536,
+          "num_rank": 577
+        },
+        {
+          "images": 128,
+          "rows": 131072,
+          "num_rank": 577
+        },
+        {
+          "images": 256,
+          "rows": 262144,
+          "num_rank": 577
+        },
+        {
+          "images": 512,
+          "rows": 524288,
+          "num_rank": 577
+        },
+        {
+          "images": 1024,
+          "rows": 1048576,
+          "num_rank": 577
+        }
+      ]
+    },
+    "s1b0": {
+      "stage": 1,
+      "block": 0,
+      "p": 1153,
+      "Cin_conv2": 128,
+      "patch_rows": 262144,
+      "nominal_rows_over_p": 227.35819601040762,
+      "numerical_rank": 1153,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 2.5804504978010625,
+      "cond_G": 52724.34439589269,
+      "cond_G_plus_lambda": 52723.926230084995,
+      "smallest_supported_sv": 11.228596968089422,
+      "largest_sv": 2578.2859852066276,
+      "lambda_rel": 6.721583518146303e-08,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 16384,
+          "num_rank": 1153
+        },
+        {
+          "images": 128,
+          "rows": 32768,
+          "num_rank": 1153
+        },
+        {
+          "images": 256,
+          "rows": 65536,
+          "num_rank": 1153
+        },
+        {
+          "images": 512,
+          "rows": 131072,
+          "num_rank": 1153
+        },
+        {
+          "images": 1024,
+          "rows": 262144,
+          "num_rank": 1153
+        }
+      ]
+    },
+    "s1b1": {
+      "stage": 1,
+      "block": 1,
+      "p": 1153,
+      "Cin_conv2": 128,
+      "patch_rows": 262144,
+      "nominal_rows_over_p": 227.35819601040762,
+      "numerical_rank": 1153,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 2.7189416361215675,
+      "cond_G": 21247.341024473255,
+      "cond_G_plus_lambda": 21247.28483973778,
+      "smallest_supported_sv": 19.446091706961212,
+      "largest_sv": 2834.5532741468246,
+      "lambda_rel": 5.277888054599428e-08,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 16384,
+          "num_rank": 1153
+        },
+        {
+          "images": 128,
+          "rows": 32768,
+          "num_rank": 1153
+        },
+        {
+          "images": 256,
+          "rows": 65536,
+          "num_rank": 1153
+        },
+        {
+          "images": 512,
+          "rows": 131072,
+          "num_rank": 1153
+        },
+        {
+          "images": 1024,
+          "rows": 262144,
+          "num_rank": 1153
+        }
+      ]
+    },
+    "s2b0": {
+      "stage": 2,
+      "block": 0,
+      "p": 2305,
+      "Cin_conv2": 256,
+      "patch_rows": 65536,
+      "nominal_rows_over_p": 28.432104121475053,
+      "numerical_rank": 2301,
+      "num_rank_over_p": 0.9982646420824295,
+      "stable_rank": 3.6522045104999976,
+      "cond_G": 3.718337627471512e+18,
+      "cond_G_plus_lambda": 730406032.0975745,
+      "smallest_supported_sv": 4.432081772360496e-07,
+      "largest_sv": 854.6379532279001,
+      "lambda_rel": 8.64075100722589e-07,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 4096,
+          "num_rank": 2297
+        },
+        {
+          "images": 128,
+          "rows": 8192,
+          "num_rank": 2296
+        },
+        {
+          "images": 256,
+          "rows": 16384,
+          "num_rank": 2299
+        },
+        {
+          "images": 512,
+          "rows": 32768,
+          "num_rank": 2299
+        },
+        {
+          "images": 1024,
+          "rows": 65536,
+          "num_rank": 2301
+        }
+      ]
+    },
+    "s2b1": {
+      "stage": 2,
+      "block": 1,
+      "p": 2305,
+      "Cin_conv2": 256,
+      "patch_rows": 65536,
+      "nominal_rows_over_p": 28.432104121475053,
+      "numerical_rank": 2305,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 4.0220458735354745,
+      "cond_G": 12475.629680201937,
+      "cond_G_plus_lambda": 12475.445056982167,
+      "smallest_supported_sv": 8.219917466254413,
+      "largest_sv": 918.1184068250702,
+      "lambda_rel": 6.798710072206647e-07,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 4096,
+          "num_rank": 2305
+        },
+        {
+          "images": 128,
+          "rows": 8192,
+          "num_rank": 2305
+        },
+        {
+          "images": 256,
+          "rows": 16384,
+          "num_rank": 2305
+        },
+        {
+          "images": 512,
+          "rows": 32768,
+          "num_rank": 2305
+        },
+        {
+          "images": 1024,
+          "rows": 65536,
+          "num_rank": 2305
+        }
+      ]
+    },
+    "s3b0": {
+      "stage": 3,
+      "block": 0,
+      "p": 4609,
+      "Cin_conv2": 512,
+      "patch_rows": 16384,
+      "nominal_rows_over_p": 3.5547841180299415,
+      "numerical_rank": 4609,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 4.798690192203311,
+      "cond_G": 72812221264.95879,
+      "cond_G_plus_lambda": 80694239.76030003,
+      "smallest_supported_sv": 0.0010533189840208252,
+      "largest_sv": 284.22485372783564,
+      "lambda_rel": 1.1889398740140223e-05,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 1024,
+          "num_rank": 2651
+        },
+        {
+          "images": 128,
+          "rows": 2048,
+          "num_rank": 3184
+        },
+        {
+          "images": 256,
+          "rows": 4096,
+          "num_rank": 4294
+        },
+        {
+          "images": 512,
+          "rows": 8192,
+          "num_rank": 4609
+        },
+        {
+          "images": 1024,
+          "rows": 16384,
+          "num_rank": 4609
+        }
+      ]
+    },
+    "s3b1": {
+      "stage": 3,
+      "block": 1,
+      "p": 4609,
+      "Cin_conv2": 512,
+      "patch_rows": 16384,
+      "nominal_rows_over_p": 3.5547841180299415,
+      "numerical_rank": 4609,
+      "num_rank_over_p": 1.0,
+      "stable_rank": 4.108622664414762,
+      "cond_G": 101259.88630624262,
+      "cond_G_plus_lambda": 101195.474796951,
+      "smallest_supported_sv": 1.2534201222621284,
+      "largest_sv": 398.8553118523836,
+      "lambda_rel": 7.0514704470799525e-06,
+      "rank_curve": [
+        {
+          "images": 64,
+          "rows": 1024,
+          "num_rank": 2694
+        },
+        {
+          "images": 128,
+          "rows": 2048,
+          "num_rank": 3228
+        },
+        {
+          "images": 256,
+          "rows": 4096,
+          "num_rank": 4312
+        },
+        {
+          "images": 512,
+          "rows": 8192,
+          "num_rank": 4609
+        },
+        {
+          "images": 1024,
+          "rows": 16384,
+          "num_rank": 4609
+        }
+      ]
+    }
+  }
+}

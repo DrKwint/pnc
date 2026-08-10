@@ -1,0 +1,12 @@
+method,label,n_forward_passes,resident_after_build_mib,build_peak_mib,predict_peak_mib,warm_per_sample_ms
+single_model,"PreAct ResNet-18 (single)",1,44.1,93.2,2469.6,0.608
+react,"ReAct+Energy",1,44.1,2474.1,2474.1,0.623
+mc_dropout,"MC Dropout n=32",32,44.1,93.2,2469.7,4.851
+deep_ensemble,"Deep Ensemble n=5",5,226.9,272.5,2053.5,1.141
+deep_ensemble_50,"Deep Ensemble n=50 (matched-M)",50,2250.3,2298.0,4071.8,7.280
+swag,"SWAG n=50",50,1070.7,1157.8,5360.1,7.473
+llla,"LLLA n=50 (Laplace)",50,245.0,1922.9,2096.7,7.455
+epinet,"Epinet n=50",50,44.4,93.2,2469.9,1.611
+pnc_single_s3b1,"P&C single-block s3b1 (as shipped)",50,1329.0,4332.2,4332.2,7.404
+pnc_anchor_s3b0,"P&C single-block s3b0 (SUBMITTED anchor)",50,1062.7,4332.2,4332.2,7.529
+pnc_multi,"P&C multi-block",50,4737.2,5444.8,6063.3,9.683

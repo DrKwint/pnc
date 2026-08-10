@@ -1,0 +1,239 @@
+% CIFAR-10 hyperparameter sweep details — drop into the appendix.
+% Standalone: requires only the standard tabular environment (no tabularray).
+% Update the \ref{} targets to match your local labels if needed.
+
+\section{CIFAR-10 Hyperparameter Sweeps}
+\label{app:cifar10-sweeps}
+
+\subsection{Selection Protocol}
+\label{app:cifar10-protocol}
+
+All hyperparameters were selected per-method on a 10\% in-distribution validation
+split held out from the CIFAR-10 training set. The remaining 90\% (45,000 images)
+is used for training. Selection is by validation NLL after post-hoc temperature
+scaling, with the temperature $T$ fit on the same 10\% split (one $T$ per
+hyperparameter configuration). No OOD data is used for any tuning decision.
+
+The shared training recipe across all methods using the PreAct ResNet-18 base is:
+SGD with momentum 0.9 (Nesterov), initial lr $0.1$ with cosine decay and 5-epoch
+warmup, weight decay $5 \cdot 10^{-4}$, batch size 128, 300 epochs, augmentation
+\texttt{flipcrop+cutout(8)}, label smoothing 0.
+
+\subsection{Per-Method Sweep Grids}
+\label{app:cifar10-grid}
+
+Table~\ref{tab:cifar10-sweep-grid} enumerates the swept hyperparameters per
+method, the values explored, and the selected value (bold). \textit{Fixed} =
+held constant, never swept; secondary settings without a sweep were taken from
+defaults / literature.
+
+\begin{table}[h]
+\centering
+\caption{CIFAR-10 hyperparameter sweep grids per method. Selected value bold.}
+\label{tab:cifar10-sweep-grid}
+\small
+\begin{tabular}{l l l c}
+\toprule
+Method & Hyperparameter & Values & Selected \\
+\midrule
+PreActResNet-18 & --- & --- & --- \\
+MSP             & --- (derived)              & ---                        & --- \\
+Energy          & --- (derived)              & ---                        & --- \\
+Mahalanobis     & --- (derived)              & ---                        & --- \\
+ReAct+Energy    & --- (derived)              & ---                        & --- \\
+\midrule
+MC Dropout      & dropout\_rate              & $\{\mathbf{0.1}, 0.2, 0.3, 0.5\}$ & $\mathbf{0.1}$ (kept; see \S\ref{app:mcd-sweep}) \\
+                & n\_perturbations (fixed)   & $32$ (OOD eval)            & $32$ \\
+\midrule
+LLLA            & prior\_precision           & $\{0.01, 0.1, 1.0, \mathbf{10.0}, 100, 1000\}$ & $\mathbf{10.0}$ \\
+                & n\_perturbations (fixed)   & $50$                       & $50$ \\
+\midrule
+SWAG            & swag\_start\_epoch         & $\{160, \mathbf{240}\}$    & $\mathbf{240}$ \\
+                & swag\_collect\_freq (fixed)& $1$                        & $1$ \\
+                & swag\_max\_rank (fixed)    & $20$                       & $20$ \\
+                & n\_perturbations (fixed)   & $50$                       & $50$ \\
+                & bn\_refresh\_subset (fixed)& $2048$                     & $2048$ \\
+\midrule
+Epinet          & prior\_scale               & $\{0.5, 1.0, \mathbf{3.0}\}$ & $\mathbf{3.0}$ \\
+                & index\_dim (fixed)         & $8$                        & $8$ \\
+                & epinet\_hiddens (fixed)    & $[50, 50]$                 & $[50, 50]$ \\
+                & epinet\_epochs (fixed)     & $100$                      & $100$ \\
+                & epinet\_lr (fixed)         & $10^{-3}$                  & $10^{-3}$ \\
+                & epinet\_wd (fixed)         & $10^{-4}$                  & $10^{-4}$ \\
+                & n\_perturbations (fixed)   & $50$                       & $50$ \\
+\midrule
+Standard Ensemble & n\_models (fixed)        & $5$                        & $5$ \\
+\midrule
+PnC (single-block) & target (stage, block)   & $\{1,2,3\} \times \{0,1\}$ (6 positions, 3 seeds) & $\mathbf{(3,0)}$ \\
+                & n\_directions $K$          & $\{5, 10, 15, 16, \mathbf{20}\}$ & $\mathbf{20}$ \\
+                & perturbation scale $\sigma$ & val sweep: $\{1, 5, 10, 50, 100, 200, 500,$ & $\mathbf{25}$ \\
+                &                            & $1000, 2000, 5000\}$; OOD eval: $\{\mathbf{25}, 50\}$ & \\
+                & bootstrap fraction $f_{\text{boot}}$ & val: $\{\mathbf{0.05}, 0.075, 0.1, 0.2, 0.3, 0.5, 0.8\}$ & $\mathbf{0.05}$ \\
+                &                            & OOD eval: $\{0.05, 0.5\}$  &  \\
+                & ridge regularizer $\lambda$ & $\{10^{-4}, \mathbf{10^{-3}}, 10^{-2}, 10^{-1}, 1.0\}$ & $\mathbf{10^{-3}}$ \\
+                & direction type             & $\{\mathbf{\text{random}}, \text{Lanczos}\}$ & $\mathbf{\text{random}}$ \\
+                & n\_perturbations (fixed)   & $50$                       & $50$ \\
+                & subset\_size (fixed)       & $1024$                     & $1024$ \\
+                & chunk\_size                & $\{16, 64, 1024\}$ (memory-only)& --- \\
+\midrule
+PnC (multi-block) & block selection          & $\{[4,7], [2,4,7], [4,6,7],$ & $\mathbf{[2,4,6,7]}$ \\
+                  &                          & $\mathbf{[2,4,6,7]}, [2,4,5,6,7]\}$ &  \\
+                & n\_directions $K$          & $\{5, 10, 15, \mathbf{20}\}$ & $\mathbf{20}$ \\
+                & perturbation scale $\sigma$ & $\{3, 5, 6, \mathbf{7}, 8, 9, 10, 15, 20\}$ & $\mathbf{7}$ \\
+                & bootstrap fraction (OOD)   & $\{0.05, 0.5\}$            & --- \\
+                & ridge $\lambda$ (fixed)    & $10^{-3}$                  & $10^{-3}$ \\
+                & direction type (fixed)     & random                     & random \\
+                & n\_perturbations (fixed)   & $50$                       & $50$ \\
+                & subset\_size (fixed)       & $1024$                     & $1024$ \\
+                & chunk\_size (fixed)        & $64$ (memory)              & $64$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Coverage notes:
+\begin{itemize}
+  \item LLLA, MC Dropout, Epinet, SWAG: only the headline hyperparameter was
+        swept; secondary settings (e.g. SWAG \texttt{max\_rank}, Epinet
+        \texttt{index\_dim}) were taken from defaults or the originating paper.
+  \item PnC \texttt{bootstrap\_frac} was swept widely on validation-only runs
+        but only $\{0.05, 0.5\}$ reached the full OpenOOD evaluation grid.
+  \item PnC \texttt{lambda\_reg} was confirmed to have no measurable effect on
+        validation NLL across five orders of magnitude, so it is not a useful
+        knob and was not re-explored beyond the initial sweep.
+  \item PnC \texttt{chunk\_size} affects only memory footprint, not the
+        validation objective; it is set per-position to fit on an 8\,GB GPU.
+\end{itemize}
+
+\subsection{PnC Block-Position Sanity Check}
+\label{app:pnc-position-sanity}
+
+The original PnC block-position selection of stage 3, block 1 ("S3B1") was
+made at seed 0 only, at a configuration that omitted bootstrap resampling.
+Because bootstrap was added later (final $f_{\text{boot}} = 0.05$), we re-ran
+the validation-only sweep at all 6 candidate positions
+$(\text{stage}, \text{block}) \in \{1, 2, 3\} \times \{0, 1\}$ across three
+seeds at the final configuration: $K = 20$, $\sigma = 25$, $\lambda = 10^{-3}$,
+$f_{\text{boot}} = 0.05$, random directions, subset size 1024.
+
+Table~\ref{tab:pnc-position-sanity} reports per-position validation NLL after
+post-hoc temperature scaling. Position S3B0 (stage 3, block 0) achieves the
+lowest validation NLL at every seed and the lowest mean. The originally
+selected S3B1 ranks second; the gap is small (mean 0.1294 vs 0.1347, ${\sim}4\%$)
+but consistent. The headline numbers reported in
+Table~\ref{tab:ood_cifar10} use S3B0 with all other hyperparameters unchanged.
+
+\begin{table}[h]
+\centering
+\caption{Validation NLL by (stage, block) position across three seeds. Lower
+is better. The originally selected position S3B1 ranks second; S3B0 is the
+robust winner.}
+\label{tab:pnc-position-sanity}
+\small
+\begin{tabular}{l c c c c}
+\toprule
+Position & seed 0 & seed 1 & seed 2 & mean $\pm$ std \\
+\midrule
+\textbf{S3B0} & \textbf{0.1246} & \textbf{0.1315} & \textbf{0.1321} & $\mathbf{0.1294 \pm 0.0042}$ \\
+S3B1 (original pick) & 0.1294 & 0.1398 & 0.1349 & $0.1347 \pm 0.0052$ \\
+S1B0 & 0.1420 & 0.1489 & 0.1528 & $0.1479 \pm 0.0055$ \\
+S2B1 & 0.1454 & 0.1566 & 0.1552 & $0.1524 \pm 0.0061$ \\
+S1B1 & 0.1468 & 0.1585 & 0.1583 & $0.1545 \pm 0.0067$ \\
+S2B0 & 0.1668 & 0.1867 & 0.1807 & $0.1781 \pm 0.0102$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The validation-NLL gap between S3B0 and S3B1 is small in absolute terms
+(${\sim}4\%$, comparable to the seed-to-seed standard deviation), but the
+downstream OpenOOD detection improvement is non-trivial.
+Table~\ref{tab:pnc-s3b0-vs-s3b1-ood} reports the full evaluation suite for
+both positions at the final configuration. S3B0 wins on 6 of 7 reported
+metrics; the largest improvement is on near-OOD FPR@95 (-4.3 pp,
+$37.4\% \to 33.1\%$). The single metric where S3B1 has a small edge is
+classification accuracy ($-0.09$ pp), which falls well within the
+seed-to-seed standard deviation.
+
+\begin{table}[h]
+\centering
+\caption{OpenOOD v1.5 evaluation at S3B0 vs.\ S3B1 (3 seeds, $K = 20$,
+$\sigma = 25$, $f_{\text{boot}} = 0.05$, $\lambda = 10^{-3}$, $n = 50$
+perturbations, post-hoc temperature scaling on a 10\% ID validation split).
+Bold = better.}
+\label{tab:pnc-s3b0-vs-s3b1-ood}
+\small
+\begin{tabular}{l c c c}
+\toprule
+Metric & S3B0 (new pick) & S3B1 (original) & $\Delta$ \\
+\midrule
+Acc\%        & $95.59 \pm 0.25$  & $\mathbf{95.69 \pm 0.13}$    & $-0.09$ \\
+NLL          & $\mathbf{0.1384 \pm 0.0038}$ & $0.1403 \pm 0.0039$ & $-0.0018$ \\
+ECE          & $\mathbf{0.0050 \pm 0.0010}$ & $0.0069 \pm 0.0010$ & $-0.0019$ \\
+Near AUROC   & $\mathbf{91.55 \pm 0.16}$    & $90.99 \pm 0.10$    & $+0.57$ \\
+Near FPR95 $\downarrow$ & $\mathbf{33.08 \pm 0.77}$ & $37.39 \pm 0.40$ & $-4.31$ \\
+Far AUROC    & $\mathbf{95.09 \pm 0.62}$    & $94.83 \pm 0.63$    & $+0.26$ \\
+Far FPR95 $\downarrow$  & $\mathbf{18.15 \pm 1.31}$ & $19.52 \pm 1.15$ & $-1.38$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{MC Dropout Dropout-Rate Sweep (Stability Check)}
+\label{app:mcd-sweep}
+
+The CIFAR-10 MC Dropout configuration uses the literature-default dropout
+rate of $0.1$. As a stability check we swept $\{0.1, 0.2, 0.3, 0.5\}$ at
+seed 0, training a fresh model for each value under the shared recipe
+(300 epochs) and evaluating with $n = 32$ stochastic forward passes.
+Table~\ref{tab:mcd-dropout-sweep} reports the per-rate validation and test
+metrics at seed 0; by validation NLL the seed-0 winner is $p_{\text{drop}} = 0.2$.
+
+\begin{table}[h]
+\centering
+\caption{MC Dropout dropout-rate sweep on CIFAR-10 at seed 0. Validation NLL
+is the protocol selection criterion; bold marks the seed-0 winner.}
+\label{tab:mcd-dropout-sweep}
+\small
+\begin{tabular}{c c c c c c c}
+\toprule
+$p_{\text{drop}}$ & val NLL & val acc & val ECE & $T$ & test NLL & test acc \\
+\midrule
+0.1                & 0.1433          & 95.60\%          & 0.0101          & 1.33 & 0.1425 & 95.77\% \\
+\textbf{0.2}       & \textbf{0.1380} & \textbf{95.80\%} & 0.0107          & 1.32 & 0.1488 & 95.61\% \\
+0.3                & 0.1402          & 96.02\%          & \textbf{0.0084} & 1.32 & 0.1436 & 95.95\% \\
+0.5                & 0.1421          & 95.92\%          & 0.0095          & 1.31 & 0.1441 & 95.92\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+To verify whether the seed-0 advantage replicates, we trained and evaluated
+$p_{\text{drop}} = 0.2$ at two additional seeds and computed the full 3-seed
+OpenOOD evaluation, alongside the existing $p_{\text{drop}} = 0.1$ baseline.
+Table~\ref{tab:mcd-3seed} compares the two rates across all paper-table
+metrics. The seed-0 validation gap collapses into noise: differences in
+accuracy, NLL, near-AUROC, and far-AUROC are all well within the seed-to-seed
+standard deviation, while ECE and FPR@95 are slightly worse at $0.2$ (notably
+$\text{far FPR95}$ has a $3\times$ wider standard deviation at $0.2$).
+We therefore retain $p_{\text{drop}} = 0.1$ in the headline paper table; the
+selection by seed-0 validation NLL was not robust at three seeds.
+
+\begin{table}[h]
+\centering
+\caption{MC Dropout 3-seed OpenOOD comparison: $p_{\text{drop}} = 0.1$
+(retained) vs.\ $p_{\text{drop}} = 0.2$ (seed-0 val-NLL winner). The
+seed-0 advantage of $0.2$ does not replicate; we keep $0.1$ in the
+headline table.}
+\label{tab:mcd-3seed}
+\small
+\begin{tabular}{l c c c}
+\toprule
+Metric & $p_{\text{drop}} = 0.1$ (kept) & $p_{\text{drop}} = 0.2$ & $\Delta$ \\
+\midrule
+Acc\%      & $95.76 \pm 0.11$            & $95.69 \pm 0.18$            & $-0.06$ \\
+NLL        & $0.148 \pm 0.005$           & $0.148 \pm 0.004$           & $\phantom{+}0.000$ \\
+ECE        & $\mathbf{0.0099 \pm 0.0030}$ & $0.0117 \pm 0.0004$        & $+0.0017$ \\
+Near AUROC & $87.25 \pm 0.14$            & $87.25 \pm 0.15$            & $\phantom{+}0.00$ \\
+Near FPR95 $\downarrow$ & $\mathbf{71.04 \pm 0.69}$ & $71.62 \pm 0.51$  & $+0.59$ \\
+Far AUROC  & $91.34 \pm 0.22$            & $91.34 \pm 0.47$            & $+0.01$ \\
+Far FPR95 $\downarrow$  & $\mathbf{42.53 \pm 1.16}$ & $43.22 \pm 3.70$ & $+0.69$ \\
+\bottomrule
+\end{tabular}
+\end{table}

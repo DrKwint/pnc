@@ -1,0 +1,26 @@
+{
+  "global_config": {
+    "label": "s3b0",
+    "stage_idx": 3,
+    "block_idx": 0,
+    "scale": 25.0,
+    "bootstrap_frac": 0.05,
+    "mean_val_nll": 0.1304765765865644,
+    "std_val_nll": 0.004908252167624336
+  },
+  "coordinate_descent_config": {
+    "label": "s3b0",
+    "stage_idx": 3,
+    "block_idx": 0,
+    "scale": 25.0,
+    "bootstrap_frac": 0.05,
+    "mean_val_nll": 0.1304765765865644,
+    "std_val_nll": 0.004908252167624336,
+    "rank_among_54": 1
+  },
+  "val_nll_regret_CD_minus_global": 0.0,
+  "regret_exceeds_seed_variability": false,
+  "median_seed_std": 0.006727378142232078,
+  "n_configs": 54,
+  "global_config_sha256": "e00dd19a4f46faf9d3eb3f9b6f5d8801329c55e2331171001142785ef47a7575"
+}

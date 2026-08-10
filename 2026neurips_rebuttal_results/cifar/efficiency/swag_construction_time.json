@@ -1,0 +1,23 @@
+{
+  "method": "SWAG n=50 (sws240, swr20)",
+  "what_is_timed": "base ckpt load + SWAG moment ckpt load + 50-sample posterior draw (cache_samples=True) + BatchNorm refresh over 2048 ID train images, up to a predict-ready ensemble. Excludes the 300-epoch training run that collected the moments (report section 2.6). Includes one 128-image predict to force deferred device work; that is ~1 s of the total.",
+  "timer_semantics_matched_to": "CIFARLLLA.run() train_time (report section 2.5)",
+  "n_members": 50,
+  "bn_refresh_images": 2048,
+  "seeds": [
+    {
+      "seed": 0,
+      "construction_s": 61.27635717391968
+    },
+    {
+      "seed": 1,
+      "construction_s": 51.29006218910217
+    },
+    {
+      "seed": 2,
+      "construction_s": 54.82567381858826
+    }
+  ],
+  "mean_s": 55.79736439387003,
+  "sd_s": 5.0635618700196
+}

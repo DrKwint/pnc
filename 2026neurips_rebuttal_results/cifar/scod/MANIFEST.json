@@ -1,0 +1,100 @@
+{
+  "framework_note": "Spec is PyTorch; this repo/impl is JAX/Flax nnx (faithful analogue).",
+  "method": "SCOD",
+  "variant": "SCOD-1024",
+  "checkpoint_paths": {
+    "0": "/home/elean/pnc/results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed0.pkl",
+    "1": "/home/elean/pnc/results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed1.pkl",
+    "2": "/home/elean/pnc/results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed2.pkl"
+  },
+  "checkpoint_hashes": {
+    "0": "b4c45628adaa9e5321e15ae83679841e2474e23c2126968fe6cdffcb2143a7e5",
+    "1": "2e942d691915025dac8e15d56aeaf289a4bebaa065184338f6a1ef18105674b4",
+    "2": "9b5d9de691ba2d51f63bdb8cf9445ee05e7cdc292e6c57c68847ff77e8793035"
+  },
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "model_architecture": "PreActResNet18 (CIFAR-10, 10 classes)",
+  "train_split_hash": "678e8b3ec067065974aeb301388fe1df132961e40a891714f80b252d6be89197",
+  "id_validation_split_hash": "6ff9d39ce98f1f5f2b67696801203fc1569ef98663701cba5c88924a4179ba5b",
+  "id_test_split_hash": "2aea907da2f9c8916892bdc80f316f4e95fd77b9f3280090130de6d67228eb31",
+  "pnc_calibration_subset_hashes": {
+    "0": "32169f4e687521a48028c658bfa6dd9234526273b72e2ce0c8b739bb025b79b3",
+    "1": "1934a9d908db3d6a9bf8cc07c6c48e7f48fc1dfe87bcde48c2c8a153b190273c",
+    "2": "7b4de3a184800e4aa8ee7f850527c0bae93753c5a43fbb686fc6ad5354858977"
+  },
+  "temperature_by_seed": {
+    "0": 1.3120340757619302,
+    "1": 1.3594659671845,
+    "2": 1.3291347716148063
+  },
+  "temperature_fit_split": "id_validation_only (base classifier)",
+  "transform_description": "deterministic eval, no crop/flip/cutout",
+  "normalization": {
+    "mean": [
+      0.4914,
+      0.4822,
+      0.4465
+    ],
+    "std": [
+      0.247,
+      0.2435,
+      0.2616
+    ],
+    "formula": "(x/255 - mean)/std"
+  },
+  "near_ood_datasets": [
+    "CIFAR-100",
+    "TinyImageNet"
+  ],
+  "far_ood_datasets": [
+    "MNIST",
+    "SVHN",
+    "Textures",
+    "Places365"
+  ],
+  "metric_code_paths": {
+    "evaluator": "openood_eval.py:_binary_ood_metrics",
+    "orientation": "higher score = more OOD; ID=neg class"
+  },
+  "aggregation_convention": "macro-mean over datasets; +/- = sample std (ddof=1) over 3 seeds",
+  "git_commit": "854f4d847ce9ce0d723e7b49a707ebe2f5fcb95c",
+  "jax_version": "0.9.1",
+  "flax_version": "0.12.3",
+  "cuda_note": "JAX GPU (CUDA); torch_version/cuda_version N/A (JAX impl)",
+  "build_summary": {
+    "0": {
+      "P": 11172170,
+      "temperature": 1.3120340757619302,
+      "immutable": true,
+      "id_test_acc": 95.77,
+      "build_seconds": 349.1
+    },
+    "1": {
+      "P": 11172170,
+      "temperature": 1.3594659671845,
+      "immutable": true,
+      "id_test_acc": 95.89999999999999,
+      "build_seconds": 337.5
+    },
+    "2": {
+      "P": 11172170,
+      "temperature": 1.3291347716148063,
+      "immutable": true,
+      "id_test_acc": 95.55,
+      "build_seconds": 338.5
+    }
+  },
+  "scod_hyperparameters": {
+    "num_eigs_max": 20,
+    "num_samples": 124,
+    "reported_num_eigs": 10,
+    "Meps": 5000,
+    "sketch_type": "random",
+    "weighted": false,
+    "projection_type": "posterior_pred"
+  }
+}

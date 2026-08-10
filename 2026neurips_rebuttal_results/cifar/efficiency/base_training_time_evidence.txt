@@ -1,0 +1,2 @@
+534:[00:50:22] <= OK    Train MCD dr=0.5 seed=0  (8010s)
+Base ResNet-18 training time = 8010s (MEASURED). Source: experiments/logs/cifar10_finish_20260427_223643.log:534

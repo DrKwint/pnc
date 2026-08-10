@@ -1,0 +1,89 @@
+% \usepackage{tabularray}
+\begin{table}
+\centering
+\caption{CIFAR-10 OOD detection. 3 seeds, post-hoc temperature on ID validation only. No OOD data used for tuning.}
+\label{tab:ood_cifar10}
+\begin{tblr}{
+  row{2} = {font=\itshape},
+  row{8} = {font=\itshape},
+  row{14} = {font=\itshape},
+  column{even} = {c},
+  column{3} = {c},
+  column{5} = {c},
+  column{7} = {c},
+  cell{2}{1} = {c=8}{},
+  cell{8}{1} = {c=8}{},
+  cell{9}{2} = {font=\bfseries},
+  cell{9}{3} = {font=\bfseries},
+  cell{13}{3} = {font=\bfseries},
+  cell{13}{4} = {font=\bfseries},
+  cell{13}{5} = {font=\bfseries},
+  cell{13}{6} = {font=\bfseries},
+  cell{13}{7} = {font=\bfseries},
+  cell{13}{8} = {font=\bfseries},
+  cell{14}{1} = {c=8}{},
+  hline{1,16} = {-}{0.08em},
+  hline{2,8} = {-}{0.05em},
+  hline{14} = {-}{},
+}
+Method                           & Acc\%            & NLL               & ECE                 & Near AUROC       & Near FPR95$\downarrow$ & Far AUROC        & Far FPR95$\downarrow$ \\
+\textit{Single-pass baselines}   &                  &                   &                     &                  &                        &                  &                       \\
+PreAct ResNet-18                 & $95.74 \pm 0.15$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0011$ & $87.85 \pm 0.07$ & $66.30 \pm 0.88$       & $91.86 \pm 0.98$ & $38.30 \pm 5.44$      \\
+MSP                              & $95.74 \pm 0.14$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0011$ & $87.66 \pm 0.05$ & $66.30 \pm 0.88$       & $91.53 \pm 0.90$ & $38.30 \pm 5.44$      \\
+Energy                           & $95.74 \pm 0.15$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0011$ & $87.00 \pm 0.10$ & $66.31 \pm 0.89$       & $91.38 \pm 1.23$ & $38.30 \pm 5.44$      \\
+Mahalanobis                      & $95.74 \pm 0.14$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0010$ & $87.98 \pm 0.11$ & $66.30 \pm 0.88$       & $93.25 \pm 0.26$ & $38.30 \pm 5.44$      \\
+ReAct+Energy                     & $95.77 \pm 0.16$ & $0.148 \pm 0.004$ & $0.0116 \pm 0.0010$ & $88.63 \pm 0.15$ & $54.39 \pm 1.28$       & $92.50 \pm 1.20$ & $29.78 \pm 5.26$      \\
+\textit{Single-model UQ methods} &                  &                   &                     &                  &                        &                  &                       \\
+LLLA                             & $95.77 \pm 0.20$ & $0.140 \pm 0.005$ & $0.0083 \pm 0.0013$ & $88.97 \pm 0.69$ & $54.12 \pm 5.70$       & $93.04 \pm 0.95$ & $28.44 \pm 6.72$      \\
+Epinet                           & $95.76 \pm 0.18$ & $0.148 \pm 0.005$ & $0.0103 \pm 0.0022$ & $88.07 \pm 0.04$ & $63.37 \pm 1.40$       & $92.16 \pm 1.02$ & $35.10 \pm 5.57$      \\
+MC Dropout                       & $95.76 \pm 0.11$ & $0.148 \pm 0.005$ & $0.0099 \pm 0.0030$ & $87.25 \pm 0.14$ & $71.04 \pm 0.69$       & $91.34 \pm 0.22$ & $42.53 \pm 1.16$      \\
+SWAG                             & $95.37 \pm 0.05$ & $0.146 \pm 0.003$ & $0.0075 \pm 0.0010$ & $90.03 \pm 0.15$ & $44.71 \pm 0.79$       & $94.19 \pm 1.03$ & $22.09 \pm 4.91$      \\
+PnC                              & $95.59 \pm 0.20$ & $0.138 \pm 0.003$ & $0.0050 \pm 0.0008$ & $91.55 \pm 0.13$ & $33.08 \pm 0.63$       & $95.09 \pm 0.50$ & $18.15 \pm 1.07$      \\
+\textit{5x-cost reference}       &                  &                   &                     &                  &                        &                  &                       \\
+Standard Ensemble                & $96.56 \pm 0.04$ & $0.109 \pm 0.000$ & $0.0046 \pm 0.0003$ & $91.10 \pm 0.03$ & $40.39 \pm 0.38$       & $94.63 \pm 0.14$ & $19.49 \pm 0.26$      
+\end{tblr}
+\end{table}
+
+% \usepackage{tabularray}
+\begin{table}
+\centering
+\caption{CIFAR-100 OOD detection. Frozen CIFAR-10 hyperparameters (transferability test). 3 seeds, post-hoc temperature on ID validation only.}
+\label{tab:ood_cifar100}
+\begin{tblr}{
+  row{2} = {font=\itshape},
+  row{8} = {font=\itshape},
+  row{13} = {font=\itshape},
+  column{even} = {c},
+  column{3} = {c},
+  column{5} = {c},
+  column{7} = {c},
+  cell{2}{1} = {c=8}{},
+  cell{5}{6} = {font=\bfseries},
+  cell{7}{4} = {font=\bfseries},
+  cell{8}{1} = {c=8}{},
+  cell{10}{2} = {font=\bfseries},
+  cell{10}{3} = {font=\bfseries},
+  cell{10}{5} = {font=\bfseries},
+  cell{12}{7} = {font=\bfseries},
+  cell{12}{8} = {font=\bfseries},
+  cell{13}{1} = {c=8}{},
+  hline{1,15} = {-}{0.08em},
+  hline{2,8} = {-}{0.05em},
+  hline{13} = {-}{},
+}
+Method                           & Acc\%            & NLL               & ECE                 & Near AUROC       & Near FPR95$\downarrow$ & Far AUROC        & Far FPR95$\downarrow$ \\
+\textit{Single-pass baselines}   &                  &                   &                     &                  &                        &                  &                       \\
+PreAct ResNet-18                 & $78.31 \pm 0.11$ & $0.865 \pm 0.005$ & $0.0423 \pm 0.0013$ & $80.61 \pm 0.17$ & $57.89 \pm 0.35$       & $78.64 \pm 0.56$ & $57.11 \pm 0.97$      \\
+MSP                              & $78.30 \pm 0.10$ & $0.865 \pm 0.005$ & $0.0423 \pm 0.0013$ & $79.99 \pm 0.14$ & $57.89 \pm 0.35$       & $77.69 \pm 0.59$ & $57.11 \pm 0.97$      \\
+Energy                           & $78.31 \pm 0.11$ & $0.865 \pm 0.005$ & $0.0423 \pm 0.0014$ & $80.44 \pm 0.20$ & $57.88 \pm 0.35$       & $78.91 \pm 0.58$ & $57.10 \pm 0.97$      \\
+Mahalanobis                      & $78.30 \pm 0.10$ & $0.865 \pm 0.005$ & $0.0423 \pm 0.0013$ & $73.60 \pm 0.48$ & $57.89 \pm 0.35$       & $82.41 \pm 0.51$ & $57.11 \pm 0.97$      \\
+ReAct+Energy                     & $75.56 \pm 0.11$ & $0.949 \pm 0.011$ & $0.0113 \pm 0.0006$ & $78.30 \pm 0.40$ & $59.41 \pm 0.78$       & $73.86 \pm 0.69$ & $65.42 \pm 1.97$      \\
+\textit{Single-model UQ methods} &                  &                   &                     &                  &                        &                  &                       \\
+Epinet                           & $78.31 \pm 0.19$ & $0.880 \pm 0.004$ & $0.0400 \pm 0.0033$ & $80.49 \pm 0.21$ & $58.26 \pm 0.46$       & $79.23 \pm 0.69$ & $55.41 \pm 1.06$      \\
+MC Dropout                       & $78.36 \pm 0.18$ & $0.867 \pm 0.004$ & $0.0421 \pm 0.0022$ & $80.64 \pm 0.25$ & $58.48 \pm 0.83$       & $78.63 \pm 1.29$ & $56.14 \pm 2.76$      \\
+SWAG                             & $77.23 \pm 0.23$ & $0.874 \pm 0.011$ & $0.0311 \pm 0.0028$ & $80.32 \pm 0.17$ & $58.88 \pm 0.17$       & $81.28 \pm 0.91$ & $53.33 \pm 1.93$      \\
+PnC                              & $75.39 \pm 0.84$ & $1.191 \pm 0.095$ & $0.2173 \pm 0.0381$ & $79.19 \pm 0.14$ & $62.26 \pm 0.48$       & $83.18 \pm 0.76$ & $49.57 \pm 2.40$      \\
+\textit{5x-cost reference}       &                  &                   &                     &                  &                        &                  &                       \\
+Standard Ensemble                & $81.25 \pm 0.11$ & $0.706 \pm 0.002$ & $0.0211 \pm 0.0009$ & $82.62 \pm 0.03$ & $54.98 \pm 0.09$       & $80.61 \pm 0.16$ & $53.67 \pm 0.26$      
+\end{tblr}
+\end{table}

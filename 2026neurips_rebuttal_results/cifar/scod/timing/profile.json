@@ -1,0 +1,46 @@
+{
+  "offline": {
+    "build_seconds_seed0": 349.1,
+    "sketch_build_seconds": 167.3,
+    "serialized_sketch_bytes": 893776858,
+    "memory_preflight": {
+      "P": 11172170,
+      "k_max": 20,
+      "T": 124,
+      "C": 10,
+      "block_cols": 31,
+      "sketch_bytes": 5541396320,
+      "basis_bytes": 893773600,
+      "est_peak_gpu_bytes": 4602934040,
+      "est_peak_cpu_bytes": 7135169920.0,
+      "available_cpu_gb": 13.72,
+      "gpu_total_mb": 8151.0,
+      "est_peak_gpu_gb": 4.6,
+      "est_peak_cpu_gb": 7.14,
+      "est_sketch_gb": 5.54
+    }
+  },
+  "online": {
+    "batch_1": {
+      "base_forward_ms": 1.999,
+      "scod_score_ms": 21.447,
+      "ratio_scod_over_base": 10.7,
+      "images_per_sec_scod": 46.6,
+      "peak_gpu_mb": 7308.0
+    },
+    "batch_32": {
+      "base_forward_ms": 4.036,
+      "scod_score_ms": 555.989,
+      "ratio_scod_over_base": 137.7,
+      "images_per_sec_scod": 57.6,
+      "peak_gpu_mb": 7310.0
+    },
+    "batch_128": {
+      "base_forward_ms": 12.762,
+      "scod_score_ms": 2317.346,
+      "ratio_scod_over_base": 181.6,
+      "images_per_sec_scod": 55.2,
+      "peak_gpu_mb": 7310.0
+    }
+  }
+}

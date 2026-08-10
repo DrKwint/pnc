@@ -1,0 +1,18 @@
+{
+  "method": "deep_ensemble",
+  "note": "distinct seeds 0-4",
+  "n_forward_passes": 5,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 272.469482421875,
+  "resident_after_build_mib": 226.858642578125,
+  "predict_peak_mib": 2053.469482421875,
+  "in_use_after_predict_mib": 234.85888671875,
+  "cold_warmup_s": 13.920579433441162,
+  "warm_total_s": 5.702677011489868,
+  "warm_per_sample_ms": 1.1405354022979737
+}

@@ -1,0 +1,124 @@
+{
+  "_comment": "IMMUTABLE rebuttal anchor for all CIFAR-10 one-factor sensitivity sweeps (Phase 2). This IS the submitted config (Candidate A), confirmed by the author 2026-07-23 against the submitted PDF Table 2 and by exact numerical match to experiments/cifar_tables_paper.tex. Do NOT edit; vary exactly one field at a time in sweeps.",
+  "status": "submitted_configuration",
+  "label": "PnC single-block s3b0 ps25 bf0.05 (submitted)",
+  "method": "single_block_pnc",
+  "task_class": "CIFAROpenOODPnC",
+  "module": "cifar_tasks",
+  "builder_fn": "_build_single_block_pnc_ensemble -> PnCEnsemble",
+
+  "dataset": "cifar10",
+  "n_classes": 10,
+
+  "target": {
+    "target_stage_idx": 3,
+    "target_block_idx": 0,
+    "filename_token": "s3b0",
+    "code_convention": "0-indexed (stage_idx, block_idx); stages=[stage1,stage2,stage3,stage4]; stages[3][0] = first block of stage4",
+    "human_description": "stage4 (deepest, 512-channel) block 0",
+    "tuple_convention": "(3,0)",
+    "corrected_layer": "conv2 of the target block",
+    "corrected_kernel_shape": [3, 3, 512, 512],
+    "corrected_weight_params": 2359296,
+    "corrected_bias_params_added": 512,
+    "perturbed_layer": "conv1 of the target block",
+    "downsample_present": true,
+    "downsample": "1x1 conv 256->512 stride 2"
+  },
+
+  "perturbation": {
+    "n_directions_K": 20,
+    "n_perturbations_M": 50,
+    "direction_family": "random",
+    "direction_generation": "Gaussian NxD then QR-orthonormalized (find_random_directions, pnc.py); K orthonormal rows in conv1 parameter space; sigmas=ones(K)",
+    "perturbation_size": 25.0,
+    "perturbation_size_semantics": "L2 radius (in conv1 parameter space) of each member's conv1 weight perturbation",
+    "member_coefficient_normalization": "each member coeff row L2-normalized to unit norm then scaled to radius = perturbation_scale * member_radius_multiplier",
+    "member_radius_distribution": "fixed (multipliers all 1.0)",
+    "coefficient_seed": "seed (z_coeffs = RandomState(seed).normal(0,1,(50,20)))"
+  },
+
+  "correction": {
+    "mode": "affine ridge least-squares (conv2 weight delta + new per-channel bias)",
+    "lambda_reg": 0.001,
+    "ridge_centered_on": "original conv2 parameters (solves for delta; H+lambda*I penalizes ||delta||^2 = deviation from original weights)",
+    "subset_size": 1024,
+    "subset_size_semantics": "number of ID training images sampled for the correction/calibration set",
+    "chunk_size": 1024,
+    "chunk_size_semantics": "memory-only knob; results invariant (submitted OOD run used 1024; val block-sweep used 16)",
+    "bootstrap_frac": 0.05,
+    "bootstrap_semantics": "each of the M=50 members draws its own with-replacement resample of ~5% of the concatenated ridge calibration rows and runs an independent ridge solve",
+    "bootstrap_seed": "seed"
+  },
+
+  "batchnorm": {
+    "frozen_running_stats": true,
+    "use_running_average": true,
+    "bn2_absorbed_into_correction": false,
+    "bn2_handling": "bn2 (between conv1 and conv2) applied with frozen stats BEFORE forming ridge design features; correction fit on top of fixed bn2->ReLU output"
+  },
+
+  "evaluation": {
+    "benchmark": "openood_v1_5",
+    "openood_root": "openood_data",
+    "normalize": true,
+    "openood_max_examples_per_dataset": null,
+    "near_ood_datasets": ["cifar100", "tiny_imagenet"],
+    "far_ood_datasets": ["mnist", "svhn", "textures", "places365"],
+    "per_dataset_counts": {"cifar100": 10000, "tiny_imagenet": 10000, "mnist": 10000, "svhn": 26032, "textures": 5640, "places365": 10000},
+    "far_dataset_caveat": "Places365 uses a 10k subset; DTD(textures) native 5640 — not identical to public OpenOOD leaderboard splits",
+    "primary_ood_score": "predictive_entropy",
+    "ood_scores_stored": ["predictive_entropy", "max_softmax_uncertainty", "energy_score", "margin_uncertainty", "mutual_information", "variation_ratio"],
+    "auroc_aggregation": "unweighted macro-mean over constituent datasets (mean_auroc); concat_auroc (pooled) also stored but not headline",
+    "fpr95_aggregation": "macro-mean of per-dataset FPR95 (each at its own 95%-TPR threshold)",
+    "probability_averaging": "post-softmax probability-space mean over members (members return raw logits; softmax then mean)",
+    "id_test_split": "full CIFAR-10 test set (10000 images) -> id_metrics",
+    "id_val_split": "first 10% of CIFAR-10 train (5000 images) via _split_data(seed=99, val_split=0.1) -> val_metrics"
+  },
+
+  "temperature_scaling": {
+    "posthoc_calibrate": true,
+    "fit_split": "id_validation_only (the 5000-image ID val split)",
+    "fit_method": "golden-section search over log-temperature minimizing ensemble-mean-softmax NLL",
+    "ood_data_used_for_temperature": false,
+    "seed0_fitted_temperature": 0.7607
+  },
+
+  "base_checkpoint": {
+    "train_recipe_suffix": "e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0",
+    "optimizer": "sgd", "lr": 0.1, "weight_decay": 0.0005, "momentum": 0.9, "nesterov": true,
+    "warmup_epochs": 5, "epochs": 300, "batch_size": 128, "cutout_size": 8, "label_smoothing": 0.0,
+    "paths": {
+      "seed0": "results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed0.pkl",
+      "seed1": "results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed1.pkl",
+      "seed2": "results/cifar10/preact_resnet18_train_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_seed2.pkl"
+    }
+  },
+
+  "seeds": [0, 1, 2],
+
+  "protocol_compliance": {
+    "ood_tuning_used": false,
+    "ood_validation_used": false,
+    "no_ood_for_model_or_hyperparameter_selection": true
+  },
+
+  "reproduction": {
+    "seed0_verified": true,
+    "gate_passed": true,
+    "cached_reference_seed0": "results/cifar10/openood_v1p5_pnc_single_block_vcal_s3b0_k20_n50_ps25.0_lr0.001_bf0.05_e300_optsgd_lr1e-01_wd5e-04_bs128_wu5_mom0p9_n1_augfcco8_ls0_subsetsize1024_chunksize1024_seed0_random.json",
+    "runtime_sec_seed0": 4898
+  },
+
+  "submitted_3seed_metrics": {
+    "accuracy_pct": [95.59, 0.20],
+    "nll": [0.138, 0.003],
+    "ece": [0.0050, 0.0008],
+    "near_auroc_pct": [91.55, 0.13],
+    "near_fpr95_pct": [33.08, 0.63],
+    "far_auroc_pct": [95.09, 0.50],
+    "far_fpr95_pct": [18.15, 1.07]
+  },
+
+  "reproduction_command_seed0": "python -m luigi --module cifar_tasks CIFAROpenOODPnC --local-scheduler --dataset cifar10 --epochs 300 --n-directions 20 --n-perturbations 50 --perturbation-sizes \"[25.0]\" --target-stage-idx 3 --target-block-idx 0 --lambda-reg 1e-3 --subset-size 1024 --chunk-size 1024 --random-directions --bootstrap-frac 0.05 --seed 0 --posthoc-calibrate"
+}

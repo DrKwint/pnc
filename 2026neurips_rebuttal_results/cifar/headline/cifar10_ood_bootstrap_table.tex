@@ -1,0 +1,36 @@
+\begin{table}[t]
+\centering
+\caption{CIFAR-10 OOD detection. 3 seeds, post-hoc temperature on ID validation only. No OOD data used for tuning.}
+\label{tab:ood_cifar10}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l c c c c c c c}
+\toprule
+Method & Acc\% & NLL & ECE & Near AUROC & Near FPR95$\downarrow$ & Far AUROC & Far FPR95$\downarrow$ \\
+\midrule
+\midrule
+\multicolumn{8}{l}{\textit{Single-pass baselines}} \\
+  PreAct ResNet-18 & $95.74 \pm 0.15$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0011$ & $87.85 \pm 0.07$ & $66.30 \pm 0.88$ & $91.86 \pm 0.98$ & $38.30 \pm 5.44$ \\
+  MSP & $95.74 \pm 0.14$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0011$ & $87.66 \pm 0.05$ & $66.30 \pm 0.88$ & $91.53 \pm 0.90$ & $38.30 \pm 5.44$ \\
+  Energy & $95.74 \pm 0.15$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0011$ & $87.00 \pm 0.10$ & $66.31 \pm 0.89$ & $91.38 \pm 1.23$ & $38.30 \pm 5.44$ \\
+  Mahalanobis & $95.74 \pm 0.14$ & $0.144 \pm 0.004$ & $0.0102 \pm 0.0010$ & $87.98 \pm 0.11$ & $66.30 \pm 0.88$ & $93.25 \pm 0.26$ & $38.30 \pm 5.44$ \\
+  ReAct+Energy & $95.77 \pm 0.16$ & $0.148 \pm 0.004$ & $0.0116 \pm 0.0010$ & $88.63 \pm 0.15$ & $54.39 \pm 1.28$ & $92.50 \pm 1.20$ & $29.78 \pm 5.26$ \\
+\midrule
+\multicolumn{8}{l}{\textit{Single-model UQ methods}} \\
+  LLLA & \textbf{$95.77 \pm 0.20$} & $0.140 \pm 0.005$ & $0.0083 \pm 0.0013$ & $88.97 \pm 0.69$ & $54.12 \pm 5.70$ & $93.04 \pm 0.95$ & $28.44 \pm 6.72$ \\
+  Epinet & $95.76 \pm 0.18$ & $0.148 \pm 0.005$ & $0.0103 \pm 0.0022$ & $88.07 \pm 0.04$ & $63.37 \pm 1.40$ & $92.16 \pm 1.02$ & $35.10 \pm 5.57$ \\
+  MC Dropout & $95.76 \pm 0.11$ & $0.148 \pm 0.005$ & $0.0099 \pm 0.0030$ & $87.25 \pm 0.14$ & $71.04 \pm 0.69$ & $91.34 \pm 0.22$ & $42.53 \pm 1.16$ \\
+  SWAG & $95.37 \pm 0.05$ & $0.146 \pm 0.003$ & $0.0075 \pm 0.0010$ & $90.03 \pm 0.15$ & $44.71 \pm 0.79$ & $94.19 \pm 1.03$ & $22.09 \pm 4.91$ \\
+\midrule
+\multicolumn{8}{l}{\textit{PnC methods (1x training cost)}} \\
+  PnC single (sc=50) & $95.59 \pm 0.10$ & $0.144 \pm 0.005$ & $0.0079 \pm 0.0009$ & \textbf{$91.51 \pm 0.17$} & \textbf{$32.17 \pm 1.01$} & $94.10 \pm 0.81$ & $20.54 \pm 1.85$ \\
+  PnC multi (sc=7) & $95.09 \pm 0.14$ & $0.152 \pm 0.003$ & $0.0077 \pm 0.0014$ & $89.96 \pm 0.07$ & $38.82 \pm 0.81$ & $92.86 \pm 0.93$ & $24.41 \pm 1.39$ \\
+  PnC+Boot (bf=.05, sc=25) & $95.69 \pm 0.10$ & \textbf{$0.140 \pm 0.003$} & \textbf{$0.0069 \pm 0.0008$} & $90.99 \pm 0.08$ & $37.39 \pm 0.32$ & \textbf{$94.83 \pm 0.52$} & \textbf{$19.52 \pm 0.94$} \\
+  PnC+Boot (bf=.05, sc=50) & $95.47 \pm 0.15$ & $0.154 \pm 0.005$ & $0.0095 \pm 0.0019$ & $89.77 \pm 0.40$ & $48.95 \pm 2.69$ & $94.41 \pm 0.78$ & $22.94 \pm 2.29$ \\
+  PnC+Boot (bf=.5, sc=25) & $95.70 \pm 0.11$ & $0.141 \pm 0.004$ & $0.0072 \pm 0.0006$ & $91.02 \pm 0.12$ & $35.74 \pm 0.72$ & $94.25 \pm 0.64$ & $20.62 \pm 1.25$ \\
+  PnC+Boot (bf=.5, sc=50) & $95.54 \pm 0.11$ & $0.144 \pm 0.005$ & $0.0073 \pm 0.0002$ & $91.29 \pm 0.22$ & $33.56 \pm 1.26$ & $94.40 \pm 0.74$ & $19.95 \pm 1.64$ \\
+\midrule
+\multicolumn{8}{l}{\textit{5x-cost reference}} \\
+  Standard Ensemble & $96.56 \pm 0.04$ & $0.109 \pm 0.000$ & $0.0046 \pm 0.0003$ & $91.10 \pm 0.03$ & $40.39 \pm 0.38$ & $94.63 \pm 0.14$ & $19.49 \pm 0.26$ \\
+\bottomrule
+\end{tabular}}
+\end{table}

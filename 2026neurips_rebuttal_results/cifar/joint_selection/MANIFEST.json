@@ -1,0 +1,11 @@
+{
+  "experiment": "CIFAR-10 full P&C grid (6x3x3x3=162)",
+  "git_commit": "854f4d847ce9ce0d723e7b49a707ebe2f5fcb95c",
+  "git_dirty": true,
+  "jax": "0.9.1",
+  "flax": "0.12.3",
+  "gpu": "RTX 5060 8GB",
+  "checkpoint_manifest": "checkpoint_manifest.json",
+  "grid_spec": "GRID_SPEC.json",
+  "protocol": "split seed 99; 45000/5000; 1024 calib RandomState(seed).choice; ID-val NLL selection after temperature scaling; no OOD in construction/selection"
+}

@@ -1,0 +1,18 @@
+{
+  "method": "epinet",
+  "note": "ps=3.0, n=50",
+  "n_forward_passes": 50,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 93.158203125,
+  "resident_after_build_mib": 44.400146484375,
+  "predict_peak_mib": 2469.901123046875,
+  "in_use_after_predict_mib": 44.400146484375,
+  "cold_warmup_s": 4.810492515563965,
+  "warm_total_s": 8.05669903755188,
+  "warm_per_sample_ms": 1.611339807510376
+}

@@ -1,0 +1,18 @@
+{
+  "method": "swag",
+  "note": "cached samples + BN refresh on 2048 train imgs",
+  "n_forward_passes": 50,
+  "n_bench_samples": 5000,
+  "batch_size": 256,
+  "seed": 0,
+  "gpu_total_mib": 6112.921875,
+  "baseline_peak_mib": 0.0,
+  "baseline_in_use_mib": 0.0,
+  "build_peak_mib": 1157.8203125,
+  "resident_after_build_mib": 1070.677978515625,
+  "predict_peak_mib": 5360.134765625,
+  "in_use_after_predict_mib": 3460.100341796875,
+  "cold_warmup_s": 68.37337040901184,
+  "warm_total_s": 37.36445903778076,
+  "warm_per_sample_ms": 7.472891807556152
+}

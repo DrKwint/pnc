@@ -1,0 +1,23 @@
+{
+  "0": {
+    "P": 11172170,
+    "temperature": 1.3120340757619302,
+    "immutable": true,
+    "id_test_acc": 95.77,
+    "build_seconds": 349.1
+  },
+  "1": {
+    "P": 11172170,
+    "temperature": 1.3594659671845,
+    "immutable": true,
+    "id_test_acc": 95.89999999999999,
+    "build_seconds": 337.5
+  },
+  "2": {
+    "P": 11172170,
+    "temperature": 1.3291347716148063,
+    "immutable": true,
+    "id_test_acc": 95.55,
+    "build_seconds": 338.5
+  }
+}
