@@ -1,0 +1,88 @@
+{
+  "source_pdf": "pnc_repro/figures/pnc_bridge_Ant-v5.pdf",
+  "panel_B_printed_annotation": {
+    "raw_text": "\u03c1s = + 0.97\u03b21 = + 1.03\u00b10.01",
+    "rho_s": 0.97,
+    "beta_1": 1.03,
+    "beta_1_se": 0.01
+  },
+  "panel_A": {
+    "calibration": {
+      "x": {
+        "scale": "log",
+        "n_labelled_ticks": 4,
+        "max_residual_pt": 1.1008229819253756e-05,
+        "values": [
+          0.4,
+          0.6,
+          0.8,
+          1.0
+        ],
+        "axis_limits": [
+          0.21959129893114612,
+          1.3447320013948854
+        ]
+      },
+      "y": {
+        "scale": "log",
+        "n_labelled_ticks": 2,
+        "max_residual_pt": 8.526512829121202e-14,
+        "values": [
+          1.0,
+          10.0
+        ],
+        "axis_limits": [
+          0.5641272440331936,
+          15.034146458517688
+        ]
+      }
+    },
+    "n_points": 8
+  },
+  "panel_B": {
+    "calibration": {
+      "x": {
+        "scale": "log",
+        "n_labelled_ticks": 2,
+        "max_residual_pt": 5.684341886080802e-14,
+        "values": [
+          10.0,
+          100.0
+        ],
+        "axis_limits": [
+          4.161002646129637,
+          372.29223812242657
+        ]
+      },
+      "y": {
+        "scale": "linear",
+        "n_labelled_ticks": 8,
+        "max_residual_pt": 3.928571427991301e-05,
+        "values": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75
+        ],
+        "axis_limits": [
+          -0.047182016435579004,
+          1.8267156512400442
+        ]
+      },
+      "n_band_vertices": 12,
+      "scatter_x_vs_cached_mahal": {
+        "n": 2000,
+        "max_rel_residual": 6.392857002903221e-06,
+        "median_rel_residual": 1.486878251133401e-06
+      }
+    },
+    "n_scatter": 2000,
+    "n_tier_bin_means": 45,
+    "n_trend_vertices": 12,
+    "n_band_vertices": 12
+  }
+}

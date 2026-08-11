@@ -37,14 +37,10 @@ Outputs (repo-root relative):
   figures/fig3c_panelC_source.csv        normalized per-example plot input
   figures/fig3c_panelC_stats.json        recomputed statistics + provenance
   figures/fig3c_probes_predict_disagreement.{pdf,png}   standalone panel
-  figures/fig3_pnc_bridge_Ant-v5.{pdf,png}              full Figure 3 (see below)
 
-The full-figure output re-composes the regenerated panel C with panels (A) and
-(B) carried over as unmodified *vector* content from the submitted PDF. Panels A
-and B cannot be regenerated: their source data is not cached anywhere in this
-repo and their plotting code is gone (see the audit note). That step needs
-PyMuPDF; if it is not importable the script still writes the standalone panel
-and says so.
+The full three-panel Figure 3 is drawn by ``scripts/make_fig3.py``, which imports
+the panel-C drawing from this module. This script only produces panel C on its
+own, plus the normalized inputs and the recomputed statistics.
 
 Run:  .venv/bin/python scripts/make_fig3c_panel.py
 """
@@ -195,13 +191,17 @@ def style() -> dict:
         "xtick.labelsize": FS_TICK,
         "ytick.labelsize": FS_TICK,
         "legend.fontsize": FS_TICK,
-        "axes.labelpad": 1.0,
+        "axes.labelpad": 2.5,
         "axes.titlepad": 3.0,
         "axes.linewidth": 0.6,
         "xtick.major.width": 0.6,
         "ytick.major.width": 0.6,
         "xtick.minor.width": 0.6,
         "ytick.minor.width": 0.6,
+        "xtick.major.pad": 2.0,
+        "ytick.major.pad": 2.0,
+        "xtick.minor.pad": 2.0,
+        "ytick.minor.pad": 2.0,
         "xtick.major.size": 2.0,
         "ytick.major.size": 2.0,
         "xtick.minor.size": 2.0,
@@ -278,33 +278,6 @@ def render_standalone(data, stats, subsets, out_stem: Path) -> None:
         plt.close(fig)
 
 
-def compose_figure3(panel_c_pdf: Path, out_stem: Path) -> bool:
-    """Figure 3 = submitted panels (A)+(B), unmodified vector, + new panel (C).
-
-    Panels A and B are placed by clipping the submitted page to everything left
-    of the B/C boundary, so nothing of the old panel C survives in the output —
-    it is clipped away, not painted over.
-    """
-    try:
-        import pymupdf
-    except ImportError:
-        return False
-
-    src = pymupdf.open(SUBMITTED_PDF)
-    new_c = pymupdf.open(panel_c_pdf.with_suffix(".pdf"))
-    doc = pymupdf.open()
-    page = doc.new_page(width=PAGE_W_PT, height=PAGE_H_PT)
-
-    left = pymupdf.Rect(0, 0, PANEL_C_SPLIT_PT, PAGE_H_PT)
-    page.show_pdf_page(left, src, 0, clip=left)
-    page.show_pdf_page(pymupdf.Rect(PANEL_C_SPLIT_PT, 0, PAGE_W_PT, PAGE_H_PT), new_c, 0)
-
-    doc.save(out_stem.with_suffix(".pdf"))
-    doc.load_page(0).get_pixmap(dpi=400).save(out_stem.with_suffix(".png"))
-    doc.close(); new_c.close(); src.close()
-    return True
-
-
 # ── outputs ──────────────────────────────────────────────────────────────────
 
 
@@ -372,12 +345,7 @@ def main() -> None:
     print(f"t      = {ols['t_stat']:+.4f}  (printed {ols['t_stat']:+.1f})")
     print(f"wrote {panel_stem.with_suffix('.pdf')} / .png")
 
-    fig3_stem = args.out_dir / "fig3_pnc_bridge_Ant-v5"
-    if compose_figure3(panel_stem, fig3_stem):
-        print(f"wrote {fig3_stem.with_suffix('.pdf')} / .png")
-    else:
-        print("PyMuPDF not available — skipped the Figure 3 composite "
-              "(panels A/B carry-over). Install pymupdf to produce it.")
+    print("full Figure 3: run scripts/make_fig3.py")
 
 
 if __name__ == "__main__":
