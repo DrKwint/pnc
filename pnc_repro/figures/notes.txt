@@ -1,0 +1,33 @@
+What J and ε are in Panel C's title:
+
+  - J = number of random probe directions used to estimate the local sensitivity. The sketch is s_hat(x) = (1/Jε²) Σⱼ ||f_probe_j(x) − f_base(x)||² —
+  averaging over J independent finite-difference probes drawn from u_j ~ N(0, I_K). Default J=16. Larger J reduces Monte-Carlo noise on each per-sample
+  s_hat (in the linear limit, s_hat → trace(J^T J · Cov(u)) as J→∞).
+  - ε = the small perturbation magnitude used for the probes. By default ε = 0.01 × ps (so ε=0.32 when ps=32). It has to be small enough that the
+  LS-corrected member output stays in the locally-linear regime around the base — otherwise the sketch picks up the full nonlinear residual instead of
+  the Jacobian-dotted-with-direction quantity the theorem talks about. The 1/ε² normalization makes s_hat scale-invariant w.r.t. ε in that regime:
+  ‖f_probe − f_base‖ scales as ε, and the squared-and-divided cancels.
+
+  How to read the annotations:
+
+  Both panels report ρ (Spearman rank correlation between x and y, pooled across regimes) and β₁ (OLS slope on x's log axis with per-regime fixed
+  effects, ± its standard error). Panel C also reports t = β₁/SE.
+
+  - ρ ∈ [-1, 1]. ρ → +1 means perfect monotone-increasing ranking — every higher-x sample also has a higher y. ρ ≈ 0 means no monotone relationship.
+  Spearman is rank-based so it's robust to scale and to sample-by-sample outliers.
+  - β₁ is the slope after partialling out regime labels. The regime fixed effects subtract per-regime means before fitting the slope, so β₁ measures the
+   within-regime relationship. A non-trivial β₁ rules out the trivial story "ID samples are close & low-disagreement, OOD samples are far &
+  high-disagreement, but inside each regime the signal is flat" — that story would give large ρ pooled but β₁ ≈ 0 once regime is controlled.
+
+    - In Panel B the regression is disagreement = β₀ + β₁ log₁₀(distance) + regime_FE. So β₁'s units are "disagreement per decade of distance." Sign
+  tells direction; magnitude tells how much within-regime disagreement grows per 10× distance.
+    - In Panel C the regression is log-log: log₁₀(D + ε) = β₀ + β₁ log₁₀(s_hat + ε) + regime_FE. So β₁ is a power-law exponent: D ∝ s_hat^β₁ at fixed
+  regime. Theorem prediction is β₁ ≈ 1 (proportional). β₁ < 1 indicates the finite-scale ensemble saturates relative to the local sketch (expected from 
+  nonlinearity at the full ps=32). β₁ > 1 would mean amplification.
+  - ±SE is the standard error of β₁. β₁ being ≫ SE means the slope is well-determined; small SE relative to β₁ ⇒ the relationship is statistically      
+  tight, not luck of the draw.                                                                                                                          
+  - t = β₁/SE (Panel C only). |t| > 2 ≈ p < 0.05 against the null β₁ = 0. |t| ≫ 2 (e.g., 10+) means the relationship is overwhelmingly significant — the
+   sketch is genuinely tracking the ensemble.                                                                                                           
+                                                                  
+  Heuristic for both panels: a clean theorem-validation looks like ρ near +1, β₁ close to 1 (Panel C) or visibly positive with small SE (Panel B), |t|  
+  large. Drift away from that points to which assumption broke (regime confounding, nonlinearity, noisy probe estimate, etc.).

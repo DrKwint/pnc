@@ -1,0 +1,134 @@
+{
+  "n_total": 4000,
+  "n_by_tier": {
+    "id": 1000,
+    "near": 1000,
+    "mid": 1000,
+    "far": 1000
+  },
+  "pooled_spearman": {
+    "rho": 0.7332623222663951,
+    "p": 0.0
+  },
+  "within_tier_spearman": {
+    "id": 0.9842057762057763,
+    "near": 0.9112575232575234,
+    "mid": 0.8994746874746876,
+    "far": 0.6801706521706522
+  },
+  "regime_controlled_ols": {
+    "model": "log10(D) ~ 1 + log10(s_hat) + tier dummies (ID = baseline)",
+    "scale": "log-log (base 10), no epsilon offset needed; all values > 0",
+    "beta_1": 0.8271778180607643,
+    "beta_1_se": 0.007028011568553777,
+    "beta_1_se_definition": "OLS standard error (homoskedastic), not a CI half-width",
+    "t_stat": 117.69727610607517,
+    "dof": 3995,
+    "intercept": -0.4169287886232405,
+    "tier_offsets": {
+      "near": 0.08853626890235321,
+      "mid": 0.11983476888863998,
+      "far": 0.4829118920377977
+    }
+  },
+  "provenance": {
+    "canonical_source": "pnc_repro/artifacts/panel_c_diagnostic_Ant-v5_seed0.csv",
+    "submitted_figure": "pnc_repro/figures/pnc_bridge_Ant-v5.pdf",
+    "env": "Ant-v5",
+    "seed": 0,
+    "probe_config": {
+      "n_probes_J": 16,
+      "probe_eps": 0.32,
+      "eps_frac_of_ps": 0.01,
+      "pnc_perturbation_scale": 32.0
+    },
+    "pnc_config": {
+      "bootstrap_frac": 0.3,
+      "correction_lambda": 0.1,
+      "calibration_size": 1024,
+      "target_layer": "even-indexed (l1, l3, ...); LS on next layer"
+    },
+    "scatter": {
+      "per_tier": 500,
+      "rng": "np.random.default_rng(0), drawn in tier order id, near, mid, far"
+    }
+  },
+  "trend": {
+    "n_bins": 12,
+    "binning": "quantile bins on pooled s_hat over all 4000 examples",
+    "x": "geometric centre of the bin edges",
+    "y": "mean D(x) in bin",
+    "band": "+/- SEM",
+    "bin_edges": [
+      140.18153381347656,
+      740.5189971923828,
+      893.075927734375,
+      1029.2716064453125,
+      1165.4659423828125,
+      1312.5435485839844,
+      1490.564208984375,
+      1700.4287719726562,
+      1958.9622802734375,
+      2308.7725830078125,
+      2892.220458984374,
+      3793.554931640625,
+      12646.248046875
+    ],
+    "bin_centers": [
+      322.19107505398995,
+      813.2279449345775,
+      958.7584131661104,
+      1095.2538531197492,
+      1236.8204411994952,
+      1398.7245748368873,
+      1592.04216886039,
+      1825.123509405902,
+      2126.6871899369166,
+      2584.0819065419337,
+      3312.3703273595606,
+      6926.34367072363
+    ],
+    "bin_mean_D": [
+      131.18833994093825,
+      162.42384773160117,
+      180.6446535526817,
+      199.16894234697025,
+      246.9613061806233,
+      268.0042299330236,
+      316.8720025280677,
+      335.11400721495596,
+      428.4689426748965,
+      462.9349997111848,
+      511.70672703270526,
+      674.152852791065
+    ],
+    "bin_sem_D": [
+      5.4561980572746975,
+      6.999072485031592,
+      6.728254737425073,
+      7.1299017604465265,
+      9.904742965319565,
+      10.909626691342918,
+      12.505635808314914,
+      11.810051707543694,
+      15.62826855267516,
+      14.635322198576892,
+      14.546387534268943,
+      19.638969527637794
+    ],
+    "bin_n": [
+      334,
+      333,
+      333,
+      333,
+      334,
+      333,
+      333,
+      333,
+      334,
+      333,
+      333,
+      334
+    ]
+  }
+}
