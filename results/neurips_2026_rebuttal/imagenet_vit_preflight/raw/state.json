@@ -1,0 +1,16 @@
+{
+  "safe_batch": 16,
+  "model_resident_gib": 0.34008216857910156,
+  "gpu_baseline_other_gib": 0.875,
+  "numerical_scale": 5.726238250732422,
+  "n_tokens": 197,
+  "seed": 0,
+  "K": 20,
+  "M": 20,
+  "sustained_images_per_s": 129.57017848272213,
+  "member_construction_s": 282.8093679300009,
+  "member_accumulate_s": 282.42588124900067,
+  "member_solve_s": 0.3834866810002495,
+  "ensemble_done": true,
+  "mean_member_build_s": 281.5595390339995
+}

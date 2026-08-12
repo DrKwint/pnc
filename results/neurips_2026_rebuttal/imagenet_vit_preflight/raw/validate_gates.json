@@ -1,0 +1,47 @@
+[
+  {
+    "gate": "solver_parity",
+    "pass": true,
+    "detail": "bitwise equal = True, max|diff| = 0.000e+00"
+  },
+  {
+    "gate": "cho_parity",
+    "pass": true,
+    "detail": "rel max diff = 3.875e-16, one factorisation (0.08 ms) for all 7 outputs (0.07 ms)"
+  },
+  {
+    "gate": "residual_from_stats",
+    "pass": true,
+    "detail": "direct 0.9582732317 vs from-stats 0.9582732317 (diff 1.11e-16)"
+  },
+  {
+    "gate": "token_sampling",
+    "pass": true,
+    "detail": "deterministic=True seed-sensitive=True CLS-always=True no-dupes=True"
+  },
+  {
+    "gate": "cached_prefix_parity",
+    "pass": true,
+    "detail": "max|tail - model| = 9.537e-07 (tol 1e-4)"
+  },
+  {
+    "gate": "cls_only_parity",
+    "pass": true,
+    "detail": "max|cls_only - full_token| = 9.537e-07 (tol 1e-5)"
+  },
+  {
+    "gate": "token_count",
+    "pass": true,
+    "detail": "T = 197 (expected 197 = 1 + 14x14)"
+  },
+  {
+    "gate": "mutation_restore",
+    "pass": true,
+    "detail": "pristine=True logits_bitwise_equal=True, perturbation moved logits by 1.391e-02"
+  },
+  {
+    "gate": "stats_accumulation",
+    "pass": true,
+    "detail": "max|G_stream - X^T X| = 0.000e+00"
+  }
+]

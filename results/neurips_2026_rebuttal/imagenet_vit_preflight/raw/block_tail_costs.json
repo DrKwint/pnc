@@ -1,0 +1,29 @@
+{
+  "11": {
+    "prefix_ms_per_img": 6.4935351562667165,
+    "tail_M20_ms_per_img": 0.30956381249325204,
+    "tail_ms_per_img_per_member": 0.015478190624662604,
+    "total_ms_per_img_M20": 6.803098968759969,
+    "images_per_s_M20": 146.9918348376276,
+    "peak_gib": 0.8168239593505859,
+    "cls_only": true
+  },
+  "10": {
+    "prefix_ms_per_img": 5.9414968750104435,
+    "tail_M20_ms_per_img": 17.002274562457842,
+    "tail_ms_per_img_per_member": 0.8501137281228921,
+    "total_ms_per_img_M20": 22.943771437468286,
+    "images_per_s_M20": 43.58481353971962,
+    "peak_gib": 0.8627028465270996,
+    "cls_only": false
+  },
+  "9": {
+    "prefix_ms_per_img": 5.4248913749859184,
+    "tail_M20_ms_per_img": 29.446404812517812,
+    "tail_ms_per_img_per_member": 1.4723202406258906,
+    "total_ms_per_img_M20": 34.87129618750373,
+    "images_per_s_M20": 28.676880682122565,
+    "peak_gib": 0.8627028465270996,
+    "cls_only": false
+  }
+}

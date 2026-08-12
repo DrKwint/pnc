@@ -1,0 +1,10 @@
+test,batch_size,dtype,token_mode,member_count,rows_per_image,rows_per_s,images_per_s,median_s,mean_s,xtx_accum_s_per_batch,proj_1000_images_s,proj_4000_images_s,rows_over_correction_dim,peak_allocated_gib,peak_reserved_gib,notes
+base_inference,1,float32,n/a,1,,,86.11,0.011613,0.011568,,,,,0.3565,0.3984,20 timed iters after 3 warmup
+base_inference,2,float32,n/a,1,,,113.15,0.017675,0.017709,,,,,0.3681,0.4141,20 timed iters after 3 warmup
+base_inference,4,float32,n/a,1,,,148.06,0.027017,0.027145,,,,,0.3801,0.4336,20 timed iters after 3 warmup
+base_inference,8,float32,n/a,1,,,148.58,0.053844,0.053713,,,,,0.4113,0.4863,20 timed iters after 3 warmup
+base_inference,16,float32,n/a,1,,,148.72,0.107585,0.107652,,,,,0.4742,0.5547,20 timed iters after 3 warmup
+base_inference,32,float32,n/a,1,,,123.19,0.259769,0.25965,,,,,0.6007,0.7109,20 timed iters after 3 warmup
+base_inference,64,float32,n/a,1,,,94.29,0.678765,0.677257,,,,,0.8533,1.0156,20 timed iters after 3 warmup
+base_inference,128,float32,n/a,1,,,130.07,0.98406,0.984667,,,,,1.3597,1.623,20 timed iters after 3 warmup
+base_inference,256,float32,n/a,1,,,97.1,2.636421,2.688593,,,,,2.3715,2.8516,20 timed iters after 3 warmup

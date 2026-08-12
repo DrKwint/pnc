@@ -1,0 +1,66 @@
+# ViT-B/16 P&C TITAN X feasibility preflight -- exact configuration as run.
+# Reproduce with the commands in REPRODUCE.md. Nothing here touches OOD data.
+
+experiment: imagenet_vit_pnc_preflight
+branch: agent/vit-imagenet-preflight
+date: 2026-08-12
+
+model:
+  arch: vit_b_16
+  source: torchvision
+  weight_enum: ViT_B_16_Weights.IMAGENET1K_V1     # pinned; never DEFAULT
+  url: https://download.pytorch.org/models/vit_b_16-c867db91.pth
+  sha256: c867db91d3e12c6cbadabb610d73c24a546bf82d8c03a9fea34f43a712ddb0e9
+  parameters: 86567656
+  dtype: float32                                   # fp16 tested only as an aside (sec 17)
+  eval_mode: true
+  gradients: disabled everywhere (torch.inference_mode)
+
+target:
+  block: encoder.layers.encoder_layer_11           # final block only, per spec sec 4
+  W1_perturb: encoder.layers.encoder_layer_11.mlp.0   # nn.Linear(768 -> 3072)
+  activation: encoder.layers.encoder_layer_11.mlp.1   # GELU(approximate=none)
+  W2_correct: encoder.layers.encoder_layer_11.mlp.3   # nn.Linear(3072 -> 768)
+  code_layout: y = h @ W1 + b1 ; z = y @ W2 + b2   # transpose of nn.Linear.weight
+  correction_dim: 3073                             # 3072 + bias column (bias first)
+  tokens_per_image: 197                            # 1 CLS + 14x14 patches
+
+pnc:
+  K: 20                     # perturbation basis rank
+  M_preflight: 20
+  seed: 0                   # basis seed; coefficients use seed+1 (Banking77 convention)
+  target_rel: 0.5           # median ||dW1||_F / ||W1||_F at scale multiplier 1.0
+  ridge_lambda: 1.0e-3
+  ridge_centering: toward_original     # w_prior = [b2; W2] of the pristine checkpoint
+  objective_reduction: sum_legacy      # matches pnc_theory.linalg.ridge_solve default
+  solver: experiments/scripts/pnc_theory/linalg.py::ridge_solve (streamed form, gated bitwise)
+  solve_precision: float64 on CPU
+  accumulation_precision: float32 on GPU
+
+data:
+  dataset: evanarlian/imagenet_1k_resized_256      # ILSVRC-2012 val, short side 256
+  split: validation (both shards)
+  n_images: 50000
+  transform: ViT_B_16_Weights.IMAGENET1K_V1.transforms()   # resize 256, crop 224, normalize
+  split_seed: 20260812
+  n_calib: 40000
+  n_heldout: 8192
+  n_bench: 512
+  ood: none                 # spec sec 21 -- no OOD data is loaded anywhere in this preflight
+
+sweeps:
+  batch_sizes: [1, 2, 4, 8, 16, 32, 64, 128, 256]
+  reserved_ceiling_gib: 11.0
+  required_headroom_gib: 1.5
+  token_modes: [cls, cls+4, cls+16, all]
+  row_budgets: [4096, 8192, 16384, 32768]
+  ensemble_sizes: [1, 5, 20]
+  token_sample_seed_rule: RandomState(seed * 100003 + global_image_id)
+
+environment:
+  venv: .venv_vit                    # sibling venv; main .venv's torch has no sm_61 kernels
+  python: 3.12.3
+  torch: 2.7.1+cu126
+  torchvision: 0.22.1+cu126
+  gpu: NVIDIA TITAN X (Pascal), 12 GiB, sm_61
+  driver: 581.80 (CUDA 13.0)

@@ -1,0 +1,139 @@
+{
+  "primitives": {
+    "safe_batch": 16,
+    "cold_images_per_s": 148.32323823744397,
+    "sustained_images_per_s": 129.57017848272213,
+    "thermal_derate_factor": 1.1447328387930138,
+    "cache_h_z_s_per_block": 277.43887491499936,
+    "member_construction_s_cached": 0.44573538850045225,
+    "member_gpu_accum_s": 0.17245312099976218,
+    "member_cpu_solve_s": 0.2738603635002619,
+    "member_construction_s_naive": 281.5595390339995,
+    "cached_vs_naive_speedup": 631.6741867439
+  },
+  "per_block_costs": {
+    "11": {
+      "cls_only_tail": true,
+      "prefix_ms": 6.4935351562667165,
+      "tail_ms_per_member": 0.015478190624662604,
+      "ms_per_image_M20": 6.803098968759969,
+      "images_per_s_M20": 146.9918348376276,
+      "peak_gib": 0.8168239593505859
+    },
+    "10": {
+      "cls_only_tail": false,
+      "prefix_ms": 5.9414968750104435,
+      "tail_ms_per_member": 0.8501137281228921,
+      "ms_per_image_M20": 22.943771437468286,
+      "images_per_s_M20": 43.58481353971962,
+      "peak_gib": 0.8627028465270996
+    },
+    "9": {
+      "cls_only_tail": false,
+      "prefix_ms": 5.4248913749859184,
+      "tail_ms_per_member": 1.4723202406258906,
+      "ms_per_image_M20": 34.87129618750373,
+      "images_per_s_M20": 28.676880682122565,
+      "peak_gib": 0.8627028465270996
+    }
+  },
+  "construction": {
+    "target_blocks": [
+      11,
+      10,
+      9
+    ],
+    "scales": 3,
+    "selection_members": 90,
+    "final_members": 20,
+    "total_members": 110,
+    "cache_passes": 3,
+    "cache_s_per_block": 277.43887491499936,
+    "cache_total_s": 832.3166247449981,
+    "member_s_each": 0.44573538850045225,
+    "member_total_s": 49.03089273504975,
+    "cpu_solve_total_s": 30.124639985028807,
+    "gpu_accum_total_s": 18.96984330997384,
+    "naive_member_s_each": 281.5595390339995,
+    "naive_total_s": 30971.549293739947,
+    "total_s": 881.3475174800478,
+    "speedup_vs_naive": 35.14113182311323
+  },
+  "selection": {
+    "id_val_images": 5000,
+    "M": 10,
+    "per_block_s": {
+      "11": 114.15820296250394,
+      "10": 247.99436395981246,
+      "9": 345.9627688570838
+    },
+    "total_s": 708.1153357794002
+  },
+  "id_evaluation_s": {
+    "11": 389.38653975492116,
+    "10": 1313.2244305115569,
+    "9": 1995.9158938556573
+  },
+  "ood_evaluation": {
+    "per_dataset_s": {
+      "11": {
+        "SSB-hard": 381.59880895982275,
+        "NINCO": 45.78406934438363,
+        "iNaturalist": 77.87730795098422,
+        "Textures": 43.9228016843551,
+        "OpenImage-O": 123.58349998741689
+      },
+      "10": {
+        "SSB-hard": 1286.9599419013257,
+        "NINCO": 154.40892853954887,
+        "iNaturalist": 262.6448861023114,
+        "Textures": 148.13171576170362,
+        "OpenImage-O": 416.7911697557579
+      },
+      "9": {
+        "SSB-hard": 1955.997575978544,
+        "NINCO": 234.6797907995482,
+        "iNaturalist": 399.18317877113145,
+        "Textures": 225.13931282691814,
+        "OpenImage-O": 633.4637863919085
+      }
+    },
+    "total_s": {
+      "11": 672.7664879269626,
+      "10": 2268.9366420606475,
+      "9": 3448.4636447680505
+    },
+    "per_10k_examples_s": {
+      "11": 77.87730795098422,
+      "10": 262.6448861023114,
+      "9": 399.18317877113145
+    },
+    "total_examples": 86388
+  },
+  "disk_io": {
+    "compact_state_mib": 334.2676067352295,
+    "note": "written once per member set; negligible against compute"
+  },
+  "scenarios": {
+    "final_block_only": {
+      "description": "target block 11 only (CLS-only tail)",
+      "construction_s": 326.4697676500491,
+      "selection_s": 114.15820296250394,
+      "id_eval_s": 389.38653975492116,
+      "ood_eval_s": 672.7664879269626,
+      "total_s": 1502.7809982944368,
+      "total_h": 0.4174391661928991,
+      "total_h_with_20pct_margin": 0.5009269994314789
+    },
+    "all_three_blocks": {
+      "description": "construct and evaluate all three target blocks",
+      "construction_s": 881.3475174800478,
+      "selection_s": 708.1153357794002,
+      "id_eval_s": 3698.5268641221355,
+      "ood_eval_s": 6390.16677475566,
+      "total_s": 11678.156492137245,
+      "total_h": 3.2439323589270126,
+      "total_h_with_20pct_margin": 3.8927188307124148
+    }
+  }
+}

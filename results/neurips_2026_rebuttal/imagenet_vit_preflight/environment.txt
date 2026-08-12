@@ -1,0 +1,72 @@
+# ViT-B/16 P&C TITAN X preflight -- environment inventory
+
+## Hardware
+GPU model             : NVIDIA TITAN X (Pascal)
+total VRAM            : 12.00 GiB (12884770816 bytes)
+compute capability    : sm_61
+multiprocessors       : 28
+CPU model             : 12th Gen Intel(R) Core(TM) i7-12700KF
+CPU logical cores     : 20
+system RAM            : 24607916 kB
+
+## Drivers / toolkit
+NVIDIA driver         : 581.80
+driver CUDA version   : 13.0
+torch CUDA runtime    : 12.6
+torch cuDNN           : 90501
+torch arch list       : ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90']
+
+## Python stack
+Python                : 3.12.3 (CPython)
+interpreter           : /home/elean/pnc/.venv_vit/bin/python
+PyTorch               : 2.7.1+cu126
+torchvision           : 0.22.1+cu126
+numpy                 : 2.4.4
+scipy                 : 1.18.0
+platform              : Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+
+## torch.cuda.get_device_properties(0)
+_CudaDeviceProperties(name='NVIDIA TITAN X (Pascal)', major=6, minor=1, total_memory=12287MB, multi_processor_count=28, uuid=24ea7138-d704-c92e-42d6-9180fd8a6cd7, L2_cache_size=3MB)
+
+## nvidia-smi
+```
+Wed Aug 12 12:28:17 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.105.07             Driver Version: 581.80         CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA TITAN X (Pascal)        On  |   00000000:01:00.0  On |                  N/A |
+| 24%   45C    P5             23W /  250W |     896MiB /  12288MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A              31      G   /Xwayland                             N/A      |
++-----------------------------------------------------------------------------------------+
+```
+
+## Pinned checkpoint (spec section 3)
+weight enum           : ViT_B_16_Weights.IMAGENET1K_V1
+url                   : https://download.pytorch.org/models/vit_b_16-c867db91.pth
+cache path            : /home/elean/.cache/torch/hub/checkpoints/vit_b_16-c867db91.pth
+SHA-256               : c867db91d3e12c6cbadabb610d73c24a546bf82d8c03a9fea34f43a712ddb0e9
+parameters            : 86,567,656
+classes               : 1000
+preprocessing         : ImageClassification(     crop_size=[224]     resize_size=[256]     mean=[0.485, 0.456, 0.406]     std=[0.229, 0.224, 0.225]     interpolation=InterpolationMode.BILINEAR )
+reported metrics      : {'acc@1': 81.072, 'acc@5': 95.318}
+
+## P&C target (spec section 4)
+target block          : encoder.layers.encoder_layer_11
+W1 [PERTURB]          : encoder.layers.encoder_layer_11.mlp.0  nn.Linear weight (3072, 768) -> code layout (768, 3072)
+activation            : encoder.layers.encoder_layer_11.mlp.1  GELU(approximate=none)
+W2 [CORRECT]          : encoder.layers.encoder_layer_11.mlp.3  nn.Linear weight (768, 3072) -> code layout (3072, 768)
+||W1||_F              : 52.6551
+||W2||_F              : 39.2893
+correction dimension  : 3072 + 1 bias = 3073
