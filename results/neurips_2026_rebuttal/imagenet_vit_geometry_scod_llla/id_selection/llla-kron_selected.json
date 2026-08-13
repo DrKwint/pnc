@@ -1,0 +1,40 @@
+{
+  "method": "LLLA-Kron",
+  "package": "laplace-torch",
+  "version": "0.2.2.2",
+  "curvlinops": "2.0.1",
+  "subset_of_weights": "last_layer",
+  "hessian_structure": "kron",
+  "last_layer_name": "head",
+  "n_cal": 32768,
+  "prior_precision": 1000000000.0,
+  "selection_criterion": "ID selection-pool NLL",
+  "pred_type": "glm",
+  "link_approx": "probit",
+  "predictive_note": "closed-form functional variance; laplace-torch's own predictive materialises an 11,718 GiB Jacobian for a 1000-class head",
+  "closed_form_gate": {
+    "max_rel_error": 2.075004772450484e-07,
+    "ok": true,
+    "n_checked": 64,
+    "d_in": 16,
+    "k_out": 10
+  },
+  "OOD data accessed before selection": "NO",
+  "grid": [
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0,
+    1000000.0,
+    10000000.0,
+    100000000.0,
+    1000000000.0,
+    10000000000.0
+  ]
+}

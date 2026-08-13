@@ -1,0 +1,56 @@
+{
+  "val50k": {
+    "tag": "val50k",
+    "n": 50000,
+    "seconds": 451.1773048689938,
+    "images_per_s": 110.82117708584269,
+    "disk_mib": 732.4231052398682,
+    "peak_gpu_gib": 0.45618629455566406,
+    "cached": false
+  },
+  "ssb_hard": {
+    "tag": "ssb_hard",
+    "n": 49000,
+    "seconds": 384.63448614400113,
+    "images_per_s": 127.39367312387888,
+    "disk_mib": 717.7746677398682,
+    "peak_gpu_gib": 0.45618629455566406,
+    "cached": false
+  },
+  "ninco": {
+    "tag": "ninco",
+    "n": 5879,
+    "seconds": 50.01980535899929,
+    "images_per_s": 117.5334441588802,
+    "disk_mib": 86.11939430236816,
+    "peak_gpu_gib": 0.45618629455566406,
+    "cached": false
+  },
+  "inaturalist": {
+    "tag": "inaturalist",
+    "n": 10000,
+    "seconds": 94.15251125200302,
+    "images_per_s": 106.21065616863467,
+    "disk_mib": 146.48560523986816,
+    "peak_gpu_gib": 0.45618629455566406,
+    "cached": false
+  },
+  "textures": {
+    "tag": "textures",
+    "n": 5160,
+    "seconds": 46.75835262700275,
+    "images_per_s": 110.35461495322488,
+    "disk_mib": 75.58716773986816,
+    "peak_gpu_gib": 0.45618629455566406,
+    "cached": false
+  },
+  "openimage_o": {
+    "tag": "openimage_o",
+    "n": 15869,
+    "seconds": 126.62439180299407,
+    "images_per_s": 125.32340549907204,
+    "disk_mib": 232.45728492736816,
+    "peak_gpu_gib": 0.45618629455566406,
+    "cached": false
+  }
+}

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtualenvs (22 GB — never commit)
+.venv/
+.venv_*/
+
+# Scratch / temp
+*.dedupe_tmp
+*.tmp
+tmp*.npz
+
+# NOTE: results/ is deliberately NOT ignored. It is large (20 GB) but the
+# per-experiment manifests, configs and hashes under it are the provenance record.
+# If you want it out of git, prefer `git rm -r --cached results/` over ignoring it,
+# so the removal is explicit and reviewable.
+
+# ViT preflight: regenerable member weights (335 MB); their *sizes* are the measurement
+# and live in raw/stage_ensemble.json. Rebuild with the commands in REPRODUCE.md.
+results/neurips_2026_rebuttal/imagenet_vit_preflight/raw/*.npz
+
+# ImageNet ViT full experiment: activation caches and member weight matrices.
+# Both are regenerable from the commands in MANIFEST.md; sizes and checksums are
+# recorded in timing/ and metrics/. (~1.8 GB)
+results/neurips_2026_rebuttal/imagenet_vit/raw/
+results/neurips_2026_rebuttal/imagenet_vit/construction/
+
+# Preservation-frontier follow-up: member weight matrices (regenerable)
+results/neurips_2026_rebuttal/imagenet_vit_preservation_frontier/raw/
+
+# Geometry/SCOD/LLLA follow-up: multi-layer CLS caches (~2.0 GB), regenerable with
+# `python -m experiments.imagenet_vit_pnc.geom_cache`. Sizes in metrics/cls_layer_cache.json.
+results/neurips_2026_rebuttal/imagenet_vit_geometry_scod_llla/raw/
