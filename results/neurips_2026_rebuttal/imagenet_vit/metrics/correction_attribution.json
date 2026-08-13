@@ -1,0 +1,62 @@
+{
+  "config": "selected: r=0.375, lambda=1.0, n_cal=16384, seed 0, M=20",
+  "step1_ffn_output": {
+    "rel_dz_uncorrected": 0.176,
+    "rel_dz_corrected": 0.1384,
+    "fraction_of_deviation_removed": 0.214,
+    "note": "the ridge is a PARTIAL correction: it removes ~21% of the perturbation-induced FFN-output change on held-out data, not ~100%"
+  },
+  "step2_residual_stream": {
+    "z0_over_x_resid": 0.4292,
+    "rel_block_output_change_uncorrected": 0.06974,
+    "rel_block_output_change_corrected": 0.05482,
+    "note": "the FFN contributes <half the residual-stream norm, so a 17.6% FFN change is only a 7.0% block-output change"
+  },
+  "step3_score_composition": {
+    "id_val": {
+      "mean_predictive_entropy": {
+        "base": 0.3481,
+        "pnc": 0.3548,
+        "uncorrected": 0.3577
+      },
+      "mean_mutual_information": {
+        "pnc": 0.002407,
+        "uncorrected": 0.003373
+      },
+      "mi_as_pct_of_predictive_entropy": {
+        "pnc": 0.68,
+        "uncorrected": 0.94
+      }
+    },
+    "ninco_ood": {
+      "mean_predictive_entropy": {
+        "base": 1.0541,
+        "pnc": 1.0789,
+        "uncorrected": 1.0797
+      },
+      "mean_mutual_information": {
+        "pnc": 0.007419,
+        "uncorrected": 0.009061
+      },
+      "mi_as_pct_of_predictive_entropy": {
+        "pnc": 0.69,
+        "uncorrected": 0.84
+      }
+    },
+    "note": "member disagreement is <1% of the predictive entropy, so the OOD score is dominated by the base model's own confidence"
+  },
+  "step4_ranking": {
+    "spearman_id_val": {
+      "pnc_vs_uncorrected": 0.99778,
+      "pnc_vs_base": 0.99817,
+      "uncorrected_vs_base": 0.99723
+    },
+    "spearman_ninco": {
+      "pnc_vs_uncorrected": 0.99922,
+      "pnc_vs_base": 0.99896,
+      "uncorrected_vs_base": 0.99929
+    },
+    "note": "AUROC is a pure ranking statistic; rankings this correlated cannot produce different AUROC"
+  },
+  "interpretation": "The correction does what it claims -- it removes the reducible part of the perturbation (MI drops 29%, median logit MSE 2.3x) -- but at r=0.375 the disagreement term it acts on is <1% of the score, so improving it cannot move AUROC. The r-sweep confirms the mechanism: the corrected-vs-uncorrected AUROC gap grows monotonically (+0.12 at r=0.25, +0.25 at 0.375, +0.39 at 0.5, +1.39 at 1.0, +4.57 at 2.0) as the disagreement term grows."
+}

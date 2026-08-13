@@ -178,6 +178,40 @@ The correction's importance is strongly scale-dependent (from Stage A, ratio of 
 to corrected median logit MSE): 2.6× at r = 0.125, 2.7× at 0.25, 3.1× at 0.5, 4.6× at 1.0,
 **11.7× at r = 2.0**. See §12.
 
+### Why the correction changes so little here
+
+`metrics/correction_attribution.json` traces the effect through the network. The correction
+is not inert — it is diluted four times over, and then feeds a score it barely controls.
+
+**1. The ridge is a partial correction, not a near-complete one.** On held-out validation
+images it removes **21.4 %** of the perturbation-induced change in the FFN output
+(‖Δz‖/‖z₀‖ 0.176 → 0.138), consistent with the held-out CLS residual 0.192 → 0.143. The
+map from perturbed post-GELU activations to the original FFN output is not exactly
+linearly realisable, so most of the deviation is irreducible by *any* choice of W₂.
+
+**2. The FFN is a minority of the residual stream.** ‖z₀‖/‖x‖ = 0.429 at the CLS position,
+so a 17.6 % FFN deviation is only a **7.0 %** change in the block output — 5.5 % after
+correction.
+
+**3. Member disagreement is under 1 % of the score.** Mean mutual information against mean
+predictive entropy: 0.68 % for P&C, 0.94 % uncorrected on ID; 0.69 % / 0.84 % on NINCO. The
+predictive entropy that P&C uses as its OOD score is ~99 % the base model's own confidence
+plus a ~1 % disagreement term.
+
+**4. So the rankings are nearly identical, and AUROC is a ranking statistic.** Spearman
+correlation between P&C and uncorrected entropy is **0.998** (ID) and **0.999** (NINCO);
+between P&C entropy and *base* entropy, 0.998 and 0.999. Two scores this correlated cannot
+produce materially different AUROC.
+
+The mechanism is nevertheless visible in the right place. Correcting **reduces** member
+disagreement by 29 % (MI 3.37e-03 → 2.41e-03) — it removes the reducible part of the
+perturbation — and yet AUROC goes *up* slightly. The disagreement that survives correction
+is better targeted per unit. That is precisely the claim P&C makes; at r = 0.375 the term
+being improved is simply too small a share of the score for it to matter. As r grows the
+disagreement term grows with it, and the corrected/uncorrected AUROC gap widens
+monotonically: +0.12 at r = 0.25, +0.25 at 0.375, +0.39 at 0.5, +1.39 at 1.0, **+4.57 at
+r = 2.0** (§12).
+
 ## 10. OpenOOD Near/Far results
 
 | Method | Near AUROC | Near FPR95 | Far AUROC | Far FPR95 |
