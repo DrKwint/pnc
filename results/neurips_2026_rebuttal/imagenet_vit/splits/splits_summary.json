@@ -1,0 +1,35 @@
+{
+  "split_seed": 20260813,
+  "source_repo": "evanarlian/imagenet_1k_resized_256",
+  "source_split": "train",
+  "n_train_rows": 122024,
+  "pools": {
+    "correction": {
+      "file": "correction_32768.csv",
+      "n_images": 32768,
+      "n_classes": 1000,
+      "per_class_min": 32,
+      "per_class_max": 33,
+      "sha256": "08affc7e865e58cee7b3aa110e83072e861760b97894ee7d087c6c02d160b64d",
+      "split_seed": 20260813
+    },
+    "selection": {
+      "file": "selection_8192.csv",
+      "n_images": 8192,
+      "n_classes": 1000,
+      "per_class_min": 8,
+      "per_class_max": 9,
+      "sha256": "71edce32d39bd6a17a2a56d0993ba73d05fb05278764710428d38de8529078dd",
+      "split_seed": 20260813
+    },
+    "temperature": {
+      "file": "temperature_8192.csv",
+      "n_images": 8192,
+      "n_classes": 1000,
+      "per_class_min": 8,
+      "per_class_max": 9,
+      "sha256": "3271a90afd4a7c3aebd6936e4083ef92dd69876e63416eb9bafb7e95e3e23ee2",
+      "split_seed": 20260813
+    }
+  }
+}

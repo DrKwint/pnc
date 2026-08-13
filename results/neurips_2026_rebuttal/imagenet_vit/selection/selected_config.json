@@ -1,0 +1,17 @@
+{
+  "r_target": 0.375,
+  "r_realized_median": 0.37499968707561493,
+  "scale": 4.923062801361084,
+  "n_cal": 16384,
+  "lambda": 1.0,
+  "K": 20,
+  "M_final": 20,
+  "token_mode": "cls",
+  "target_block": 11,
+  "selection_nll": 0.3260294048216372,
+  "selection_top1": 0.93798828125,
+  "base_top1_selection_pool": 0.938232421875,
+  "n_survivors": 15,
+  "n_tied": 8,
+  "ood_data_accessed_before_freeze": false
+}

@@ -160,6 +160,35 @@ class ViTPnCAdapter:
         return self.tail(self.prefix(images))
 
     @torch.inference_mode()
+    def features(self, x_resid: torch.Tensor, W1=None, b1=None, W2=None, b2=None,
+                 cls_only: bool | None = None) -> torch.Tensor:
+        """Penultimate CLS feature (after ``encoder.ln``, before ``heads``) -> (B, 768).
+
+        This is the representation ReAct clips, and ``heads(features(...))`` reproduces
+        :meth:`tail` exactly.
+        """
+        if cls_only is None:
+            cls_only = self.is_final
+        if cls_only:
+            if not self.is_final:
+                raise ValueError("cls_only is only valid for the final block")
+            x_resid = x_resid[:, :1]
+        W1 = self.W1 if W1 is None else W1
+        b1 = self.b1 if b1 is None else b1
+        W2 = self.W2 if W2 is None else W2
+        b2 = self.b2 if b2 is None else b2
+        h = self.block.ln_2(x_resid)
+        out = x_resid + (F.gelu(h @ W1 + b1) @ W2 + b2)
+        for i in range(self.block_index + 1, N_BLOCKS):
+            out = self.enc.layers[i](out)
+        return self.enc.ln(out)[:, 0]
+
+    @torch.inference_mode()
+    def head(self, feats: torch.Tensor) -> torch.Tensor:
+        """Classifier head applied to penultimate features -> (B, 1000) logits."""
+        return self.model.heads(feats)
+
+    @torch.inference_mode()
     def ffn_triplet(self, x_resid: torch.Tensor, W1=None, b1=None):
         """(h, y, z) at the target FFN: h=ln_2(x), y=gelu(h@W1+b1), z=y@W2+b2 (original W2)."""
         W1 = self.W1 if W1 is None else W1
