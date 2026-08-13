@@ -1,0 +1,8 @@
+method,models,extra_opt_steps,cal_n,fit_s,gpu_hours,peak_vram_gib,peak_ram_gib,storage_mib,fwd_bwd_construction,evals_per_image,label
+MSP,1,0,0,0.0,0.0,0.47,4.8,0.0,0,1,MEASURED
+Energy,1,0,0,0.0,0.0,0.47,4.8,0.0,0,1,MEASURED
+ReAct + Energy,1,0,8192,0.11,0.0,0.47,4.8,0.0,8192,1,MEASURED
+Mahalanobis,1,0,32768,0.3,0.0,0.47,4.8,5.18,32768,1,MEASURED
+Laplace (KFAC),1,0,32768,1.13,0.0,0.47,4.8,6.07,32768,20,MEASURED
+P&C (r=2),1,0,32768,12.0,0.00333,2.16,4.8,167.0,32768,20,MEASURED
+SCOD (not run),1,0,32768,1007915.0,280.0,5.08,389.6,398917.0,19791872,1,ESTIMATED from MEASURED matvec

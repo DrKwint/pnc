@@ -1,0 +1,65 @@
+{
+  "n_replicates": 2000,
+  "seed": 20260815,
+  "id_subsample": 10000,
+  "reference": "P&C[primary] seed 0",
+  "positive_means": "P&C better",
+  "comparisons": {
+    "Mahalanobis": {
+      "near_delta": -0.023934947815035135,
+      "near_ci": [
+        -0.02681147648943529,
+        -0.020889162616737716
+      ],
+      "near_excludes_zero": true,
+      "far_delta": -0.04814858465116201,
+      "far_ci": [
+        -0.05075017421746446,
+        -0.04569527031092755
+      ],
+      "far_excludes_zero": true
+    },
+    "Laplace-KFAC": {
+      "near_delta": 0.01795364615436823,
+      "near_ci": [
+        0.015686514842580095,
+        0.02028051211727089
+      ],
+      "near_excludes_zero": true,
+      "far_delta": 0.011777360907525125,
+      "far_ci": [
+        0.010191855713515715,
+        0.013415821567969942
+      ],
+      "far_excludes_zero": true
+    },
+    "MSP": {
+      "near_delta": 0.029081919088228214,
+      "near_ci": [
+        0.0265012006619917,
+        0.03187246019191228
+      ],
+      "near_excludes_zero": true,
+      "far_delta": 0.017039122492149006,
+      "far_ci": [
+        0.01522114953393512,
+        0.018820865084317406
+      ],
+      "far_excludes_zero": true
+    },
+    "Energy": {
+      "near_delta": 0.1403611006578761,
+      "near_ci": [
+        0.13459855661247352,
+        0.1460683701272885
+      ],
+      "near_excludes_zero": true,
+      "far_delta": 0.08776839269164016,
+      "far_ci": [
+        0.08384933938155836,
+        0.09162491639687792
+      ],
+      "far_excludes_zero": true
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "method": "Laplace (KFAC, last layer)",
+  "source": "pnc_core/ensembles.py::LaplaceEnsemble + pnc_core/laplace.py::compute_kfac_factors(is_classification=True)",
+  "prior_precision": 10000.0,
+  "data_size": 32768,
+  "n_samples": 20,
+  "selection_criterion": "ID selection-pool NLL",
+  "selection_pool": "8,192 ImageNet train images (disjoint from calibration)",
+  "grid": [
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    30000.0,
+    100000.0,
+    300000.0,
+    1000000.0,
+    10000000.0,
+    100000000.0
+  ],
+  "temperature": 0.7,
+  "temperature_fit_data": "ID temperature pool (reused)",
+  "OOD data accessed before selection": "NO",
+  "kfac_seconds": 1.1338009489991236
+}

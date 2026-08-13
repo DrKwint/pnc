@@ -1,0 +1,59 @@
+{
+  "checks": [
+    {
+      "name": "top1",
+      "harness": 0.81068,
+      "reference": 0.81068,
+      "ok": true
+    },
+    {
+      "name": "top5",
+      "harness": 0.95318,
+      "reference": 0.95318,
+      "ok": true
+    },
+    {
+      "name": "nll",
+      "harness": 0.838440570508553,
+      "reference": 0.838440570508553,
+      "ok": true
+    },
+    {
+      "name": "ece",
+      "harness": 0.05604525972053075,
+      "reference": 0.05604525972053075,
+      "ok": true
+    },
+    {
+      "name": "react_threshold",
+      "harness": 0.6917991936206818,
+      "reference": 0.6917991936206818,
+      "ok": true
+    },
+    {
+      "name": "MSP_near_auroc",
+      "harness": 0.7351724446054271,
+      "reference": 0.7351724446054271,
+      "ok": true
+    },
+    {
+      "name": "MSP_far_auroc",
+      "harness": 0.8603523722605176,
+      "reference": 0.8603523722605176,
+      "ok": true
+    },
+    {
+      "name": "Energy_near_auroc",
+      "harness": 0.6238932522177172,
+      "reference": 0.6238932522177172,
+      "ok": true
+    },
+    {
+      "name": "Energy_far_auroc",
+      "harness": 0.789623091508718,
+      "reference": 0.789623091508718,
+      "ok": true
+    }
+  ],
+  "n_failed": 0
+}

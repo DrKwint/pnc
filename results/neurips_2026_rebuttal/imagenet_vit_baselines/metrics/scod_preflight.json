@@ -1,0 +1,42 @@
+{
+  "verdict": "SCOD_NOT_TRACTABLE_AT_VIT_SCALE",
+  "fisher_factor_check": {
+    "max_abs_error": 4.163336342344337e-17,
+    "ok": true
+  },
+  "timings": {
+    "256": {
+      "matvec_seconds": 12.220747430998017,
+      "seconds_per_image": 0.047737294652336004,
+      "peak_gpu_gib": 5.069964408874512,
+      "batch_size": 8
+    },
+    "1024": {
+      "matvec_seconds": 52.14790041100059,
+      "seconds_per_image": 0.050925683995117765,
+      "peak_gpu_gib": 5.080362319946289,
+      "batch_size": 8
+    }
+  },
+  "extrapolation": {
+    "parameters_P": 86567656,
+    "num_eigs_max": 100,
+    "num_samples": 604,
+    "source_config": "configs/mujoco_posthoc.yaml",
+    "seconds_per_image_per_matvec": 0.050925683995117765,
+    "matvec_seconds_at_32768": 1668.732813152019,
+    "total_sketch_seconds_at_32768": 1007914.6191438194,
+    "total_sketch_hours_at_32768": 279.9762830955054,
+    "sketch_test_matrix_gib": 194.78374803066254,
+    "sketch_output_gib": 194.78374803066254,
+    "sketch_total_gib": 389.5674960613251,
+    "one_parameter_vector_gib": 0.3224896490573883,
+    "gpu_total_gib": 12.0,
+    "system_ram_gib": 24.6,
+    "rank10_sketch_total_gib": 41.2786750793457
+  },
+  "blockers": [
+    "the repository's SCOD implements only Gaussian Case A/B (MuJoCo regression); there is no categorical likelihood to port",
+    "the Nystrom sketch at the repo's own num_samples=604 needs 390 GiB against 12 GiB VRAM and 24.6 GiB RAM"
+  ]
+}
