@@ -143,7 +143,7 @@ def main():
     args, extra = ap.parse_known_args()
     if args.stage in STAGES:
         STAGES[args.stage](args)
-    elif args.stage in ("stage_a", "stage_b"):
+    elif args.stage in ("stage_a", "stage_b", "robustness"):
         from . import full_search
         full_search.dispatch(args.stage, args, extra, OUT, BATCH)
     elif args.stage == "final":

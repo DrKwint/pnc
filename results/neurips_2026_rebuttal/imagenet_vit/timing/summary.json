@@ -1,0 +1,146 @@
+{
+  "checkpoint_load_s": 0.8176989290004713,
+  "model_resident_gib": 0.34008216857910156,
+  "basis_construction_s": 0.7600933829999121,
+  "basis_mib": 180.0,
+  "basis_gpu_mib": 0.0,
+  "sustained": {
+    "batch": 16,
+    "images": 8320,
+    "first_window_images_per_s": 149.45242220464218,
+    "settled_images_per_s": 130.66037239904497,
+    "decay_pct": 11.970792047324164,
+    "gpu_state_start": {
+      "sm_clock_mhz": 1708.0,
+      "temp_c": 63.0,
+      "power_w": 88.41,
+      "throttle": "0x0000000000000000"
+    },
+    "gpu_state_end": {
+      "sm_clock_mhz": 1417.0,
+      "temp_c": 88.0,
+      "power_w": 88.69,
+      "throttle": "0x0000000000000001"
+    }
+  },
+  "cache_val50k": {
+    "tag": "val50k",
+    "n_images": 50000,
+    "cache_seconds": 432.154543628003,
+    "images_per_s": 115.69935046902992,
+    "x_resid_cls_mib": 146.484375,
+    "stored_h_z0": false,
+    "disk_mib": 147.24803924560547,
+    "peak_gpu_gib": 0.46520423889160156,
+    "cpu_rss_before_gib": 0.7421951293945312,
+    "cpu_peak_rss_gib": 3.1213417053222656,
+    "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_val50k.npz"
+  },
+  "cache_train_pools": {
+    "correction": {
+      "tag": "correction",
+      "n_images": 32768,
+      "cache_seconds": 300.40027475199895,
+      "images_per_s": 109.08112526545534,
+      "x_resid_cls_mib": 96.0,
+      "stored_h_z0": true,
+      "disk_mib": 288.5011730194092,
+      "peak_gpu_gib": 1.294534683227539,
+      "cpu_rss_before_gib": 0.7445945739746094,
+      "cpu_peak_rss_gib": 4.837635040283203,
+      "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_correction.npz"
+    },
+    "selection": {
+      "tag": "selection",
+      "n_images": 8192,
+      "cache_seconds": 84.91027269799815,
+      "images_per_s": 96.47831457492344,
+      "x_resid_cls_mib": 24.0,
+      "stored_h_z0": false,
+      "disk_mib": 24.12572479248047,
+      "peak_gpu_gib": 0.46520423889160156,
+      "cpu_rss_before_gib": 4.369300842285156,
+      "cpu_peak_rss_gib": 4.837635040283203,
+      "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_selection.npz"
+    },
+    "temperature": {
+      "tag": "temperature",
+      "n_images": 8192,
+      "cache_seconds": 83.5741818610004,
+      "images_per_s": 98.02070229804748,
+      "x_resid_cls_mib": 24.0,
+      "stored_h_z0": false,
+      "disk_mib": 24.12572479248047,
+      "peak_gpu_gib": 0.46520423889160156,
+      "cpu_rss_before_gib": 4.494716644287109,
+      "cpu_peak_rss_gib": 4.837635040283203,
+      "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_temperature.npz"
+    }
+  },
+  "cache_ood": {
+    "ssb_hard": {
+      "n": 49000,
+      "seconds": 413.171237079001,
+      "images_per_s": 118.59489626242033,
+      "group": "near",
+      "disk_mib": 145.06771183013916,
+      "peak_gpu_gib": 0.45618629455566406
+    },
+    "ninco": {
+      "n": 5879,
+      "seconds": 52.072900559996924,
+      "images_per_s": 112.89941479688427,
+      "group": "near",
+      "disk_mib": 17.619572639465332,
+      "peak_gpu_gib": 0.45618629455566406
+    },
+    "inaturalist": {
+      "n": 10000,
+      "seconds": 94.22863858800338,
+      "images_per_s": 106.12484855822952,
+      "group": "far",
+      "disk_mib": 29.736275672912598,
+      "peak_gpu_gib": 0.45618629455566406
+    },
+    "textures": {
+      "n": 5160,
+      "seconds": 44.65609203200074,
+      "images_per_s": 115.5497439476415,
+      "group": "far",
+      "disk_mib": 15.253231048583984,
+      "peak_gpu_gib": 0.45618629455566406
+    },
+    "openimage_o": {
+      "n": 15869,
+      "seconds": 134.70311907099676,
+      "images_per_s": 117.80722012558647,
+      "group": "far",
+      "disk_mib": 46.83999443054199,
+      "peak_gpu_gib": 0.45618629455566406
+    }
+  },
+  "ensemble_construction": {
+    "M": 20,
+    "n_cal": 16384,
+    "seconds_per_ensemble_mean": 9.934144972600189,
+    "seconds_per_member_mean": 0.4967072486300094,
+    "peak_gpu_build_gib": 1.5839567184448242,
+    "peak_gpu_eval_gib": 1.5839567184448242,
+    "id_eval_seconds_per_ensemble_mean": 20.18812561540035,
+    "note": "construction excludes the one-off (h, z0) cache, reported separately",
+    "id_val_images_per_s_M20_both_variants": 4953.406864266577
+  },
+  "compact_ensemble_disk": {
+    "files": 5,
+    "mib_per_seed": [
+      167.30690097808838,
+      167.3082103729248,
+      167.3066177368164,
+      167.30808353424072,
+      167.3074188232422
+    ],
+    "total_mib": 836.5372314453125,
+    "twenty_full_vit_copies_gib": 6.449792981147766
+  },
+  "cpu_peak_rss_gib": 1.1841506958007812
+}

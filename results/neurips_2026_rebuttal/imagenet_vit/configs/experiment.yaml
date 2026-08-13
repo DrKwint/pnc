@@ -1,0 +1,110 @@
+# Final-block P&C on ImageNet-1K ViT-B/16 — exact configuration as run.
+# Reproduce with the commands in ../MANIFEST.md.
+
+experiment: imagenet_vit_pnc_full
+branch: agent/vit-imagenet-full
+date: 2026-08-13
+
+model:
+  arch: vit_b_16
+  source: torchvision
+  weight_enum: ViT_B_16_Weights.IMAGENET1K_V1        # pinned; never DEFAULT
+  sha256: c867db91d3e12c6cbadabb610d73c24a546bf82d8c03a9fea34f43a712ddb0e9
+  parameters: 86567656
+  dtype: float32                                     # fp16 never used
+  eval_mode: true
+  gradients: disabled everywhere (torch.inference_mode)
+  batch_size: 16
+
+target:
+  block: encoder.layers.encoder_layer_11             # final block only
+  W1_perturb: encoder.layers.encoder_layer_11.mlp.0  # nn.Linear(768 -> 3072)
+  activation: encoder.layers.encoder_layer_11.mlp.1  # GELU(approximate=none)
+  W2_correct: encoder.layers.encoder_layer_11.mlp.3  # nn.Linear(3072 -> 768)
+  code_layout: y = h @ W1 + b1 ; z = y @ W2 + b2     # transpose of nn.Linear.weight
+  correction_dim: 3073                               # 3072 + bias (bias first)
+  observation: CLS token only, exactly 1 row per calibration image
+  rationale: >
+    After the final block's FFN every remaining op (encoder.ln, CLS slice, heads) is
+    token-wise, so only the CLS output can reach the classifier. Verified numerically:
+    CLS-only tail == full-token tail to 9.5e-07.
+
+pnc:
+  K: 20
+  M_final: 20
+  M_stage_a: 5
+  M_stage_b: 10
+  construction_seeds: [0, 10, 42, 123, 2026]
+  scale_parameterisation: realized r = ||dW1||_F / ||W1||_F
+  ridge_centering: toward_original                   # w_prior = [b2; W2] of the checkpoint
+  objective_reduction: sum_legacy
+  solver: experiments/scripts/pnc_theory/linalg.py::ridge_solve (streamed, gated bitwise)
+  solve_precision: float64 on CPU, one Cholesky shared across all 768 outputs
+  accumulation_precision: float32 on GPU
+
+search:                                              # ID data only
+  stage_a:
+    r: [0.125, 0.25, 0.5, 1.0, 2.0]
+    n_cal: 32768
+    lambda: 1.0e-3
+    extend_up: [4.0, 8.0]                            # not triggered: r=2.0 fails
+    extend_down: [0.0625]                            # not triggered: r=0.125 passes
+    r_boundary: 0.5
+  stage_b:
+    r: [0.25, 0.375, 0.5]
+    n_cal: [16384, 32768]
+    lambda: [1.0e-3, 1.0, 1.0e2]
+    configurations: 18
+  robustness_check: [0.8, 1.0, 1.2]                  # x selected r, diagnostic only
+
+id_stability_gate:                                   # frozen before any OOD read
+  max_top1_drop_pp: 0.25
+  min_base_agreement: 0.99
+  require_finite: true
+  require_corrected_median_lt_uncorrected: true
+  require_corrected_p99_le_uncorrected: true
+
+selected:
+  r_target: 0.375
+  r_realized_median: 0.3749997
+  lambda: 1.0
+  n_cal: 16384
+  survivors: 15
+  tied_on_nll: 8
+  ood_data_accessed_before_freeze: false
+
+data:
+  source: ILSVRC/imagenet-1k                         # gated; authentic ILSVRC-2012 JPEGs
+  train_shards_used: 28                              # of 294; shards are shuffled
+  train_rows_indexed: 122024
+  split_seed: 20260813
+  pools:                                             # from TRAIN, pairwise disjoint
+    correction: 32768                                # 32-33 per class
+    selection: 8192                                  # 8-9 per class
+    temperature: 8192                                # 8-9 per class
+  id_evaluation: official 50,000-image validation split (untouched until final eval)
+  ood:
+    lists: torch-uncertainty/ood-datasets-splits (OpenOOD canonical imglists)
+    near: {ssb_hard: 49000, ninco: 5879}
+    far: {inaturalist: 10000, textures: 5160, openimage_o: 15869}
+
+calibration_and_scoring:
+  temperature: 0.700
+  temperature_protocol: >
+    one shared scalar T, grid search on the BASE model's logits over the ID temperature
+    pool, applied to every member's logits before softmax (matches banking77_pnc/evaluate.py)
+  pnc_ood_score: predictive entropy of the temperature-scaled mean member softmax
+  baselines:
+    msp: -max softmax
+    energy: -logsumexp(logits)
+    react_energy: energy after clipping penultimate features at the ID p90 (0.6918)
+  metrics: full_oodmetrics (gated against pnc_core/openood_eval.py)
+  aggregation: Near/Far macro mean over datasets
+
+environment:
+  venv: .venv_vit                    # main .venv's torch 2.11+cu130 has no sm_61 kernels
+  python: 3.12.3
+  torch: 2.7.1+cu126
+  torchvision: 0.22.1+cu126
+  gpu: NVIDIA TITAN X (Pascal), 12 GiB, sm_61
+  driver: 581.80

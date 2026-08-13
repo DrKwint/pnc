@@ -1,0 +1,41 @@
+{
+  "correction": {
+    "tag": "correction",
+    "n_images": 32768,
+    "cache_seconds": 300.40027475199895,
+    "images_per_s": 109.08112526545534,
+    "x_resid_cls_mib": 96.0,
+    "stored_h_z0": true,
+    "disk_mib": 288.5011730194092,
+    "peak_gpu_gib": 1.294534683227539,
+    "cpu_rss_before_gib": 0.7445945739746094,
+    "cpu_peak_rss_gib": 4.837635040283203,
+    "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_correction.npz"
+  },
+  "selection": {
+    "tag": "selection",
+    "n_images": 8192,
+    "cache_seconds": 84.91027269799815,
+    "images_per_s": 96.47831457492344,
+    "x_resid_cls_mib": 24.0,
+    "stored_h_z0": false,
+    "disk_mib": 24.12572479248047,
+    "peak_gpu_gib": 0.46520423889160156,
+    "cpu_rss_before_gib": 4.369300842285156,
+    "cpu_peak_rss_gib": 4.837635040283203,
+    "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_selection.npz"
+  },
+  "temperature": {
+    "tag": "temperature",
+    "n_images": 8192,
+    "cache_seconds": 83.5741818610004,
+    "images_per_s": 98.02070229804748,
+    "x_resid_cls_mib": 24.0,
+    "stored_h_z0": false,
+    "disk_mib": 24.12572479248047,
+    "peak_gpu_gib": 0.46520423889160156,
+    "cpu_rss_before_gib": 4.494716644287109,
+    "cpu_peak_rss_gib": 4.837635040283203,
+    "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_temperature.npz"
+  }
+}

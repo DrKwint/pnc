@@ -1,0 +1,6 @@
+{
+  "temperature": 0.7,
+  "protocol": "shared scalar T, grid search on base model logits over the ID temperature pool; applied to every member's logits before softmax (matches banking77_pnc/evaluate.py)",
+  "pool": "temperature_8192 (ImageNet train)",
+  "n_images": 8192
+}

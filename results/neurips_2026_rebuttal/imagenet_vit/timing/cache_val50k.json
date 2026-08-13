@@ -1,0 +1,13 @@
+{
+  "tag": "val50k",
+  "n_images": 50000,
+  "cache_seconds": 432.154543628003,
+  "images_per_s": 115.69935046902992,
+  "x_resid_cls_mib": 146.484375,
+  "stored_h_z0": false,
+  "disk_mib": 147.24803924560547,
+  "peak_gpu_gib": 0.46520423889160156,
+  "cpu_rss_before_gib": 0.7421951293945312,
+  "cpu_peak_rss_gib": 3.1213417053222656,
+  "path": "results/neurips_2026_rebuttal/imagenet_vit/raw/cache_val50k.npz"
+}

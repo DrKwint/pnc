@@ -81,7 +81,8 @@ def build_cls_cache(adapter, dataset, indices, out_path: str | Path, batch: int 
 
 
 def load_cache(path: str | Path) -> dict:
-    z = np.load(path)
+    # OOD caches carry an object array of image ids alongside the float tensors
+    z = np.load(path, allow_pickle=True)
     return {k: z[k] for k in z.files}
 
 

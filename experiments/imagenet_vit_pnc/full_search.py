@@ -360,10 +360,39 @@ def _selection_report(rows, survivors, tied, chosen, base_top1) -> str:
     return "\n".join(lines) + "\n"
 
 
+def robustness(args, out: Path):
+    """Local ID-only sensitivity around the selected point (spec §14, diagnostic only).
+
+    This never changes the frozen selection; it only reports whether the chosen operating
+    point is isolated or sits on a plateau.
+    """
+    cfg = json.loads((out / "selection" / "selected_config.json").read_text())
+    s = Searcher(out, seed=args.seed)
+    rows = []
+    for mult in (0.8, 1.0, 1.2):
+        r = round(cfg["r_target"] * mult, 6)
+        row = s.evaluate("robustness", r, cfg["lambda"], cfg["n_cal"], M=10)
+        row["stage"] = f"robustness_{mult:g}x"
+        rows.append(row)
+        _print(row, s.base_top1)
+    _write_rows(out / "selection" / "robustness_local.csv", rows)
+    fc.write_json(out / "selection" / "robustness_local.json",
+                  {"selected_r": cfg["r_target"], "multipliers": [0.8, 1.0, 1.2],
+                   "note": "diagnostic only; the frozen selection is not revisited",
+                   "rows": [{k: r[k] for k in ("stage", "r_target", "top1", "nll", "ece",
+                                               "base_agreement", "logit_mse_median",
+                                               "logit_mse_p99", "passes_gate")}
+                            for r in rows]})
+    print(f"\n  wrote {out/'selection'/'robustness_local.csv'}")
+    return rows
+
+
 def dispatch(stage: str, args, extra, out: Path, batch: int):
     if stage == "stage_a":
         stage_a(args, out)
     elif stage == "stage_b":
         stage_b(args, out)
+    elif stage == "robustness":
+        robustness(args, out)
     else:
         raise SystemExit(f"unknown stage {stage!r}")

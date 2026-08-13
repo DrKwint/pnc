@@ -118,16 +118,21 @@ class OODZip:
     def __len__(self) -> int:
         return len(self.entries)
 
-    def _decode(self, name: str) -> torch.Tensor:
-        with self._zf.open(name) as fh:
-            blob = fh.read()
+    def _decode(self, blob: bytes) -> torch.Tensor:
         return self.transform(Image.open(io.BytesIO(blob)).convert("RGB"))
 
     def iter_batches(self, batch_size: int, indices=None):
+        """Bytes are read serially, decoded in parallel.
+
+        A single ``ZipFile`` shares one file handle, so concurrent ``open()`` calls on it
+        interleave seeks and raise a spurious ``BadZipFile: Overlapped entries``. Reading
+        is cheap (local disk); JPEG decode is the part worth threading.
+        """
         idx = np.arange(len(self.entries)) if indices is None else np.asarray(indices)
         for s in range(0, len(idx), batch_size):
             chunk = idx[s:s + batch_size]
-            imgs = list(self._pool.map(self._decode, [self.entries[i] for i in chunk]))
+            blobs = [self._zf.read(self.entries[i]) for i in chunk]
+            imgs = list(self._pool.map(self._decode, blobs))
             yield torch.stack(imgs), torch.full((len(chunk),), -1, dtype=torch.long), chunk
 
     def ids(self, indices=None) -> list[str]:

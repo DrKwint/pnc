@@ -1,0 +1,62 @@
+[
+  {
+    "gate": "split_correction",
+    "pass": true,
+    "detail": "32768 images, 1000 classes, 32-33 per class"
+  },
+  {
+    "gate": "split_selection",
+    "pass": true,
+    "detail": "8192 images, 1000 classes, 8-9 per class"
+  },
+  {
+    "gate": "split_temperature",
+    "pass": true,
+    "detail": "8192 images, 1000 classes, 8-9 per class"
+  },
+  {
+    "gate": "split_disjoint",
+    "pass": true,
+    "detail": "{'correction&selection': 0, 'correction&temperature': 0, 'selection&temperature': 0}"
+  },
+  {
+    "gate": "ood_lists",
+    "pass": true,
+    "detail": "ssb_hard=49000, ninco=5879, inaturalist=10000, textures=5160, openimage_o=15869"
+  },
+  {
+    "gate": "cache_forward_parity",
+    "pass": true,
+    "detail": "max|full model - cached tail| = 1.240e-05 over 256 real validation images (tol 1e-4)"
+  },
+  {
+    "gate": "features_head_parity",
+    "pass": true,
+    "detail": "max|head(features) - logits| = 0.000e+00 (ReAct path consistency)"
+  },
+  {
+    "gate": "cache_labels",
+    "pass": true,
+    "detail": "top-1 agreement between paths = 1.0000; cached-label accuracy 0.7930"
+  },
+  {
+    "gate": "ablation_identity",
+    "pass": true,
+    "detail": "corrected != uncorrected (max diff 2.610e-01) and uncorrected != base (max diff 3.165e-01); both share one W1 mutation"
+  },
+  {
+    "gate": "realized_scale",
+    "pass": true,
+    "detail": "member 0 realized r = 0.4043 (target 0.375, median over members 0.3750)"
+  },
+  {
+    "gate": "ood_metric_parity",
+    "pass": true,
+    "detail": "auroc/aupr/fpr95 match to <1e-12 (auroc 0.6910311111)"
+  },
+  {
+    "gate": "ood_aggregate_parity",
+    "pass": true,
+    "detail": "Near/Far macro aggregation matches to <1e-12 (mean_auroc 0.7429723889)"
+  }
+]
