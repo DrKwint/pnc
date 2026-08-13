@@ -1,0 +1,4 @@
+budget,r,lambda,pnc_id_acc,unc_id_acc,pnc_nll,unc_nll,pnc_agreement,unc_agreement,pnc_near_auroc,unc_near_auroc,pnc_far_auroc,unc_far_auroc,median_logit_mse_ratio,p99_logit_mse_ratio
+strict,1.25,1000.0,80.968,80.957,0.812,0.8227,0.9857,0.9816,75.59,74.2,87.38,86.53,2.525,1.985
+primary,2.0,1000.0,80.83,80.619,0.8045,0.9048,0.9736,0.9595,76.49,72.53,87.89,84.4,4.37,2.432
+relaxed,3.0,1000.0,80.598,79.065,0.8173,1.4219,0.9612,0.9151,77.27,73.16,88.06,83.82,6.757,2.512
