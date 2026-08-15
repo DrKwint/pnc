@@ -1,0 +1,17 @@
+metric,ridge_center,n_cells,mean_rank,wins,higher_is_better
+rmse_id,zero,20,1.45,11,False
+rmse_id,original,20,1.55,9,False
+nll_id,zero,20,1.25,15,False
+nll_id,original,20,1.75,5,False
+nll_ood_near,zero,20,1.35,13,False
+nll_ood_near,original,20,1.65,7,False
+nll_ood_mid,zero,20,1.4,12,False
+nll_ood_mid,original,20,1.6,8,False
+nll_ood_far,zero,20,1.6,8,False
+nll_ood_far,original,20,1.4,12,False
+auroc_ood_far,zero,20,1.6,8,True
+auroc_ood_far,original,20,1.4,12,True
+auroc_ood_near,zero,20,1.6,8,True
+auroc_ood_near,original,20,1.4,12,True
+auroc_ood_mid,zero,20,1.7,6,True
+auroc_ood_mid,original,20,1.3,14,True

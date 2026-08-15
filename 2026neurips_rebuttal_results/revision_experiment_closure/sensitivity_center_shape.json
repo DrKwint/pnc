@@ -1,0 +1,60 @@
+{
+  "env": "Hopper-v5",
+  "seed": 0,
+  "curves": {
+    "original": [
+      {
+        "lambda": 0.0,
+        "id_rmse": 1.468078374862671
+      },
+      {
+        "lambda": 0.0001,
+        "id_rmse": 1.4681237936019897
+      },
+      {
+        "lambda": 0.01,
+        "id_rmse": 1.4680616855621338
+      },
+      {
+        "lambda": 1.0,
+        "id_rmse": 1.4681944847106934
+      },
+      {
+        "lambda": 100.0,
+        "id_rmse": 1.4774287939071655
+      },
+      {
+        "lambda": 10000.0,
+        "id_rmse": 1.571114420890808
+      }
+    ],
+    "zero": [
+      {
+        "lambda": 0.0,
+        "id_rmse": 1.468078374862671
+      },
+      {
+        "lambda": 0.0001,
+        "id_rmse": 1.4681246280670166
+      },
+      {
+        "lambda": 0.01,
+        "id_rmse": 1.468064546585083
+      },
+      {
+        "lambda": 1.0,
+        "id_rmse": 1.4682986736297607
+      },
+      {
+        "lambda": 100.0,
+        "id_rmse": 1.4804967641830444
+      },
+      {
+        "lambda": 10000.0,
+        "id_rmse": 1.8452677726745605
+      }
+    ]
+  },
+  "stored_lambda_0_to_1_ratio": 1.009418979456438,
+  "note": "original-centred degrades gently (Theta_hat -> Theta); zero-centred collapses (Theta_hat -> 0). The stored sweep is nearly flat over lambda 0..1, matching the original-centred curve."
+}

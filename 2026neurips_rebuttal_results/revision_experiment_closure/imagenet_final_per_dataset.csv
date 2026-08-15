@@ -1,0 +1,66 @@
+method,dataset,family,auroc,fpr95
+P&C,ssb_hard,near,0.7076530789387755,0.797512
+P&C,ninco,near,0.8220636737540398,0.5555760000000001
+P&C,inaturalist,far,0.8968976129999999,0.390156
+P&C,textures,far,0.862188335271318,0.5145839999999999
+P&C,openimage_o,far,0.8776623133152688,0.4442959999999999
+Uncorrected perturbation,ssb_hard,near,0.6591418564489796,0.8433919999999999
+Uncorrected perturbation,ninco,near,0.7914976975676136,0.589836
+Uncorrected perturbation,inaturalist,far,0.8514813792000002,0.407348
+Uncorrected perturbation,textures,far,0.8278522961240309,0.543204
+Uncorrected perturbation,openimage_o,far,0.8526876593358119,0.44474800000000003
+Mahalanobis,ssb_hard,near,0.7133024751020409,0.83552
+Mahalanobis,ninco,near,0.8630761422010547,0.49176
+Mahalanobis,inaturalist,far,0.958573123,0.21546
+Mahalanobis,textures,far,0.8954239050387598,0.38344
+Mahalanobis,openimage_o,far,0.9226232276766021,0.30796
+MSP,ssb_hard,near,0.689277123877551,0.86408
+MSP,ninco,near,0.7810677581221297,0.77274
+MSP,inaturalist,far,0.88187524,0.424
+MSP,textures,far,0.8505649341085272,0.56548
+MSP,openimage_o,far,0.8486169531791543,0.56268
+Base entropy (T=0.7),ssb_hard,near,0.6983109614285715,0.83874
+Base entropy (T=0.7),ninco,near,0.7923379418268413,0.67614
+Base entropy (T=0.7),inaturalist,far,0.885360579,0.42944
+Base entropy (T=0.7),textures,far,0.8529548585271319,0.53742
+Base entropy (T=0.7),openimage_o,far,0.8543668158043985,0.51006
+Base entropy (raw),ssb_hard,near,0.6808217714285714,0.87966
+Base entropy (raw),ninco,near,0.778143589045756,0.83892
+Base entropy (raw),inaturalist,far,0.897280683,0.43054
+Base entropy (raw),textures,far,0.8657925600775194,0.60512
+Base entropy (raw),openimage_o,far,0.8593797926775475,0.6342
+Energy,ssb_hard,near,0.5877820195918367,0.92232
+Energy,ninco,near,0.6600045007654364,0.94094
+Energy,inaturalist,far,0.7928028899999999,0.83502
+Energy,textures,far,0.8114835891472867,0.83602
+Energy,openimage_o,far,0.7645828445396685,0.88778
+LLLA-Kron,ssb_hard,near,0.6808217675510204,0.87966
+LLLA-Kron,ninco,near,0.7781435890457561,0.83892
+LLLA-Kron,inaturalist,far,0.8972806780000001,0.43054
+LLLA-Kron,textures,far,0.8657925523255814,0.60512
+LLLA-Kron,openimage_o,far,0.8593797951981851,0.6342
+LLLA-Kron+Temp,ssb_hard,near,0.6982487079591837,0.84074
+LLLA-Kron+Temp,ninco,near,0.792482619493111,0.68094
+LLLA-Kron+Temp,inaturalist,far,0.8860518909999999,0.42856
+LLLA-Kron+Temp,textures,far,0.8536413507751938,0.53602
+LLLA-Kron+Temp,openimage_o,far,0.8549094410485854,0.51042
+SCOD-linear,ssb_hard,near,0.6926279677551022,0.83604
+SCOD-linear,ninco,near,0.8102865147133866,0.62762
+SCOD-linear,inaturalist,far,0.9020818429999999,0.3574
+SCOD-linear,textures,far,0.873287457364341,0.49366
+SCOD-linear,openimage_o,far,0.8790812307013676,0.45
+SCOD-FFN,ssb_hard,near,0.6589033293877551,0.86358
+SCOD-FFN,ninco,near,0.7815635039972786,0.64456
+SCOD-FFN,inaturalist,far,0.8483682960000001,0.40414
+SCOD-FFN,textures,far,0.8373012461240309,0.51992
+SCOD-FFN,openimage_o,far,0.8531171031570988,0.46748
+P&C mutual information (seed 0),ssb_hard,near,0.6765366110204081,0.82072
+P&C mutual information (seed 0),ninco,near,0.802862969892839,0.54526
+P&C mutual information (seed 0),inaturalist,far,0.8424728,0.36414
+P&C mutual information (seed 0),textures,far,0.8315720406976743,0.49516
+P&C mutual information (seed 0),openimage_o,far,0.8548367811456299,0.41608
+P&C expected member entropy (seed 0),ssb_hard,near,0.7079855626530612,0.79636
+P&C expected member entropy (seed 0),ninco,near,0.8229587889096784,0.55572
+P&C expected member entropy (seed 0),inaturalist,far,0.896763218,0.39524
+P&C expected member entropy (seed 0),textures,far,0.8620599186046513,0.52484
+P&C expected member entropy (seed 0),openimage_o,far,0.8766528987333796,0.45222

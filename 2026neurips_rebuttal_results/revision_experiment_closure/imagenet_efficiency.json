@@ -1,0 +1,53 @@
+{
+  "config": {
+    "model": "ViT-B/16 IMAGENET1K_V1",
+    "r": 2.0,
+    "lambda": 1000.0,
+    "K": 20,
+    "M": 20,
+    "n_correction_images": 32768,
+    "ridge_center": "original",
+    "target": "final block FFN, CLS rows"
+  },
+  "construction": {
+    "feature_cache_s": 0.34045476801111363,
+    "basis_s": 0.8028377529990394,
+    "sufficient_stats_s": 2.8953107610577717,
+    "ridge_solve_s": 4.336807679035701,
+    "total_construction_s": 8.375410961103626,
+    "peak_gpu_gib": 1.4937162399291992,
+    "peak_cpu_rss_gib": 1.760101318359375,
+    "cpu_rss_before_gib": 0.6901473999023438,
+    "n_cal": 32768,
+    "cache_rebuilt_from_images": false
+  },
+  "storage": {
+    "base_checkpoint_mib": 330.28851222991943,
+    "pnc_compact_total_mib": 180.06131553649902,
+    "shared_basis_mib": 180.000244140625,
+    "per_member_coefficients_mib": 0.0017910003662109375,
+    "per_member_corrected_W2_b2_mib": 180.0590648651123,
+    "temperature_metadata_bytes": 8,
+    "pnc_total_with_base_mib": 510.34982776641846,
+    "full_ensemble_20_checkpoints_mib_DERIVED": 6605.770244598389,
+    "full_ensemble_note": "DERIVED as 20 x one checkpoint; the 20 full checkpoints were never physically written.",
+    "ratio_pnc_over_full_ensemble": 0.07725818623251954,
+    "basis_stored": "the shared basis is regenerable from (seed, K) and is NOT part of the shipped compact representation; measured here for completeness"
+  },
+  "inference": {
+    "batch_size": 64,
+    "warmup_iters": 3,
+    "timed_iters": 12,
+    "base_s_per_batch": 0.6105529051662112,
+    "base_images_per_s": 104.8230210002477,
+    "base_ms_per_image": 9.53988914322205,
+    "base_peak_vram_gib": 0.8535099029541016,
+    "pnc_M20_s_per_batch": 0.5970565239185817,
+    "pnc_M20_images_per_s": 107.19253108559523,
+    "pnc_M20_ms_per_image": 9.329008186227838,
+    "pnc_M20_peak_vram_gib": 1.132986068725586,
+    "slowdown_vs_base": 0.9778948210164434,
+    "note": "P&C retains O(M) member inference: the backbone prefix is shared, but each of the 20 members needs its own final-block FFN and head pass. No inference-time advantage is claimed."
+  },
+  "gpu": "NVIDIA TITAN X (Pascal)"
+}

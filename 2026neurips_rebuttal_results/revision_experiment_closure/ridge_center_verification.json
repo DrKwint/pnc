@@ -1,0 +1,54 @@
+{
+  "numpy_ridge": {
+    "as_called_by_distilbert(w_prior=Theta)": {
+      "rel_err_vs_original": 0.0,
+      "rel_err_vs_zero": 0.06415098553701877,
+      "ratio_zero_over_original": 6.415098553701877e+298,
+      "implements_centre": "original"
+    },
+    "library_default(w_prior=None)": {
+      "rel_err_vs_original": 0.06440407075856111,
+      "rel_err_vs_zero": 0.0,
+      "ratio_zero_over_original": 0.0,
+      "implements_centre": "zero"
+    }
+  },
+  "jax_ensemble": {
+    "ridge_toward_orig=True": {
+      "rel_err_vs_original": 1.4572570688664326e-07,
+      "rel_err_vs_zero": 0.06415099836780191,
+      "ratio_zero_over_original": 440217.4450778511,
+      "implements_centre": "original"
+    },
+    "ridge_toward_orig=False": {
+      "rel_err_vs_original": 0.0644040974328983,
+      "rel_err_vs_zero": 1.5681484204157463e-07,
+      "ratio_zero_over_original": 2.4348581579760165e-06,
+      "implements_centre": "zero"
+    },
+    "constructor_default_ridge_toward_orig": true
+  },
+  "cifar_conv": {
+    "solve_chunked_conv2_correction path": {
+      "rel_err_vs_original": 8.952570863709048e-07,
+      "rel_err_vs_zero": 0.055159468055355904,
+      "ratio_zero_over_original": 61612.992396357695,
+      "implements_centre": "original"
+    },
+    "note": "conv2 use_bias=False, so Theta = [0; w2_orig] exactly"
+  },
+  "vit": {
+    "as_called_by_vit(w_prior=Theta0)": {
+      "rel_err_vs_original": 9.512880607180938e-17,
+      "rel_err_vs_zero": 0.06415098553701873,
+      "ratio_zero_over_original": 674359199763249.5,
+      "implements_centre": "original"
+    },
+    "library_default(w_prior=None)": {
+      "rel_err_vs_original": 0.0644040707585611,
+      "rel_err_vs_zero": 1.532398313560961e-16,
+      "ratio_zero_over_original": 2.3793500869e-15,
+      "implements_centre": "zero"
+    }
+  }
+}

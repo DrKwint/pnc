@@ -1,0 +1,22 @@
+quantity,value,std,n,source
+P&C K=5 Near AUROC,0.7653137188727849,0.001522611025533661,5,metrics/ksweep_final.json
+P&C K=5 Far AUROC,0.878166154128856,0.0015905428935610204,5,metrics/ksweep_final.json
+P&C K=20 Near AUROC,0.7649065574896812,0.0010601341415986776,5,metrics/ksweep_final.json
+P&C K=20 Far AUROC,0.8792542882054525,0.001520890173053694,5,metrics/ksweep_final.json
+P&C K=40 Near AUROC,0.765069726327218,0.0018338020963460878,5,metrics/ksweep_final.json
+P&C K=40 Far AUROC,0.879338832508572,0.0014190643201924449,5,metrics/ksweep_final.json
+P&C K=80 Near AUROC,0.7641169859122855,0.0014013162821240842,5,metrics/ksweep_final.json
+P&C K=80 Far AUROC,0.8793403999217464,0.001230597470807546,5,metrics/ksweep_final.json
+random-projection Mahalanobis K=5 Near AUROC,0.5958687992074176,0.01145320897938834,20,metrics/random_projection_mahalanobis.json
+random-projection Mahalanobis K=20 Near AUROC,0.7079065646723516,0.0061667351131662355,20,metrics/random_projection_mahalanobis.json
+random-projection Mahalanobis K=40 Near AUROC,0.7343390095268474,0.003842340368401473,20,metrics/random_projection_mahalanobis.json
+random-projection Mahalanobis K=80 Near AUROC,0.7489522937102068,0.001772785050309958,20,metrics/random_projection_mahalanobis.json
+random-projection Mahalanobis K=160 Near AUROC,0.759423140594659,0.00145180620621207,20,metrics/random_projection_mahalanobis.json
+random-projection Mahalanobis K=320 Near AUROC,0.7684273292233963,0.0007526840595654656,20,metrics/random_projection_mahalanobis.json
+random-projection Mahalanobis K=768 Near AUROC,0.7881893069505781,0.0,20,metrics/random_projection_mahalanobis.json
+highest-variance 96 covariance modes Near AUROC,0.683205829875621,,1,metrics/mahalanobis_spectrum.json
+lowest-variance 96 covariance modes Near AUROC,0.8181128297266647,,1,metrics/mahalanobis_spectrum.json
+"rho(P&C response energy, covariance eigenvalue)",0.9924834706767962,,1,metrics/spectral_alignment.json
+"rho(P&C response energy, inverse eigenvalue)",-0.9924834706767962,,1,metrics/spectral_alignment.json
+geometry-only case count (90/60),282,,1,metrics/disagreement.json
+P&C-only case count (90/60),16,,1,metrics/disagreement.json

@@ -1,0 +1,49 @@
+{
+  "batch_size": 64,
+  "base_s_per_batch": 0.6374316941995252,
+  "rows": [
+    {
+      "M": 1,
+      "s_per_batch": 0.6466547226669112,
+      "images_per_s": 98.97090016764032,
+      "ms_per_image": 10.103980041670487,
+      "ratio_vs_base": 1.0144690459406291,
+      "peak_vram_gib": 0.7899723052978516
+    },
+    {
+      "M": 5,
+      "s_per_batch": 0.6506611129336913,
+      "images_per_s": 98.36149529735646,
+      "ms_per_image": 10.166579889588927,
+      "ratio_vs_base": 1.0207542531294735,
+      "peak_vram_gib": 0.8251285552978516
+    },
+    {
+      "M": 10,
+      "s_per_batch": 0.6543820829334436,
+      "images_per_s": 97.80218876577855,
+      "ms_per_image": 10.224720045835056,
+      "ratio_vs_base": 1.0265916942758933,
+      "peak_vram_gib": 0.8690738677978516
+    },
+    {
+      "M": 20,
+      "s_per_batch": 0.6503486850667589,
+      "images_per_s": 98.40874821393749,
+      "ms_per_image": 10.161698204168108,
+      "ratio_vs_base": 1.0202641176847265,
+      "peak_vram_gib": 0.9569644927978516
+    },
+    {
+      "M": 50,
+      "s_per_batch": 0.6610639994672965,
+      "images_per_s": 96.81362175458496,
+      "ms_per_image": 10.329124991676508,
+      "ratio_vs_base": 1.0370742551442291,
+      "peak_vram_gib": 1.2206363677978516
+    }
+  ],
+  "marginal_ms_per_image_per_member": 0.004594794898082078,
+  "marginal_fraction_of_base_forward": 0.00046133080007346774,
+  "note": "Member passes act on the CLS row only at the final block, so each is tiny next to the shared 12-block 197-token backbone. Cost is still linear in M; the slope is simply small at this target layer."
+}
