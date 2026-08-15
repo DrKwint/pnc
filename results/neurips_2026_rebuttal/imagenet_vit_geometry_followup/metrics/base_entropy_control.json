@@ -1,0 +1,543 @@
+{
+  "temperature": 0.7,
+  "scores": {
+    "msp": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6892771293877551,
+          "fpr95": 0.86408
+        },
+        "ninco": {
+          "auroc": 0.7810677598230991,
+          "fpr95": 0.77274
+        },
+        "inaturalist": {
+          "auroc": 0.881875234,
+          "fpr95": 0.424
+        },
+        "textures": {
+          "auroc": 0.8505649302325582,
+          "fpr95": 0.56548
+        },
+        "openimage_o": {
+          "auroc": 0.8486169525489949,
+          "fpr95": 0.56268
+        }
+      },
+      "near_auroc": 0.7351724446054271,
+      "near_fpr95": 0.81841,
+      "far_auroc": 0.8603523722605178,
+      "far_fpr95": 0.5173866666666666
+    },
+    "base_entropy_raw": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6808217702040816,
+          "fpr95": 0.87966
+        },
+        "ninco": {
+          "auroc": 0.7781435924476952,
+          "fpr95": 0.83892
+        },
+        "inaturalist": {
+          "auroc": 0.8972806779999999,
+          "fpr95": 0.43054
+        },
+        "textures": {
+          "auroc": 0.8657925503875968,
+          "fpr95": 0.60512
+        },
+        "openimage_o": {
+          "auroc": 0.8593797958283446,
+          "fpr95": 0.6342
+        }
+      },
+      "near_auroc": 0.7294826813258883,
+      "near_fpr95": 0.85929,
+      "far_auroc": 0.8741510080719804,
+      "far_fpr95": 0.55662
+    },
+    "base_entropy_T": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6983109616326532,
+          "fpr95": 0.83874
+        },
+        "ninco": {
+          "auroc": 0.7923379418268413,
+          "fpr95": 0.67614
+        },
+        "inaturalist": {
+          "auroc": 0.8853605799999998,
+          "fpr95": 0.42944
+        },
+        "textures": {
+          "auroc": 0.8529548604651163,
+          "fpr95": 0.53742
+        },
+        "openimage_o": {
+          "auroc": 0.8543668183250362,
+          "fpr95": 0.51006
+        }
+      },
+      "near_auroc": 0.7453244517297473,
+      "near_fpr95": 0.75744,
+      "far_auroc": 0.8642274195967174,
+      "far_fpr95": 0.49230666666666667
+    },
+    "M1_true_label": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.7133024751020408,
+          "fpr95": 0.83552
+        },
+        "ninco": {
+          "auroc": 0.8630761422010547,
+          "fpr95": 0.49176
+        },
+        "inaturalist": {
+          "auroc": 0.958573123,
+          "fpr95": 0.21546
+        },
+        "textures": {
+          "auroc": 0.8954239050387598,
+          "fpr95": 0.38344
+        },
+        "openimage_o": {
+          "auroc": 0.9226232276766024,
+          "fpr95": 0.30796
+        }
+      },
+      "near_auroc": 0.7881893086515477,
+      "near_fpr95": 0.66364,
+      "far_auroc": 0.925540085238454,
+      "far_fpr95": 0.30228666666666665
+    },
+    "M3_unconditional": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6775164718367347,
+          "fpr95": 0.88394
+        },
+        "ninco": {
+          "auroc": 0.8332392413675793,
+          "fpr95": 0.56972
+        },
+        "inaturalist": {
+          "auroc": 0.943321528,
+          "fpr95": 0.27462
+        },
+        "textures": {
+          "auroc": 0.8821553488372094,
+          "fpr95": 0.46518
+        },
+        "openimage_o": {
+          "auroc": 0.9084488600415905,
+          "fpr95": 0.35202
+        }
+      },
+      "near_auroc": 0.755377856602157,
+      "near_fpr95": 0.72683,
+      "far_auroc": 0.9113085789595999,
+      "far_fpr95": 0.36394
+    },
+    "expected_member_entropy": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.7079855626530612,
+          "fpr95": 0.79636
+        },
+        "ninco": {
+          "auroc": 0.8229587889096786,
+          "fpr95": 0.55572
+        },
+        "inaturalist": {
+          "auroc": 0.8967632180000001,
+          "fpr95": 0.39524
+        },
+        "textures": {
+          "auroc": 0.8620599186046513,
+          "fpr95": 0.52484
+        },
+        "openimage_o": {
+          "auroc": 0.8766528987333796,
+          "fpr95": 0.45222
+        }
+      },
+      "near_auroc": 0.7654721757813698,
+      "near_fpr95": 0.67604,
+      "far_auroc": 0.8784920117793437,
+      "far_fpr95": 0.45743333333333336
+    },
+    "predictive_entropy": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.7059748744897959,
+          "fpr95": 0.79642
+        },
+        "ninco": {
+          "auroc": 0.8225338441911889,
+          "fpr95": 0.55618
+        },
+        "inaturalist": {
+          "auroc": 0.8943251860000001,
+          "fpr95": 0.39368
+        },
+        "textures": {
+          "auroc": 0.8612906647286822,
+          "fpr95": 0.52734
+        },
+        "openimage_o": {
+          "auroc": 0.8765586489381814,
+          "fpr95": 0.45092
+        }
+      },
+      "near_auroc": 0.7642543593404925,
+      "near_fpr95": 0.6763,
+      "far_auroc": 0.8773914998889545,
+      "far_fpr95": 0.4573133333333333
+    },
+    "mutual_information": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6765366110204081,
+          "fpr95": 0.82072
+        },
+        "ninco": {
+          "auroc": 0.802862969892839,
+          "fpr95": 0.54526
+        },
+        "inaturalist": {
+          "auroc": 0.8424728000000001,
+          "fpr95": 0.36414
+        },
+        "textures": {
+          "auroc": 0.8315720406976743,
+          "fpr95": 0.49516
+        },
+        "openimage_o": {
+          "auroc": 0.8548367811456298,
+          "fpr95": 0.41608
+        }
+      },
+      "near_auroc": 0.7396997904566236,
+      "near_fpr95": 0.68299,
+      "far_auroc": 0.8429605406144347,
+      "far_fpr95": 0.42512666666666665
+    },
+    "logit_variance": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6180502924489796,
+          "fpr95": 0.86242
+        },
+        "ninco": {
+          "auroc": 0.7545618404490559,
+          "fpr95": 0.6261
+        },
+        "inaturalist": {
+          "auroc": 0.784896704,
+          "fpr95": 0.4401
+        },
+        "textures": {
+          "auroc": 0.7794583972868215,
+          "fpr95": 0.53374
+        },
+        "openimage_o": {
+          "auroc": 0.8163057798222949,
+          "fpr95": 0.45524
+        }
+      },
+      "near_auroc": 0.6863060664490177,
+      "near_fpr95": 0.7442599999999999,
+      "far_auroc": 0.7935536270363722,
+      "far_fpr95": 0.47635999999999995
+    },
+    "prob_variance": {
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.676609414489796,
+          "fpr95": 0.8108
+        },
+        "ninco": {
+          "auroc": 0.7883820989964279,
+          "fpr95": 0.5494
+        },
+        "inaturalist": {
+          "auroc": 0.8156795499999999,
+          "fpr95": 0.3852
+        },
+        "textures": {
+          "auroc": 0.8068898934108527,
+          "fpr95": 0.52452
+        },
+        "openimage_o": {
+          "auroc": 0.8324747640052934,
+          "fpr95": 0.44046
+        }
+      },
+      "near_auroc": 0.7324957567431118,
+      "near_fpr95": 0.6800999999999999,
+      "far_auroc": 0.8183480691387154,
+      "far_fpr95": 0.45005999999999996
+    }
+  },
+  "spearman": {
+    "ID": {
+      "msp": {
+        "msp": 1.0,
+        "base_entropy_raw": 0.9660805255067372,
+        "base_entropy_T": 0.9753212585192143,
+        "M1_true_label": 0.5316071220449174,
+        "M3_unconditional": 0.3555666027217574,
+        "expected_member_entropy": 0.8419044405788523,
+        "predictive_entropy": 0.8344112830853507,
+        "mutual_information": 0.6810022321751122,
+        "logit_variance": 0.43152034328492944,
+        "prob_variance": 0.7523855572121022
+      },
+      "base_entropy_raw": {
+        "msp": 0.9660805255067372,
+        "base_entropy_raw": 1.0,
+        "base_entropy_T": 0.9082609418906967,
+        "M1_true_label": 0.4745672205913822,
+        "M3_unconditional": 0.3185529534473129,
+        "expected_member_entropy": 0.7731730100616914,
+        "predictive_entropy": 0.7653273924721858,
+        "mutual_information": 0.6239771418588973,
+        "logit_variance": 0.3845744970582156,
+        "prob_variance": 0.6772673602680442
+      },
+      "base_entropy_T": {
+        "msp": 0.9753212585192143,
+        "base_entropy_raw": 0.9082609418906967,
+        "base_entropy_T": 1.0,
+        "M1_true_label": 0.6039957130426264,
+        "M3_unconditional": 0.4167471914673272,
+        "expected_member_entropy": 0.8881951236769726,
+        "predictive_entropy": 0.881773193868583,
+        "mutual_information": 0.7330384666975478,
+        "logit_variance": 0.5003114000142252,
+        "prob_variance": 0.8047400320062493
+      },
+      "M1_true_label": {
+        "msp": 0.5316071220449174,
+        "base_entropy_raw": 0.4745672205913822,
+        "base_entropy_T": 0.6039957130426264,
+        "M1_true_label": 1.0,
+        "M3_unconditional": 0.9341493459985597,
+        "expected_member_entropy": 0.7705519335856524,
+        "predictive_entropy": 0.7799998099948515,
+        "mutual_information": 0.8766534756952604,
+        "logit_variance": 0.9390183764536353,
+        "prob_variance": 0.8274402030532774
+      },
+      "M3_unconditional": {
+        "msp": 0.3555666027217574,
+        "base_entropy_raw": 0.3185529534473129,
+        "base_entropy_T": 0.4167471914673272,
+        "M1_true_label": 0.9341493459985597,
+        "M3_unconditional": 1.0,
+        "expected_member_entropy": 0.6142331940906312,
+        "predictive_entropy": 0.6274072957596902,
+        "mutual_information": 0.7812569672261178,
+        "logit_variance": 0.9226992596362323,
+        "prob_variance": 0.7035938409867171
+      },
+      "expected_member_entropy": {
+        "msp": 0.8419044405788523,
+        "base_entropy_raw": 0.7731730100616913,
+        "base_entropy_T": 0.8881951236769726,
+        "M1_true_label": 0.7705519335856524,
+        "M3_unconditional": 0.6142331940906312,
+        "expected_member_entropy": 1.0,
+        "predictive_entropy": 0.9995449967457367,
+        "mutual_information": 0.9165865682866106,
+        "logit_variance": 0.6851125033043111,
+        "prob_variance": 0.9558030145955911
+      },
+      "predictive_entropy": {
+        "msp": 0.8344112830853506,
+        "base_entropy_raw": 0.765327392472186,
+        "base_entropy_T": 0.881773193868583,
+        "M1_true_label": 0.7799998099948515,
+        "M3_unconditional": 0.6274072957596901,
+        "expected_member_entropy": 0.9995449967457368,
+        "predictive_entropy": 1.0,
+        "mutual_information": 0.9260264839572196,
+        "logit_variance": 0.6984336019371808,
+        "prob_variance": 0.9626385796976751
+      },
+      "mutual_information": {
+        "msp": 0.6810022321751124,
+        "base_entropy_raw": 0.6239771418588973,
+        "base_entropy_T": 0.7330384666975477,
+        "M1_true_label": 0.8766534756952605,
+        "M3_unconditional": 0.7812569672261177,
+        "expected_member_entropy": 0.9165865682866104,
+        "predictive_entropy": 0.9260264839572198,
+        "mutual_information": 1.0,
+        "logit_variance": 0.8499021652656882,
+        "prob_variance": 0.9793475515108525
+      },
+      "logit_variance": {
+        "msp": 0.43152034328492944,
+        "base_entropy_raw": 0.38457449705821556,
+        "base_entropy_T": 0.5003114000142254,
+        "M1_true_label": 0.9390183764536354,
+        "M3_unconditional": 0.9226992596362323,
+        "expected_member_entropy": 0.6851125033043111,
+        "predictive_entropy": 0.6984336019371807,
+        "mutual_information": 0.8499021652656882,
+        "logit_variance": 1.0,
+        "prob_variance": 0.7767907778473725
+      },
+      "prob_variance": {
+        "msp": 0.7523855572121021,
+        "base_entropy_raw": 0.6772673602680442,
+        "base_entropy_T": 0.8047400320062493,
+        "M1_true_label": 0.8274402030532775,
+        "M3_unconditional": 0.7035938409867171,
+        "expected_member_entropy": 0.9558030145955911,
+        "predictive_entropy": 0.9626385796976751,
+        "mutual_information": 0.9793475515108525,
+        "logit_variance": 0.7767907778473724,
+        "prob_variance": 1.0
+      }
+    },
+    "pooled_OOD": {
+      "msp": {
+        "msp": 1.0,
+        "base_entropy_raw": 0.9553665460084023,
+        "base_entropy_T": 0.994037603673352,
+        "M1_true_label": 0.7224293884868144,
+        "M3_unconditional": 0.6031204380234076,
+        "expected_member_entropy": 0.934445248934943,
+        "predictive_entropy": 0.9279499662259896,
+        "mutual_information": 0.7299720159099681,
+        "logit_variance": 0.534932742661037,
+        "prob_variance": 0.6335947680380535
+      },
+      "base_entropy_raw": {
+        "msp": 0.9553665460084023,
+        "base_entropy_raw": 1.0,
+        "base_entropy_T": 0.9515418033272728,
+        "M1_true_label": 0.7407370315752845,
+        "M3_unconditional": 0.6386328899722206,
+        "expected_member_entropy": 0.9365463236725139,
+        "predictive_entropy": 0.9309913149603917,
+        "mutual_information": 0.74041475208356,
+        "logit_variance": 0.5696670095873082,
+        "prob_variance": 0.6175321821563705
+      },
+      "base_entropy_T": {
+        "msp": 0.994037603673352,
+        "base_entropy_raw": 0.9515418033272728,
+        "base_entropy_T": 1.0,
+        "M1_true_label": 0.738967177026584,
+        "M3_unconditional": 0.6201629825996656,
+        "expected_member_entropy": 0.9435209748609249,
+        "predictive_entropy": 0.937276500473012,
+        "mutual_information": 0.7393862111845761,
+        "logit_variance": 0.5497894351730057,
+        "prob_variance": 0.6388574687448311
+      },
+      "M1_true_label": {
+        "msp": 0.7224293884868143,
+        "base_entropy_raw": 0.7407370315752844,
+        "base_entropy_T": 0.7389671770265839,
+        "M1_true_label": 1.0,
+        "M3_unconditional": 0.9581821123276006,
+        "expected_member_entropy": 0.8295855597485455,
+        "predictive_entropy": 0.8312327333329934,
+        "mutual_information": 0.7625937847712172,
+        "logit_variance": 0.7339247579640114,
+        "prob_variance": 0.6596755141906675
+      },
+      "M3_unconditional": {
+        "msp": 0.6031204380234076,
+        "base_entropy_raw": 0.6386328899722206,
+        "base_entropy_T": 0.6201629825996656,
+        "M1_true_label": 0.9581821123276005,
+        "M3_unconditional": 1.0,
+        "expected_member_entropy": 0.7480732758400674,
+        "predictive_entropy": 0.7553590433336553,
+        "mutual_information": 0.7505073671344283,
+        "logit_variance": 0.7921077626458629,
+        "prob_variance": 0.6427474962331209
+      },
+      "expected_member_entropy": {
+        "msp": 0.9344452489349429,
+        "base_entropy_raw": 0.9365463236725139,
+        "base_entropy_T": 0.943520974860925,
+        "M1_true_label": 0.8295855597485456,
+        "M3_unconditional": 0.7480732758400674,
+        "expected_member_entropy": 1.0,
+        "predictive_entropy": 0.9988105529716766,
+        "mutual_information": 0.8476639569070453,
+        "logit_variance": 0.7046280280988536,
+        "prob_variance": 0.7093808247368473
+      },
+      "predictive_entropy": {
+        "msp": 0.9279499662259896,
+        "base_entropy_raw": 0.9309913149603917,
+        "base_entropy_T": 0.937276500473012,
+        "M1_true_label": 0.8312327333329934,
+        "M3_unconditional": 0.7553590433336553,
+        "expected_member_entropy": 0.9988105529716766,
+        "predictive_entropy": 1.0,
+        "mutual_information": 0.8696059068798745,
+        "logit_variance": 0.7262818835050829,
+        "prob_variance": 0.7313917787747046
+      },
+      "mutual_information": {
+        "msp": 0.7299720159099681,
+        "base_entropy_raw": 0.74041475208356,
+        "base_entropy_T": 0.7393862111845761,
+        "M1_true_label": 0.7625937847712172,
+        "M3_unconditional": 0.7505073671344283,
+        "expected_member_entropy": 0.8476639569070453,
+        "predictive_entropy": 0.8696059068798746,
+        "mutual_information": 1.0,
+        "logit_variance": 0.8693702970342096,
+        "prob_variance": 0.9210398223802914
+      },
+      "logit_variance": {
+        "msp": 0.534932742661037,
+        "base_entropy_raw": 0.5696670095873082,
+        "base_entropy_T": 0.5497894351730058,
+        "M1_true_label": 0.7339247579640114,
+        "M3_unconditional": 0.7921077626458629,
+        "expected_member_entropy": 0.7046280280988536,
+        "predictive_entropy": 0.7262818835050829,
+        "mutual_information": 0.8693702970342096,
+        "logit_variance": 1.0,
+        "prob_variance": 0.745400537986474
+      },
+      "prob_variance": {
+        "msp": 0.6335947680380535,
+        "base_entropy_raw": 0.6175321821563705,
+        "base_entropy_T": 0.6388574687448311,
+        "M1_true_label": 0.6596755141906675,
+        "M3_unconditional": 0.642747496233121,
+        "expected_member_entropy": 0.7093808247368473,
+        "predictive_entropy": 0.7313917787747046,
+        "mutual_information": 0.9210398223802914,
+        "logit_variance": 0.7454005379864739,
+        "prob_variance": 1.0
+      }
+    }
+  },
+  "score_order": [
+    "msp",
+    "base_entropy_raw",
+    "base_entropy_T",
+    "M1_true_label",
+    "M3_unconditional",
+    "expected_member_entropy",
+    "predictive_entropy",
+    "mutual_information",
+    "logit_variance",
+    "prob_variance"
+  ]
+}

@@ -1,0 +1,306 @@
+{
+  "n_cal": 32768,
+  "layers": {
+    "block8": {
+      "class_conditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.5116469779591837,
+            "fpr95": 0.9241
+          },
+          "ninco": {
+            "auroc": 0.657043619663208,
+            "fpr95": 0.8117
+          },
+          "inaturalist": {
+            "auroc": 0.482958082,
+            "fpr95": 0.87848
+          },
+          "textures": {
+            "auroc": 0.9388513527131783,
+            "fpr95": 0.31974
+          },
+          "openimage_o": {
+            "auroc": 0.6731745466002899,
+            "fpr95": 0.80452
+          }
+        },
+        "near_auroc": 0.5843452988111959,
+        "near_fpr95": 0.8679,
+        "far_auroc": 0.6983279937711561,
+        "far_fpr95": 0.6675800000000001
+      },
+      "unconditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.4646976012244898,
+            "fpr95": 0.94636
+          },
+          "ninco": {
+            "auroc": 0.5960706106480693,
+            "fpr95": 0.89002
+          },
+          "inaturalist": {
+            "auroc": 0.38186063600000003,
+            "fpr95": 0.94992
+          },
+          "textures": {
+            "auroc": 0.9231116782945736,
+            "fpr95": 0.3999
+          },
+          "openimage_o": {
+            "auroc": 0.6083979116516479,
+            "fpr95": 0.89508
+          }
+        },
+        "near_auroc": 0.5303841059362795,
+        "near_fpr95": 0.9181900000000001,
+        "far_auroc": 0.6377900753154072,
+        "far_fpr95": 0.7483
+      },
+      "dim": 768
+    },
+    "block9": {
+      "class_conditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.6137479453061224,
+            "fpr95": 0.89172
+          },
+          "ninco": {
+            "auroc": 0.7580988093213132,
+            "fpr95": 0.6747
+          },
+          "inaturalist": {
+            "auroc": 0.8096411,
+            "fpr95": 0.57562
+          },
+          "textures": {
+            "auroc": 0.8820644302325582,
+            "fpr95": 0.43622
+          },
+          "openimage_o": {
+            "auroc": 0.7530274169764951,
+            "fpr95": 0.68938
+          }
+        },
+        "near_auroc": 0.6859233773137179,
+        "near_fpr95": 0.78321,
+        "far_auroc": 0.8149109824030177,
+        "far_fpr95": 0.5670733333333334
+      },
+      "unconditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.4721372742857143,
+            "fpr95": 0.93956
+          },
+          "ninco": {
+            "auroc": 0.5714463922435788,
+            "fpr95": 0.8574
+          },
+          "inaturalist": {
+            "auroc": 0.588142492,
+            "fpr95": 0.85188
+          },
+          "textures": {
+            "auroc": 0.7867144457364341,
+            "fpr95": 0.59934
+          },
+          "openimage_o": {
+            "auroc": 0.5617915457810826,
+            "fpr95": 0.87886
+          }
+        },
+        "near_auroc": 0.5217918332646465,
+        "near_fpr95": 0.89848,
+        "far_auroc": 0.6455494945058389,
+        "far_fpr95": 0.7766933333333332
+      },
+      "dim": 768
+    },
+    "block10": {
+      "class_conditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.6593249906122449,
+            "fpr95": 0.86838
+          },
+          "ninco": {
+            "auroc": 0.7366069195441401,
+            "fpr95": 0.6523
+          },
+          "inaturalist": {
+            "auroc": 0.7758340039999998,
+            "fpr95": 0.5723
+          },
+          "textures": {
+            "auroc": 0.8225759031007751,
+            "fpr95": 0.50596
+          },
+          "openimage_o": {
+            "auroc": 0.7556208620581008,
+            "fpr95": 0.6111
+          }
+        },
+        "near_auroc": 0.6979659550781925,
+        "near_fpr95": 0.76034,
+        "far_auroc": 0.7846769230529586,
+        "far_fpr95": 0.56312
+      },
+      "unconditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.28500603795918367,
+            "fpr95": 0.99484
+          },
+          "ninco": {
+            "auroc": 0.2132173668991325,
+            "fpr95": 0.99272
+          },
+          "inaturalist": {
+            "auroc": 0.15536340199999998,
+            "fpr95": 0.9919
+          },
+          "textures": {
+            "auroc": 0.38588490697674416,
+            "fpr95": 0.91918
+          },
+          "openimage_o": {
+            "auroc": 0.2187173621526246,
+            "fpr95": 0.98992
+          }
+        },
+        "near_auroc": 0.2491117024291581,
+        "near_fpr95": 0.99378,
+        "far_auroc": 0.25332189037645625,
+        "far_fpr95": 0.9670000000000001
+      },
+      "dim": 768
+    },
+    "block11": {
+      "class_conditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.7032313853061225,
+            "fpr95": 0.86316
+          },
+          "ninco": {
+            "auroc": 0.845568695356353,
+            "fpr95": 0.554
+          },
+          "inaturalist": {
+            "auroc": 0.93968886,
+            "fpr95": 0.2217
+          },
+          "textures": {
+            "auroc": 0.9235188023255813,
+            "fpr95": 0.32802
+          },
+          "openimage_o": {
+            "auroc": 0.9087227979078706,
+            "fpr95": 0.32578
+          }
+        },
+        "near_auroc": 0.7744000403312378,
+        "near_fpr95": 0.70858,
+        "far_auroc": 0.9239768200778172,
+        "far_fpr95": 0.29183333333333333
+      },
+      "unconditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.38067152653061226,
+            "fpr95": 0.97888
+          },
+          "ninco": {
+            "auroc": 0.4357231161762205,
+            "fpr95": 0.97404
+          },
+          "inaturalist": {
+            "auroc": 0.57638693,
+            "fpr95": 0.86508
+          },
+          "textures": {
+            "auroc": 0.7972256240310077,
+            "fpr95": 0.648
+          },
+          "openimage_o": {
+            "auroc": 0.5933066229756128,
+            "fpr95": 0.89048
+          }
+        },
+        "near_auroc": 0.40819732135341635,
+        "near_fpr95": 0.97646,
+        "far_auroc": 0.6556397256688735,
+        "far_fpr95": 0.8011866666666667
+      },
+      "dim": 768
+    },
+    "final_ln": {
+      "class_conditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.7133024746938775,
+            "fpr95": 0.83552
+          },
+          "ninco": {
+            "auroc": 0.8630761387991155,
+            "fpr95": 0.49176
+          },
+          "inaturalist": {
+            "auroc": 0.9585731220000001,
+            "fpr95": 0.21546
+          },
+          "textures": {
+            "auroc": 0.8954239031007752,
+            "fpr95": 0.38344
+          },
+          "openimage_o": {
+            "auroc": 0.9226232264162832,
+            "fpr95": 0.30796
+          }
+        },
+        "near_auroc": 0.7881893067464965,
+        "near_fpr95": 0.66364,
+        "far_auroc": 0.9255400838390195,
+        "far_fpr95": 0.30228666666666665
+      },
+      "unconditional": {
+        "per_dataset": {
+          "ssb_hard": {
+            "auroc": 0.677516470612245,
+            "fpr95": 0.88394
+          },
+          "ninco": {
+            "auroc": 0.8332392447695187,
+            "fpr95": 0.56972
+          },
+          "inaturalist": {
+            "auroc": 0.9433215199999999,
+            "fpr95": 0.27462
+          },
+          "textures": {
+            "auroc": 0.8821553527131782,
+            "fpr95": 0.46518
+          },
+          "openimage_o": {
+            "auroc": 0.9084488587812716,
+            "fpr95": 0.35202
+          }
+        },
+        "near_auroc": 0.7553778576908818,
+        "near_fpr95": 0.72683,
+        "far_auroc": 0.9113085771648167,
+        "far_fpr95": 0.36394
+      },
+      "dim": 768
+    }
+  },
+  "regularisation": "cov + 1e-6 I, identical at every layer",
+  "fit_pool": "32,768 ID training images (correction_rows.npy)",
+  "OOD data used for layer selection": "NO",
+  "strongest_near": "final_ln",
+  "monotone_in_depth": true,
+  "seconds": 24.20364195300499
+}

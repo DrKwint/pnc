@@ -1,0 +1,185 @@
+{
+  "n": 50000,
+  "n_errors": 9466,
+  "base_top1": 0.8106800000000001,
+  "positive_class": "base model top-1 incorrect",
+  "rows": [
+    {
+      "score": "Mahalanobis",
+      "auroc": 0.7800110782828242,
+      "aupr": 0.4694036089366457,
+      "mean_correct": 838.0356827205726,
+      "mean_incorrect": 1583.0387855866684,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "Mahalanobis (unconditional)",
+      "auroc": 0.7121759459973352,
+      "aupr": 0.38624781524065244,
+      "mean_correct": 790.6770349958908,
+      "mean_incorrect": 1008.5916958504038,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "MSP",
+      "auroc": 0.8561393595374974,
+      "aupr": 0.6011762479635119,
+      "mean_correct": 0.8078514313821666,
+      "mean_incorrect": 0.5301220113673843,
+      "sign": -1,
+      "status": "OK"
+    },
+    {
+      "score": "Base entropy (raw)",
+      "auroc": 0.8239514198423787,
+      "aupr": 0.5515678146583445,
+      "mean_correct": 1.407268842967976,
+      "mean_incorrect": 2.4552357845778148,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "Base entropy (T=0.7)",
+      "auroc": 0.8680955900465526,
+      "aupr": 0.6088208729743261,
+      "mean_correct": 0.20849400199491078,
+      "mean_incorrect": 0.9461451139629523,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C predictive entropy",
+      "auroc": 0.8558110999792324,
+      "aupr": 0.5756699270251874,
+      "mean_correct": 0.3971897409871222,
+      "mean_incorrect": 1.501868147363057,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C expected member entropy",
+      "auroc": 0.857780880162153,
+      "aupr": 0.5792318570311463,
+      "mean_correct": 0.3631201864287247,
+      "mean_incorrect": 1.3643725319906594,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C mutual information",
+      "auroc": 0.8092137107268504,
+      "aupr": 0.4953169109752037,
+      "mean_correct": 0.034069554477149155,
+      "mean_incorrect": 0.13749561513349168,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C logit variance",
+      "auroc": 0.7403178761505589,
+      "aupr": 0.40810871191113873,
+      "mean_correct": 0.04302164056825951,
+      "mean_incorrect": 0.08487827044873508,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C mean pairwise KL",
+      "auroc": 0.8530073002492574,
+      "aupr": 0.5693379463897908,
+      "mean_correct": 8.858474313985976,
+      "mean_incorrect": 33.64102207279447,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C member agreement",
+      "auroc": 0.7305370970791571,
+      "aupr": 0.4427399823355515,
+      "mean_correct": 0.9746052692450148,
+      "mean_incorrect": 0.8173885477154648,
+      "sign": -1,
+      "status": "OK"
+    },
+    {
+      "score": "LLLA-Kron entropy",
+      "auroc": 0.8239514237517354,
+      "aupr": 0.5515678210042559,
+      "mean_correct": 1.4072688457824847,
+      "mean_incorrect": 2.4552357880520237,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "LLLA-Kron+Temp entropy",
+      "auroc": 0.8677718692513887,
+      "aupr": 0.6084673752499657,
+      "mean_correct": 0.21600283339857573,
+      "mean_incorrect": 0.9635706296756684,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "SCOD-linear",
+      "auroc": 0.8561281435931936,
+      "aupr": 0.5875315789562201,
+      "mean_correct": 8.337602813957227,
+      "mean_incorrect": 13.67394293697042,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "SCOD-FFN",
+      "auroc": 0.825734717196252,
+      "aupr": 0.5278808265148356,
+      "mean_correct": 11.82372549018139,
+      "mean_incorrect": 18.662569549555712,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "SCOD-last-block",
+      "auroc": null,
+      "aupr": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "score": "P&C K=5 predictive entropy",
+      "auroc": 0.8549471881879134,
+      "aupr": 0.5717844956695091,
+      "mean_correct": 0.40131752343767746,
+      "mean_incorrect": 1.5310014453402725,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C K=20 predictive entropy",
+      "auroc": 0.8536760074367848,
+      "aupr": 0.5705365153357222,
+      "mean_correct": 0.4191896452588415,
+      "mean_incorrect": 1.5674241578706025,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C K=40 predictive entropy",
+      "auroc": 0.853459036838139,
+      "aupr": 0.5698413397519291,
+      "mean_correct": 0.42063614879280226,
+      "mean_incorrect": 1.567857663727826,
+      "sign": 1,
+      "status": "OK"
+    },
+    {
+      "score": "P&C K=80 predictive entropy",
+      "auroc": 0.854549177887832,
+      "aupr": 0.5714653894102605,
+      "mean_correct": 0.41907749035444486,
+      "mean_incorrect": 1.5644492793282403,
+      "sign": 1,
+      "status": "OK"
+    }
+  ]
+}

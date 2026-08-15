@@ -1,0 +1,137 @@
+{
+  "fisher": "exact categorical (no MC)",
+  "scopes": {
+    "SCOD-linear": {
+      "scope": "linear",
+      "fisher": "exact categorical",
+      "requested_k": 30,
+      "requested_T": 184,
+      "actual_k": 30,
+      "actual_T": 184,
+      "fallback_reason": null,
+      "k_sketch": 61,
+      "l_sketch": 123,
+      "recovered_rank": 122,
+      "n_eigs_used": 30,
+      "q": null,
+      "n_cal": 32768,
+      "n_params": 769000,
+      "fit_seconds": 163.66372420999687,
+      "basis_seconds": 1.2661815409956034,
+      "eval_seconds": 96.37598569100373,
+      "total_seconds": 262.33819345300435,
+      "peak_rss_gib": 3.4327392578125,
+      "peak_vram_gib": 0.8333444595336914,
+      "storage_mib": 357.88773345947266,
+      "top_eigs": [
+        0.08611027151346207,
+        0.08675353974103928,
+        0.0898052528500557,
+        0.09290572255849838,
+        0.09798768162727356,
+        0.10533398389816284,
+        0.10876821726560593,
+        0.11367103457450867,
+        0.11545344442129135,
+        0.12547361850738525
+      ],
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6926279653061225,
+          "fpr95": 0.83604
+        },
+        "ninco": {
+          "auroc": 0.8102865045075693,
+          "fpr95": 0.62762
+        },
+        "inaturalist": {
+          "auroc": 0.902081838,
+          "fpr95": 0.3574
+        },
+        "textures": {
+          "auroc": 0.8732874496124031,
+          "fpr95": 0.49366
+        },
+        "openimage_o": {
+          "auroc": 0.8790812288108892,
+          "fpr95": 0.45
+        }
+      },
+      "near_auroc": 0.7514572349068459,
+      "near_fpr95": 0.73183,
+      "far_auroc": 0.8848168388077641,
+      "far_fpr95": 0.4336866666666666,
+      "id_error_auroc": 0.8561281422900746,
+      "id_error_aupr": 0.5875316436832146,
+      "mean_score_correct": 8.337602814269067,
+      "mean_score_incorrect": 13.673942940311113,
+      "OOD data accessed before any choice": "NO"
+    },
+    "SCOD-ffn": {
+      "scope": "ffn",
+      "fisher": "exact categorical",
+      "requested_k": 30,
+      "requested_T": 184,
+      "actual_k": 30,
+      "actual_T": 184,
+      "fallback_reason": null,
+      "k_sketch": 61,
+      "l_sketch": 123,
+      "recovered_rank": 122,
+      "n_eigs_used": 30,
+      "q": null,
+      "n_cal": 32768,
+      "n_params": 5491432,
+      "fit_seconds": 968.3512131049938,
+      "basis_seconds": 8.970985702006146,
+      "eval_seconds": 522.5102636720112,
+      "total_seconds": 1504.4359621670155,
+      "peak_rss_gib": 17.622169494628906,
+      "peak_vram_gib": 0.8333444595336914,
+      "storage_mib": 2555.6748428344727,
+      "top_eigs": [
+        0.17821021378040314,
+        0.18371060490608215,
+        0.1889975666999817,
+        0.19523514807224274,
+        0.20217615365982056,
+        0.2145932912826538,
+        0.22573436796665192,
+        0.23752033710479736,
+        0.2747345566749573,
+        0.43350711464881897
+      ],
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6589033297959184,
+          "fpr95": 0.86358
+        },
+        "ninco": {
+          "auroc": 0.7815635073992175,
+          "fpr95": 0.64456
+        },
+        "inaturalist": {
+          "auroc": 0.84836829,
+          "fpr95": 0.40414
+        },
+        "textures": {
+          "auroc": 0.8373012519379844,
+          "fpr95": 0.51992
+        },
+        "openimage_o": {
+          "auroc": 0.8531171050475772,
+          "fpr95": 0.46748
+        }
+      },
+      "near_auroc": 0.720233418597568,
+      "near_fpr95": 0.75407,
+      "far_auroc": 0.846262215661854,
+      "far_fpr95": 0.4638466666666667,
+      "id_error_auroc": 0.8257347211056087,
+      "id_error_aupr": 0.5278807622543178,
+      "mean_score_correct": 11.823725489256057,
+      "mean_score_incorrect": 18.662569555270526,
+      "OOD data accessed before any choice": "NO"
+    }
+  }
+}

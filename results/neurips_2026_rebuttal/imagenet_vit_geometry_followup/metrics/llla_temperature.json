@@ -1,0 +1,77 @@
+{
+  "frozen_prior_precision": 1000000000.0,
+  "temperature_pool": "cache_temperature.npz (8,192 ID train images)",
+  "rule": "prior frozen from the previous round; T fitted afterwards on ID NLL",
+  "variants": {
+    "LLLA-Kron": {
+      "temperature": 1.0,
+      "prior_precision": 1000000000.0,
+      "top1": 0.81068,
+      "nll": 0.8384405703611942,
+      "ece": 0.05604526023380458,
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6808217685714286,
+          "fpr95": 0.87966
+        },
+        "ninco": {
+          "auroc": 0.7781435958496343,
+          "fpr95": 0.83892
+        },
+        "inaturalist": {
+          "auroc": 0.8972806779999999,
+          "fpr95": 0.43054
+        },
+        "textures": {
+          "auroc": 0.8657925542635658,
+          "fpr95": 0.60512
+        },
+        "openimage_o": {
+          "auroc": 0.859379792047388,
+          "fpr95": 0.6342
+        }
+      },
+      "near_auroc": 0.7294826822105315,
+      "near_fpr95": 0.85929,
+      "far_auroc": 0.8741510081036511,
+      "far_fpr95": 0.55662,
+      "matches_previous_round": {
+        "near_auroc_prev": 0.7294826822105315,
+        "far_auroc_prev": 0.8741510081036511
+      }
+    },
+    "LLLA-Kron+Temp": {
+      "temperature": 0.7062656607373682,
+      "prior_precision": 1000000000.0,
+      "top1": 0.81068,
+      "nll": 0.8438327229104838,
+      "ece": 0.08993008090886405,
+      "per_dataset": {
+        "ssb_hard": {
+          "auroc": 0.6982487093877551,
+          "fpr95": 0.84074
+        },
+        "ninco": {
+          "auroc": 0.7924826194931112,
+          "fpr95": 0.68094
+        },
+        "inaturalist": {
+          "auroc": 0.8860518940000001,
+          "fpr95": 0.42856
+        },
+        "textures": {
+          "auroc": 0.8536413488372092,
+          "fpr95": 0.53602
+        },
+        "openimage_o": {
+          "auroc": 0.8549094410485852,
+          "fpr95": 0.51042
+        }
+      },
+      "near_auroc": 0.7453656644404332,
+      "near_fpr95": 0.76084,
+      "far_auroc": 0.8648675612952649,
+      "far_fpr95": 0.4916666666666667
+    }
+  }
+}

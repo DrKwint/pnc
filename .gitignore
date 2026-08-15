@@ -36,3 +36,7 @@ results/neurips_2026_rebuttal/imagenet_vit_preservation_frontier/raw/
 # Geometry/SCOD/LLLA follow-up: multi-layer CLS caches (~2.0 GB), regenerable with
 # `python -m experiments.imagenet_vit_pnc.geom_cache`. Sizes in metrics/cls_layer_cache.json.
 results/neurips_2026_rebuttal/imagenet_vit_geometry_scod_llla/raw/
+
+# Geometry follow-up: train-pool multi-layer CLS cache (~500 MB), regenerable with
+# `python -m experiments.imagenet_vit_pnc.fu_layercache`.
+results/neurips_2026_rebuttal/imagenet_vit_geometry_followup/raw/

@@ -1,0 +1,20 @@
+{
+  "note": "gates on the exact categorical factorisation replacing MC Fisher",
+  "linear": {
+    "scope": "linear",
+    "n_examples": 2,
+    "adjoint_max_rel_error": 1.2706917686955421e-06,
+    "A_column_vs_autograd_max_rel_error": 0.0,
+    "normsq_max_rel_error": 2.066657030646995e-06,
+    "ok": true
+  },
+  "ffn": {
+    "scope": "ffn",
+    "n_examples": 2,
+    "adjoint_max_rel_error": 2.6656832687876886e-06,
+    "A_column_vs_autograd_max_rel_error": 1.0623902824136167e-07,
+    "normsq_max_rel_error": 4.88794251938925e-06,
+    "ok": true
+  },
+  "all_ok": true
+}

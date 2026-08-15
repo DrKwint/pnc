@@ -1,0 +1,62 @@
+{
+  "scope": "linear",
+  "fisher": "exact categorical",
+  "rows": [
+    {
+      "n_cal": 4096,
+      "fit_seconds": 20.559165718994336,
+      "peak_rss_gib": 3.4306564331054688,
+      "top5_eigs": [
+        0.14472125470638275,
+        0.14972016215324402,
+        0.15004220604896545,
+        0.15996453166007996,
+        0.17115533351898193
+      ]
+    },
+    {
+      "n_cal": 8192,
+      "fit_seconds": 41.512639594991924,
+      "peak_rss_gib": 3.8439407348632812,
+      "top5_eigs": [
+        0.12210570275783539,
+        0.1286705583333969,
+        0.1410590410232544,
+        0.14518120884895325,
+        0.16005198657512665
+      ],
+      "spearman_vs_previous": 0.9998757569627357,
+      "max_principal_angle_vs_previous_deg": 87.62286376953125
+    },
+    {
+      "n_cal": 16384,
+      "fit_seconds": 82.24500402898411,
+      "peak_rss_gib": 3.8451461791992188,
+      "top5_eigs": [
+        0.10442788898944855,
+        0.10885363817214966,
+        0.12168887257575989,
+        0.12428189069032669,
+        0.13468590378761292
+      ],
+      "spearman_vs_previous": 0.9998841046403002,
+      "max_principal_angle_vs_previous_deg": 84.73321533203125
+    },
+    {
+      "n_cal": 32768,
+      "fit_seconds": 163.18621787099983,
+      "peak_rss_gib": 3.8457908630371094,
+      "top5_eigs": [
+        0.10533398389816284,
+        0.10876821726560593,
+        0.11367103457450867,
+        0.11545344442129135,
+        0.12547361850738525
+      ],
+      "spearman_vs_previous": 0.9999071009168911,
+      "max_principal_angle_vs_previous_deg": 80.41944122314453
+    }
+  ],
+  "selected_n_cal": 32768,
+  "rule": "largest computationally feasible, matching the P&C/Mahalanobis pool; convergence reported, never used to pick"
+}
